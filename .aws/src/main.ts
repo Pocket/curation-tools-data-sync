@@ -1,31 +1,20 @@
 import { Construct } from 'constructs';
-import {
-  App,
-  DataTerraformRemoteState,
-  RemoteBackend,
-  TerraformStack,
-} from 'cdktf';
-import {
-  AwsProvider,
-  DataAwsCallerIdentity,
-  DataAwsKmsAlias,
-  DataAwsRegion,
-  DataAwsSnsTopic,
-} from '@cdktf/provider-aws';
+import { App, RemoteBackend, TerraformStack } from 'cdktf';
+import { AwsProvider, DataAwsCallerIdentity, DataAwsRegion } from '@cdktf/provider-aws';
 import { config } from './config';
 import {
-  ApplicationRedis,
-  PocketALBApplication,
-  PocketECSCodePipeline,
-  PocketPagerDuty,
-  PocketVPC,
+  ApplicationEventBridgeRule,
+  LAMBDA_RUNTIMES,
+  PocketVersionedLambda,
+  PocketVersionedLambdaProps,
+  PocketVPC
 } from '@pocket-tools/terraform-modules';
+import { lambdafunction } from '@cdktf/provider-aws';
 import { PagerdutyProvider } from '@cdktf/provider-pagerduty';
 import { LocalProvider } from '@cdktf/provider-local';
 import { NullProvider } from '@cdktf/provider-null';
 
-//todo: change class name to your service name
-class Acme extends TerraformStack {
+class CurationToolsDataSync extends TerraformStack {
   constructor(scope: Construct, name: string) {
     super(scope, name);
 
@@ -33,7 +22,7 @@ class Acme extends TerraformStack {
     new PagerdutyProvider(this, 'pagerduty_provider', { token: undefined });
     new LocalProvider(this, 'local_provider');
     new NullProvider(this, 'null_provider');
-    
+
     new RemoteBackend(this, {
       hostname: 'app.terraform.io',
       organization: 'Pocket',
@@ -42,269 +31,111 @@ class Acme extends TerraformStack {
 
     const region = new DataAwsRegion(this, 'region');
     const caller = new DataAwsCallerIdentity(this, 'caller');
-    const cache = Acme.createElasticache(this);
+    const vpc = new PocketVPC(this, 'pocket-shared-vpc');
 
-    const pocketApp = this.createPocketAlbApplication({
-      pagerDuty: this.createPagerDuty(),
-      secretsManagerKmsAlias: this.getSecretsManagerKmsAlias(),
-      snsTopic: this.getCodeDeploySnsTopic(),
-      region,
-      caller,
-      cache,
-    });
-
-    this.createApplicationCodePipeline(pocketApp);
-  }
-
-  /**
-   * Creates the elasticache and returns the node address list
-   * @param scope
-   * @private
-   */
-  private static createElasticache(scope: Construct): {
-    primaryEndpoint: string;
-    readerEndpoint: string;
-  } {
-    const pocketVPC = new PocketVPC(scope, 'pocket-vpc');
-
-    const elasticache = new ApplicationRedis(scope, 'redis', {
-      //Usually we would set the security group ids of the service that needs to hit this.
-      //However we don't have the necessary security group because it gets created in PocketALBApplication
-      //So instead we set it to null and allow anything within the vpc to access it.
-      //This is not ideal..
-      //Ideally we need to be able to add security groups to the ALB application.
-      allowedIngressSecurityGroupIds: undefined,
-      node: {
-        count: config.cacheNodes,
-        size: config.cacheSize,
-      },
-      subnetIds: pocketVPC.privateSubnetIds,
-      tags: config.tags,
-      vpcId: pocketVPC.vpc.id,
-      prefix: config.prefix,
-    });
-
-    return {
-      primaryEndpoint:
-        elasticache.elasticacheReplicationGroup.primaryEndpointAddress,
-      readerEndpoint:
-        elasticache.elasticacheReplicationGroup.readerEndpointAddress,
-    };
-  }
-
-  /**
-   * Get the sns topic for code deploy
-   * @private
-   */
-  private getCodeDeploySnsTopic() {
-    return new DataAwsSnsTopic(this, 'backend_notifications', {
-      name: `Backend-${config.environment}-ChatBot`,
-    });
-  }
-
-  /**
-   * Get secrets manager kms alias
-   * @private
-   */
-  private getSecretsManagerKmsAlias() {
-    return new DataAwsKmsAlias(this, 'kms_alias', {
-      name: 'alias/aws/secretsmanager',
-    });
-  }
-
-  /**
-   * Create CodePipeline to build and deploy terraform and ecs
-   * @param app
-   * @private
-   */
-  private createApplicationCodePipeline(app: PocketALBApplication) {
-    new PocketECSCodePipeline(this, 'code-pipeline', {
-      prefix: config.prefix,
-      source: {
-        codeStarConnectionArn: config.codePipeline.githubConnectionArn,
-        repository: config.codePipeline.repository,
-        branchName: config.codePipeline.branch,
-      },
-    });
-  }
-
-  /**
-   * Create PagerDuty service for alerts
-   * @private
-   */
-  private createPagerDuty() {
-    // don't create any pagerduty resources if in dev
-    if (config.isDev) {
-      return undefined;
-    }
-
-    const incidentManagement = new DataTerraformRemoteState(
-      this,
-      'incident_management',
-      {
-        organization: 'Pocket',
-        workspaces: {
-          name: 'incident-management',
+    //todo: create target lambda to process the events
+    const targetLambdaProps : PocketVersionedLambdaProps = {
+      name: `${config.prefix}-lambda`,
+      lambda: {
+        description: `target lambda to capture add/remove curated items from curatedCorpusApi through eventBridge`,
+        runtime: LAMBDA_RUNTIMES.NODEJS14,
+        handler: `index.handler`,
+        timeout: 150,
+        environment: {
+          REGION: vpc.region,
+          ENVIRONMENT:
+            config.environment === 'Prod' ? 'production' : 'development',
         },
-      }
-    );
-
-    return new PocketPagerDuty(this, 'pagerduty', {
-      prefix: config.prefix,
-      service: {
-        criticalEscalationPolicyId: incidentManagement.get(
-          'policy_backend_critical_id'
-        ),
-        nonCriticalEscalationPolicyId: incidentManagement.get(
-          'policy_backend_non_critical_id'
-        ),
-      },
-    });
-  }
-
-  private createPocketAlbApplication(dependencies: {
-    pagerDuty: PocketPagerDuty;
-    region: DataAwsRegion;
-    caller: DataAwsCallerIdentity;
-    secretsManagerKmsAlias: DataAwsKmsAlias;
-    snsTopic: DataAwsSnsTopic;
-    cache: { primaryEndpoint: string; readerEndpoint: string };
-  }): PocketALBApplication {
-    const {
-      pagerDuty,
-      region,
-      caller,
-      secretsManagerKmsAlias,
-      snsTopic,
-      cache,
-    } = dependencies;
-
-    return new PocketALBApplication(this, 'application', {
-      internal: true,
-      prefix: config.prefix,
-      alb6CharacterPrefix: config.shortName,
-      tags: config.tags,
-      cdn: false,
-      domain: config.domain,
-      containerConfigs: [
-        {
-          name: 'app',
-          portMappings: [
-            {
-              hostPort: 4005,
-              containerPort: 4005,
-            },
-          ],
-          healthCheck: config.healthCheck,
-          envVars: [
-            {
-              name: 'NODE_ENV',
-              value: process.env.NODE_ENV,
-            },
-            {
-              name: 'ENVIRONMENT',
-              value: process.env.NODE_ENV, // this gives us a nice lowercase production and development
-            },
-            {
-              name: 'REDIS_PRIMARY_ENDPOINT',
-              value: cache.primaryEndpoint,
-            },
-            {
-              name: 'REDIS_READER_ENDPOINT',
-              value: cache.readerEndpoint,
-            },
-          ],
-          secretEnvVars: [
-            {
-              name: 'SENTRY_DSN',
-              valueFrom: `arn:aws:ssm:${region.name}:${caller.accountId}:parameter/${config.name}/${config.environment}/SENTRY_DSN`,
-            },
-          ],
+        vpcConfig: {
+          securityGroupIds: vpc.defaultSecurityGroups.ids,
+          subnetIds: vpc.privateSubnetIds,
         },
-        {
-          name: 'xray-daemon',
-          containerImage: 'public.ecr.aws/xray/aws-xray-daemon:latest',
-          portMappings: [
-            {
-              hostPort: 2000,
-              containerPort: 2000,
-              protocol: 'udp',
-            },
-          ],
-          command: ['--region', 'us-east-1', '--local-mode'],
-        },
-      ],
-      codeDeploy: {
-        useCodeDeploy: true,
-        useCodePipeline: true,
-        snsNotificationTopicArn: snsTopic.arn,
-      },
-      exposedContainer: {
-        name: 'app',
-        port: 4001,
-        healthCheckPath: '/.well-known/apollo/server-health',
-      },
-      ecsIamConfig: {
-        prefix: config.prefix,
-        taskExecutionRolePolicyStatements: [
-          //This policy could probably go in the shared module in the future.
+        executionPolicyStatements: [
           {
             actions: ['secretsmanager:GetSecretValue', 'kms:Decrypt'],
             resources: [
-              `arn:aws:secretsmanager:${region.name}:${caller.accountId}:secret:Shared`,
-              `arn:aws:secretsmanager:${region.name}:${caller.accountId}:secret:Shared/*`,
-              secretsManagerKmsAlias.targetKeyArn,
-              `arn:aws:secretsmanager:${region.name}:${caller.accountId}:secret:${config.name}/${config.environment}`,
-              `arn:aws:secretsmanager:${region.name}:${caller.accountId}:secret:${config.name}/${config.environment}/*`,
-              `arn:aws:secretsmanager:${region.name}:${caller.accountId}:secret:${config.prefix}`,
-              `arn:aws:secretsmanager:${region.name}:${caller.accountId}:secret:${config.prefix}/*`,
+              `arn:aws:secretsmanager:${vpc.region}:${vpc.accountId}:secret:${config.name}/${config.environment}`,
+              `arn:aws:secretsmanager:${vpc.region}:${vpc.accountId}:secret:${config.name}/${config.environment}/*`,
             ],
-            effect: 'Allow',
-          },
-          //This policy could probably go in the shared module in the future.
-          {
-            actions: ['ssm:GetParameter*'],
-            resources: [
-              `arn:aws:ssm:${region.name}:${caller.accountId}:parameter/${config.name}/${config.environment}`,
-              `arn:aws:ssm:${region.name}:${caller.accountId}:parameter/${config.name}/${config.environment}/*`,
-            ],
-            effect: 'Allow',
           },
         ],
-        taskRolePolicyStatements: [
-          {
-            actions: [
-              'xray:PutTraceSegments',
-              'xray:PutTelemetryRecords',
-              'xray:GetSamplingRules',
-              'xray:GetSamplingTargets',
-              'xray:GetSamplingStatisticSummaries',
-            ],
-            resources: ['*'],
-            effect: 'Allow',
-          },
-        ],
-        taskExecutionDefaultAttachmentArn:
-          'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy',
+        alarms: {
+         //todo: set alarms
+        },
+        codeDeploy: {
+          region: vpc.region,
+          accountId: vpc.accountId,
+        },
       },
-      autoscalingConfig: {
-        targetMinCapacity: 2,
-        targetMaxCapacity: 10,
+      tags: config.tags,
+    };
+
+
+    const targetLambda = new PocketVersionedLambda(this,`curation-tools-datasync-lambda`,targetLambdaProps)
+
+    //event pattern to capture curation tools add item events
+    const curationToolsAddItemEventPattern : {[key: string]: any}  = {
+      detail: {
+        eventId: "curation-tools-add-items-event"
+      }
+    };
+
+
+    //thoughts:
+    //several event-bus associated with event rule.
+    //tie a target with the event bus.
+    //note: we should be able to tie multiple targets (upto 5). with one event bridge.
+    //what happens when we roll out a new apply to add extra tart
+    const eventBridgeRule = this.createEventBridgeRule(targetLambda,curationToolsAddItemEventPattern);
+    this.createLambdaEventRuleResourcePermission(targetLambda, eventBridgeRule);
+  }
+
+  /**
+   * Creates the approriate permission to allow aws events to invoke lambda
+   * @param lambda
+   * @param eventBridgeRule
+   * @private
+   */
+  private createLambdaEventRuleResourcePermission(
+    targetLambda: PocketVersionedLambda,
+    eventBridgeRule: ApplicationEventBridgeRule
+  ): void {
+    new lambdafunction.LambdaPermission(this, 'lambda-permission', {
+      action: 'lambda:InvokeFunction',
+      functionName: targetLambda.lambda.versionedLambda.functionName,
+      qualifier: targetLambda.lambda.versionedLambda.name,
+      principal: 'events.amazonaws.com',
+      sourceArn: eventBridgeRule.rule.arn,
+      dependsOn: [targetLambda.lambda.versionedLambda, eventBridgeRule.rule],
+    });
+  }
+
+  /**
+   * Creates the actual rule for event bridge to trigger the lambda
+   * @param lambda
+   * @private
+   */
+  private createEventBridgeRule(
+    targetLambda: PocketVersionedLambda,
+    eventRule: any,
+  ): ApplicationEventBridgeRule {
+
+    return new ApplicationEventBridgeRule(this, 'event-bridge-rule', {
+      name: `${config.name}-addItem-eventRule`,
+      description: `captures add curated items events in eventBridge `,
+      eventBusName: `${config.name}-addItemEventBus`,
+      eventPattern: eventRule,
+      target: {
+        targetId: 'lambda',
+        arn: targetLambda[0].lambda.versionedLambda.arn,
+        dependsOn: targetLambda[0].lambda.versionedLambda,
       },
-      alarms: {
-        //TODO: When you start using the service add the pagerduty arns as an action `pagerDuty.snsNonCriticalAlarmTopic.arn`
-        http5xxErrorPercentage: {
-          threshold: 25,
-          evaluationPeriods: 4,
-          period: 300,
-          actions: config.isDev ? [] : []
-        }
-      },
+      tags: config.tags,
     });
   }
 }
 
 const app = new App();
-new Acme(app, 'acme');
+new CurationToolsDataSync(app, config.domainPrefix);
 // TODO: Fix the terraform version. @See https://github.com/Pocket/recommendation-api/pull/333
 app.synth();
