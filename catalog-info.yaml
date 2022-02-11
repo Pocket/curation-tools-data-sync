@@ -1,0 +1,30 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: "curation-tools-data-sync"
+  description: "This repository contains all the ETL components and business logic to sync the items added in the new CuratedCorpusApi to the database to the readitla-* database."
+  annotations:
+    github.com/project-slug: pocket/"curation-tools-data-sync"
+    github.com/team-slug: "backend-infrastructure"
+    circleci.com/project-slug: github/pocket/"curation-tools-data-sync"
+    sentry.io/project-slug: "curation-tools-data-sync"
+spec:
+  type: service
+  owner: backend
+  lifecycle: production
+  providesApis:
+    - "curation-tools-data-sync"
+
+---
+
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: "curation-tools-data-sync"
+  description: "This repository contains all the ETL components and business logic to sync the items added in the new CuratedCorpusApi to the database to the readitla-* database."
+spec:
+  type: graphql
+  owner: backend
+  definition: |
+    query {}
+  lifecycle: production
