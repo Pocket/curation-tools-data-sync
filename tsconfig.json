@@ -11,7 +11,7 @@
       "es2020.symbol.wellknown"
     ],
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDirs": ["curation-migration-backfill"],
     "removeComments": true,
     "esModuleInterop": true,
     "noEmitOnError": false,
@@ -22,5 +22,5 @@
     "declaration": true
   },
   "exclude": ["node_modules"],
-  "include": ["src/**/*.ts", "src/config"]
+  "include": ["curation-migration-backfill/**/*.ts"]
 }
