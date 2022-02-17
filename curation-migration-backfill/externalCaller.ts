@@ -37,17 +37,19 @@ export async function addLiveCurtedItemsToCorpusApi(input: ApprovedItemInput) {
 }
 
 async function generateS3Url(image: Blob) {
-  const uploadApprovedCuratedCorpusItemImage = `
-  mutation uploadApprovedCuratedCorpusItemImage($image: Upload!) {
-    uploadApprovedCuratedCorpusItemImage(image: $image) {
-      url
+  const UPLOAD_APPROVED_ITEM_IMAGE = `
+    mutation uploadApprovedCuratedCorpusItemImage($image: Upload!) {
+      uploadApprovedCuratedCorpusItemImage(data: $image) {
+        url
+      }
     }
-  }`;
+  `;
+
   const variables = {
     image: image,
   };
   let response = await sendGraphQLRequest(
-    uploadApprovedCuratedCorpusItemImage,
+    UPLOAD_APPROVED_ITEM_IMAGE,
     variables
   );
   return response;
@@ -65,7 +67,8 @@ async function sendGraphQLRequest(query: string, variables: any) {
   let t = await fetch(serverUrl, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
+      'content-type': 'application/json',
+      authorization: 'Bearer jwt', //todo: read from ssm
     },
     body: JSON.stringify({ query: query, variables }),
   }).then((response) => response.json());

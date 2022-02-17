@@ -19,6 +19,8 @@ export class BackfillLambda extends Resource {
 
     //const { sentryDsn, gitSha } = getEnvVariableValues(this);
 
+    //note: because this is one time migration,
+    //we will just use the default event bus.
     new PocketEventBridgeWithLambdaTarget(
       this,
       'Curation-Migration-Backfill-Lambda',

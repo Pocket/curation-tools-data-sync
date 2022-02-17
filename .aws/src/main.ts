@@ -97,5 +97,5 @@ class CurationToolsDataSync extends TerraformStack {
 }
 
 const app = new App();
-new CurationToolsDataSync(app, 'curation-migration');
+new CurationToolsDataSync(app, config.domainPrefix);
 app.synth();
