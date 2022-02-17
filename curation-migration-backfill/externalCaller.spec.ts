@@ -1,6 +1,6 @@
 import {
   addLiveCurtedItemsToCorpusApi,
-  ApprovedItemInput,
+  CreateApprovedCuratedCorpusItemInput,
 } from './externalCaller';
 
 describe('curatedCorpusApi mutations test', () => {
@@ -9,7 +9,7 @@ describe('curatedCorpusApi mutations test', () => {
   });
 
   it('should save a scheduled Item', async () => {
-    const testData: ApprovedItemInput = {
+    const testData: CreateApprovedCuratedCorpusItemInput = {
       url: 'https://www.consumerreports.org/healthy-eating/are-potatoes-good-for-you/',
       title: 'Are potatoes good for you',
       excerpt: 'some test excerpt',
