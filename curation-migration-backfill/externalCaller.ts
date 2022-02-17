@@ -1,6 +1,8 @@
 import fetch from 'node-fetch';
 import { Blob } from 'buffer';
 import config from './config';
+import { Upload } from 'graphql-upload';
+import { createReadStream } from 'fs';
 
 export type ApprovedItemInput = {
   prospectId?: string;
@@ -32,11 +34,11 @@ export async function addLiveCurtedItemsToCorpusApi(input: ApprovedItemInput) {
     throw new Error('Failed to download image from source for saving to s3');
   }
 
-  let s3Url = await generateS3Url(image);
+  let s3Url = await generateS3Url(image, input.imageUrl);
   return s3Url;
 }
 
-async function generateS3Url(image: Blob) {
+async function generateS3Url(image: Blob, imageUrl: string) {
   const UPLOAD_APPROVED_ITEM_IMAGE = `
     mutation uploadApprovedCuratedCorpusItemImage($image: Upload!) {
       uploadApprovedCuratedCorpusItemImage(data: $image) {
@@ -45,8 +47,16 @@ async function generateS3Url(image: Blob) {
     }
   `;
 
+  let upload = new Upload();
+  upload.resolve({
+    filename: imageUrl,
+    mimetype: 'image/jpeg',
+    encoding: '7bit',
+    createReadStream: () => createReadStream(imageUrl),
+  });
+
   const variables = {
-    image: image,
+    image: upload,
   };
   let response = await sendGraphQLRequest(
     UPLOAD_APPROVED_ITEM_IMAGE,
@@ -68,7 +78,7 @@ async function sendGraphQLRequest(query: string, variables: any) {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
-      authorization: 'Bearer jwt', //todo: read from ssm
+      authorization: 'Bearer jwt',
     },
     body: JSON.stringify({ query: query, variables }),
   }).then((response) => response.json());
