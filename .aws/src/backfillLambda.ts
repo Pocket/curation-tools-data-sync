@@ -13,6 +13,7 @@ export class BackfillLambda extends Resource {
     scope: Construct,
     private name: string,
     private vpc: PocketVPC,
+    s3Bucket: string,
     pagerDuty?: PocketPagerDuty
   ) {
     super(scope, name);
@@ -57,7 +58,14 @@ export class BackfillLambda extends Resource {
               `arn:aws:secretsmanager:${vpc.region}:${vpc.accountId}:secret:CurationToolsDataSync/${config.environment}`,
               `arn:aws:secretsmanager:${vpc.region}:${vpc.accountId}:secret:CurationToolsDataSync/${config.environment}/*`,
             ],
-            //todo: add permission to access S3 bucket
+          },
+          {
+            actions: ['s3:GetObject'],
+            effect: 'Allow',
+            resources: [
+              ` "arn:aws:s3:::${s3Bucket}`,
+              ` "arn:aws:s3:::${s3Bucket}/*`,
+            ],
           },
         ],
         alarms: {
