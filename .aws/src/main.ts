@@ -21,7 +21,7 @@ import { ArchiveProvider } from '@cdktf/provider-archive';
 import { BackfillLambda } from './backfillLambda';
 
 //todo: change class name to your service name
-class Acme extends TerraformStack {
+class CurationToolsDataSync extends TerraformStack {
   constructor(scope: Construct, name: string) {
     super(scope, name);
 
@@ -97,5 +97,5 @@ class Acme extends TerraformStack {
 }
 
 const app = new App();
-new Acme(app, 'curation-migration-backfill');
+new CurationToolsDataSync(app, 'curation-migration');
 app.synth();

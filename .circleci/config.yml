@@ -339,7 +339,7 @@ workflows:
       - build_and_deploy_lambda:
           <<: *not_dev_main
           context: pocket
-          name: build_api_gateway_lambda
+          name: build_curation_migration_backfill_lambda
           dir: gateway_lambda
           env_lower_name: prod
           env_capital_name: Prod
@@ -350,7 +350,7 @@ workflows:
       - build_and_deploy_lambda:
           <<: *only_dev
           context: pocket
-          name: deploy_api_gateway_lambda_dev
+          name: deploy_curation_migration_backfill_lambda_dev
           dir: gateway_lambda
           env_lower_name: dev
           env_capital_name: Dev
@@ -364,7 +364,7 @@ workflows:
       - build_and_deploy_lambda:
           <<: *only_main
           context: pocket
-          name: deploy_api_gateway_lambda_prod
+          name: deploy_curation_migration_backfill_lambda_prod
           dir: gateway_lambda
           env_lower_name: prod
           env_capital_name: Prod
@@ -405,8 +405,7 @@ workflows:
           sentry_org: pocket
           workspace-path: /tmp/workspace
           requires:
-            - deploy_sqs_lambda_prod
-            - deploy_api_gateway_lambda_prod
+            - deploy_curation-migration-backfill_lambda_prod
 
       # Notify sentry of dev deployment
       - pocket/sentry_release_notification:
@@ -419,5 +418,4 @@ workflows:
           sentry_org: pocket
           workspace-path: /tmp/workspace
           requires:
-            - deploy_sqs_lambda_dev
-            - deploy_api_gateway_lambda_dev
+            - deploy_curation_migration_backfill_dev
