@@ -22,7 +22,7 @@ export class BackfillLambda extends Resource {
     //note: because this is one time migration,
     //we will just use the default event bus.
     new PocketEventBridgeWithLambdaTarget(this, 'Backfill-Lambda', {
-      name: `${config.prefix}-backfill-lambda`,
+      name: `${config.prefix}-Backfill-Lambda`,
       eventRule: {
         description: 'curation migration - event to initiate backfill',
         //todo: create common event bus

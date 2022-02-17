@@ -340,8 +340,8 @@ workflows:
           dir: curation-migration-backfill
           env_lower_name: prod
           env_capital_name: Prod
-          lambda_lower_name: curation-migration-backfill-lambda
-          lambda_name: Curation-Migration-Backfill-Lambda
+          lambda_lower_name: backfill-lambda
+          lambda_name: Backfill-Lambda
 
       # Build & Deploy Api gateway lambda on dev branch
       - build_and_deploy_lambda:
@@ -351,8 +351,8 @@ workflows:
           dir: curation-migration-backfill
           env_lower_name: dev
           env_capital_name: Dev
-          lambda_lower_name: curation-migration-backfill-lambda
-          lambda_name: Curation-Migration-Backfill-Lambda
+          lambda_lower_name: backfill-lambda
+          lambda_name: Backfill-Lambda
           deploy: true
           requires:
             - run_dev_code_build
@@ -365,8 +365,8 @@ workflows:
           dir: curation-migration-backfill
           env_lower_name: prod
           env_capital_name: Prod
-          lambda_lower_name: curation-migration-backfill-lambda
-          lambda_name: Curation-Migration-Backfill-Lambda
+          lambda_lower_name: backfill-lambda #this should match lambda name except prefix
+          lambda_name: Backfill-Lambda
           deploy: true
           requires:
             - run_prod_code_build
