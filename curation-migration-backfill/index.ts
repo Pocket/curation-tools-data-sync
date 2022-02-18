@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/serverless';
 import config from './config';
+import { readFromS3 } from './s3Client';
 
 export enum EVENT {
   CURATION_MIGRATION_BACKFILL = 'curation-migration-backfill',
@@ -12,6 +13,7 @@ export enum EVENT {
  */
 export async function handlerFn(event: any) {
   console.log(JSON.stringify(event));
+  await readFromS3();
 }
 
 Sentry.AWSLambda.init({
