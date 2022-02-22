@@ -1,5 +1,5 @@
 import {
-  addLiveCurtedItemsToCorpusApi,
+  addLiveCuratedItemsToCorpusApi,
   CreateApprovedCuratedCorpusItemInput,
   getS3UrlFromImageUrl,
 } from './externalCaller';
@@ -11,14 +11,14 @@ describe('curatedCorpusApi mutations test', () => {
 
   it('should save a scheduled Item', async () => {
     const testData: CreateApprovedCuratedCorpusItemInput = {
-      url: 'https://www.consumerreports.org/healthy-eating/are-potatoes-good-for-you/',
+      url: 'https://jamesclear.com/saying-no',
       title: 'Are potatoes good for you',
       excerpt: 'some test excerpt',
       status: 'CORPUS', //todo: check what should be the default for this
       language: `en`,
       publisher: `the guardian`,
       imageUrl:
-        'https://s3.amazonaws.com/pocket-curatedcorpusapi-dev-images/748ab279-91dd-42be-b72f-95f2ab278c61.jpeg',
+        'https://s3.amazonaws.com/pocket-curatedcorpusapi-dev-images/748ab279-91dd-42be-b72f-95f2ab278c62.jpeg',
       //todo: this is not a s3 url but https://
       //we need the uploadMutation working
       topic: `FOOD`,
@@ -30,7 +30,7 @@ describe('curatedCorpusApi mutations test', () => {
       //todo: we don't have option to add createdAt, updatedAt, createdBy, updatedBy
     };
 
-    const response = await addLiveCurtedItemsToCorpusApi(testData);
+    const response = await addLiveCuratedItemsToCorpusApi(testData);
     console.log(response);
   });
 
