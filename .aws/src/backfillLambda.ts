@@ -63,8 +63,8 @@ export class BackfillLambda extends Resource {
             actions: ['s3:GetObject'],
             effect: 'Allow',
             resources: [
-              ` "arn:aws:s3:::${s3Bucket}`,
-              ` "arn:aws:s3:::${s3Bucket}/*`,
+              `arn:aws:s3:::${s3Bucket}`,
+              `arn:aws:s3:::${s3Bucket}/*`,
             ],
           },
         ],

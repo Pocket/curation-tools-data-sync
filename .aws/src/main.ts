@@ -45,7 +45,7 @@ class CurationToolsDataSync extends TerraformStack {
 
     const s3Bucket = this.createMigrationBucket();
     //todo: create custom event bus and add it to backfill lambda
-    new BackfillLambda(this, 'proxy-lambda', vpc, s3Bucket.arn, pagerDuty);
+    new BackfillLambda(this, 'proxy-lambda', vpc, s3Bucket.id, pagerDuty);
   }
 
   /**

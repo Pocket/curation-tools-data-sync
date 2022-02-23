@@ -10,11 +10,13 @@ export async function readFromS3() {
     region: 'us-east-1',
   });
 
-  await s3.getObject(options, (err, data) => {
-    if (!err) {
-      console.log(`data-> ${JSON.stringify(data.Body.toString())}`);
-    } else {
-      console.log(`err: -> ${JSON.stringify(err)}`);
-    }
-  });
+  const data = await s3.getObject(options).promise();
+  console.log(`data-> ${JSON.stringify(data.Body.toString())}`);
+  // await s3.getObject(options, (err, data) => {
+  //   if (!err) {
+  //     console.log(`data-> ${JSON.stringify(data.Body.toString())}`);
+  //   } else {
+  //     console.log(`err: -> ${JSON.stringify(err)}`);
+  //   }
+  // });
 }
