@@ -13,7 +13,11 @@ import {
 } from '@cdktf/provider-aws';
 
 import { config } from './config';
-import { PocketPagerDuty, PocketVPC } from '@pocket-tools/terraform-modules';
+import {
+  ApplicationSQSQueue,
+  PocketPagerDuty,
+  PocketVPC,
+} from '@pocket-tools/terraform-modules';
 import { PagerdutyProvider } from '@cdktf/provider-pagerduty';
 import { LocalProvider } from '@cdktf/provider-local';
 import { NullProvider } from '@cdktf/provider-null';
@@ -43,9 +47,19 @@ class CurationToolsDataSync extends TerraformStack {
     const vpc = new PocketVPC(this, 'pocket-shared-vpc');
     const pagerDuty = this.createPagerDuty();
 
-    const s3Bucket = this.createMigrationBucket();
-    //todo: create custom event bus and add it to backfill lambda
-    new BackfillLambda(this, 'proxy-lambda', vpc, s3Bucket.id, pagerDuty);
+    const backfillQueue = new ApplicationSQSQueue(this, 'sqs-queue', {
+      name: `${config.prefix}-Backfill-Queue`,
+      maxReceiveCount: 3,
+      visibilityTimeoutSeconds: 300,
+    });
+
+    new BackfillLambda(
+      this,
+      'backfill-lambda',
+      vpc,
+      backfillQueue.sqsQueue,
+      pagerDuty
+    );
   }
 
   /**
@@ -80,20 +94,6 @@ class CurationToolsDataSync extends TerraformStack {
         ),
       },
     });
-  }
-
-  private createMigrationBucket() {
-    const migrationBucket = new S3Bucket(this, 'synthetic-s3-bucket', {
-      //todo: env is using `prod` here - investigate
-      bucket:
-        `pocket-curation-migration-${config.environment}-backfill-bucket`.toLowerCase(),
-      tags: config.tags,
-      acl: 'private',
-    });
-
-    //todo: make bucket as private.
-
-    return migrationBucket;
   }
 }
 

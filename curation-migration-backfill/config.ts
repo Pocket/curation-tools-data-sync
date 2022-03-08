@@ -7,7 +7,7 @@ const config = {
     environment: environment,
     sentry: {
       // these values are inserted into the environment in
-      // .aws/src/sqsLambda.ts
+      // .aws/src/.ts
       dsn: process.env.SENTRY_DSN || '',
       release: process.env.GIT_SHA || '',
     },
@@ -15,9 +15,10 @@ const config = {
   aws: {
     region: process.env.REGION || 'us-east-1',
   },
+  //todo: inject as env
   // AdminApi: isDev
-  //   ? process.env.CLIENT_API_URI || 'https://client-api.getpocket.dev'
-  //   : process.env.CLIENT_API_URI || 'https://client-api.readitlater.com',
+  //   ? process.env.CLIENT_API_URI || 'https://admin-api.getpocket.dev'
+  //   : process.env.CLIENT_API_URI || 'https://admin-api.readitlater.com',
   AdminApi: `https://admin-api.getpocket.dev`,
 };
 

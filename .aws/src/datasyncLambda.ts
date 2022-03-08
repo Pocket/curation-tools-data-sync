@@ -2,35 +2,32 @@ import { Resource } from 'cdktf';
 import { Construct } from 'constructs';
 import { config } from './config';
 import {
-  ApplicationSQSQueue,
   LAMBDA_RUNTIMES,
+  PocketEventBridgeWithLambdaTarget,
   PocketPagerDuty,
-  PocketSQSWithLambdaTarget,
   PocketVPC,
 } from '@pocket-tools/terraform-modules';
-import { getEnvVariableValues } from './utilities';
-import { SQS } from '@cdktf/provider-aws';
-import SqsQueue = SQS.SqsQueue;
 
-export class BackfillLambda extends Resource {
+export class DatasyncLambda extends Resource {
   constructor(
     scope: Construct,
     private name: string,
     private vpc: PocketVPC,
-    private sqsQueue: SqsQueue,
+    s3Bucket: string,
     pagerDuty?: PocketPagerDuty
   ) {
     super(scope, name);
 
-    const { sentryDsn, gitSha } = getEnvVariableValues(this);
-
-    new PocketSQSWithLambdaTarget(this, 'sqs-integrated-backfill-lambda', {
-      name: `${config.prefix}-Backfill-Lambda`,
-      // set batchSize to something reasonable
-      batchSize: 25,
-      batchWindow: 60,
-      configFromPreexistingSqsQueue: {
-        name: sqsQueue.name,
+    //const { sentryDsn, gitSha } = getEnvVariableValues(this);
+    new PocketEventBridgeWithLambdaTarget(this, 'Backfill-Lambda', {
+      name: `${config.prefix}-DataSync-Lambda`,
+      eventRule: {
+        description: 'curation migration - test event',
+        //todo: create common event bus
+        //eventBusName: `${config.prefix}-backfill-eventBus`,
+        pattern: {
+          eventType: ['curation-migration-datasync-test'],
+        },
       },
       lambda: {
         runtime: LAMBDA_RUNTIMES.NODEJS14,
@@ -38,8 +35,8 @@ export class BackfillLambda extends Resource {
         timeout: 120,
         environment: {
           REGION: vpc.region,
-          SENTRY_DSN: sentryDsn,
-          GIT_SHA: gitSha,
+          SENTRY_DSN: '',
+          GIT_SHA: '',
           ENVIRONMENT:
             config.environment === 'Prod' ? 'production' : 'development',
         },
@@ -61,7 +58,7 @@ export class BackfillLambda extends Resource {
           },
         ],
         alarms: {
-          // TODO: set better alarm values
+          //todo: set alarm
         },
       },
       tags: config.tags,

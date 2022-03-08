@@ -1,6 +1,10 @@
 # CurationToolsDataSync
 
-This repository contains all the ETL components and business logic to sync the items added in the new CuratedCorpusApi to the database to the readitla-* database.
+curation-migration-backfill:
+This folder contains all the ETL components and business logic to move the historical curatedItems from the readitla-* database to the added in the new CuratedCorpusApi.
+
+curation-migration-datasync:
+This folder contains all the ETL components and business logic to sync the items added in the new CuratedCorpusApi to the database to the readitla-* database.
 
 ## Folder structure
 - the infrastructure code is present in `.aws`
