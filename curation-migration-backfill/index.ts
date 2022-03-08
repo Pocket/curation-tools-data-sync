@@ -12,6 +12,7 @@ export enum EVENT {
  */
 export async function handlerFn(event: any) {
   console.log(JSON.stringify(event));
+  Sentry.captureMessage(`testing sentry -> ` + JSON.stringify(event));
 }
 
 Sentry.AWSLambda.init({
