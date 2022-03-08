@@ -9,8 +9,7 @@ import {
   PocketVPC,
 } from '@pocket-tools/terraform-modules';
 import { getEnvVariableValues } from './utilities';
-import { SQS } from '@cdktf/provider-aws';
-import SqsQueue = SQS.SqsQueue;
+import { SqsQueue } from '@cdktf/provider-aws';
 
 export class BackfillLambda extends Resource {
   constructor(
