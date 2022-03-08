@@ -16,6 +16,7 @@ import { config } from './config';
 import {
   ApplicationSQSQueue,
   PocketPagerDuty,
+  PocketSQSProps,
   PocketVPC,
 } from '@pocket-tools/terraform-modules';
 import { PagerdutyProvider } from '@cdktf/provider-pagerduty';
@@ -41,25 +42,10 @@ class CurationToolsDataSync extends TerraformStack {
       workspaces: [{ prefix: `${config.name}-` }],
     });
 
-    const region = new DataAwsRegion(this, 'region');
-    const caller = new DataAwsCallerIdentity(this, 'caller');
-
     const vpc = new PocketVPC(this, 'pocket-shared-vpc');
     const pagerDuty = this.createPagerDuty();
 
-    const backfillQueue = new ApplicationSQSQueue(this, 'sqs-queue', {
-      name: `${config.prefix}-Backfill-Queue`,
-      maxReceiveCount: 3,
-      visibilityTimeoutSeconds: 300,
-    });
-
-    new BackfillLambda(
-      this,
-      'backfill-lambda',
-      vpc,
-      backfillQueue.sqsQueue,
-      pagerDuty
-    );
+    new BackfillLambda(this, 'backfill-lambda', vpc, pagerDuty);
   }
 
   /**
