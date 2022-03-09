@@ -15,11 +15,9 @@ const config = {
   aws: {
     region: process.env.REGION || 'us-east-1',
   },
-  //todo: inject as env
-  // AdminApi: isDev
-  //   ? process.env.CLIENT_API_URI || 'https://admin-api.getpocket.dev'
-  //   : process.env.CLIENT_API_URI || 'https://admin-api.readitlater.com',
-  AdminApi: `https://admin-api.getpocket.dev`,
+  AdminApi: isDev
+    ? process.env.CLIENT_API_URI || 'https://admin-api.getpocket.dev'
+    : process.env.CLIENT_API_URI || 'https://admin-api.readitlater.com',
 };
 
 export default config;
