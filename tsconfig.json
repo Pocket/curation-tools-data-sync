@@ -8,10 +8,11 @@
       "es2019",
       "es2020.bigint",
       "es2020.string",
-      "es2020.symbol.wellknown"
+      "es2020.symbol.wellknown",
+      "dom"
     ],
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDirs": ["curation-migration-backfill", "curation-migration-datasync"],
     "removeComments": true,
     "esModuleInterop": true,
     "noEmitOnError": false,
@@ -22,5 +23,5 @@
     "declaration": true
   },
   "exclude": ["node_modules"],
-  "include": ["src/**/*.ts", "src/config"]
+  "include": ["curation-migration-backfill/**/*.ts", "curation-migration-datasync/**/*.ts"]
 }
