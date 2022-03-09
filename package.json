@@ -42,7 +42,7 @@
     "graphql-tag": "^2.12.6"
   },
   "devDependencies": {
-    "@types/aws-lambda": "^8.10.85",
+    "@types/aws-lambda": "^8.10.93",
     "@types/chai": "^4.2.22",
     "@types/chai-as-promised": "^7.1.4",
     "@types/jest": "^27.4.1",
