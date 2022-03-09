@@ -45,6 +45,7 @@ class CurationToolsDataSync extends TerraformStack {
     const vpc = new PocketVPC(this, 'pocket-shared-vpc');
     const pagerDuty = this.createPagerDuty();
 
+    this.createMigrationBucket();
     new BackfillLambda(this, 'backfill-lambda', vpc, pagerDuty);
   }
 
@@ -80,6 +81,17 @@ class CurationToolsDataSync extends TerraformStack {
         ),
       },
     });
+  }
+
+  private createMigrationBucket() {
+    const migrationBucket = new S3Bucket(this, 'synthetic-s3-bucket', {
+      bucket:
+        `pocket-curation-migration-${config.environment}-backfill-bucket`.toLowerCase(),
+      tags: config.tags,
+      acl: 'private',
+    });
+
+    return migrationBucket;
   }
 }
 
