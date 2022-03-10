@@ -2,18 +2,21 @@ import { Resource } from 'cdktf';
 import { Construct } from 'constructs';
 import { config } from './config';
 import {
+  ApplicationDynamoDBTable,
   LAMBDA_RUNTIMES,
   PocketPagerDuty,
   PocketSQSWithLambdaTarget,
   PocketVPC,
 } from '@pocket-tools/terraform-modules';
 import { getEnvVariableValues } from './utilities';
+import { DynamoDB } from './dynamoDb';
 
 export class BackfillLambda extends Resource {
   constructor(
     scope: Construct,
     private name: string,
     private vpc: PocketVPC,
+    private curationMigrationTable: ApplicationDynamoDBTable,
     pagerDuty?: PocketPagerDuty
   ) {
     super(scope, name);
@@ -34,6 +37,7 @@ export class BackfillLambda extends Resource {
         handler: 'index.handler',
         timeout: 120,
         environment: {
+          CURATION_MIGRATION_TABLE: curationMigrationTable.dynamodb.name,
           REGION: vpc.region,
           SENTRY_DSN: sentryDsn,
           GIT_SHA: gitSha,
@@ -49,6 +53,20 @@ export class BackfillLambda extends Resource {
           accountId: vpc.accountId,
         },
         executionPolicyStatements: [
+          {
+            effect: 'Allow',
+            actions: [
+              'dynamodb:BatchWriteItem',
+              'dynamodb:PutItem',
+              'dynamodb:DescribeTable',
+              'dynamodb:UpdateItem',
+              'dynamodb:Query',
+            ],
+            resources: [
+              curationMigrationTable.dynamodb.arn,
+              `${curationMigrationTable.dynamodb.arn}/*`,
+            ],
+          },
           {
             actions: ['secretsmanager:GetSecretValue', 'kms:Decrypt'],
             resources: [
