@@ -4,10 +4,13 @@ import { getByCuratedRecId, truncateDb } from './dynamodb/dynamoUtilities';
 import { dbClient } from './dynamodb/dynamoDbClient';
 
 describe('test placeholder', () => {
+  afterAll(async () => {
+    await truncateDb(dbClient);
+  });
+
   it('when event type is dynamo, insert record', async () => {
     await handlerFn('dynamo');
     const res: CuratedItemRecord = await getByCuratedRecId(dbClient, 10);
-    await truncateDb(dbClient);
 
     console.log(res);
     expect(res).not.toBeUndefined();

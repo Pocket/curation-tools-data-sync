@@ -10,9 +10,11 @@
   },
   "dependencies": {
     "@apollo/client": "^3.5.9",
+    "@aws-sdk/client-dynamodb": "^3.39.0",
+    "@aws-sdk/client-lambda": "^3.39.0",
     "@aws-sdk/client-sqs": "^3.41.0",
+    "@aws-sdk/lib-dynamodb": "^3.39.0",
     "@sentry/serverless": "^6.15.0",
-    "apollo-upload-client": "^17.0.0",
     "aws-sdk": "^2.1076.0",
     "csv-parser": "^3.0.0",
     "node-fetch": "^2.6.6",

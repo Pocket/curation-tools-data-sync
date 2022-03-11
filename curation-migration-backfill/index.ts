@@ -1,9 +1,9 @@
 import * as Sentry from '@sentry/serverless';
 import config from './config';
-import { wrapEventFunction } from '@sentry/serverless/dist/gcpfunction';
 import {
   getByCuratedRecId,
   insertCuratedItem,
+  truncateDb,
 } from './dynamodb/dynamoUtilities';
 import { dbClient } from './dynamodb/dynamoDbClient';
 import { CuratedItemRecord } from './dynamodb/types';

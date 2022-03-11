@@ -31,6 +31,7 @@ export class DynamoDB extends Resource {
       capacityMode: ApplicationDynamoDBTableCapacityMode.ON_DEMAND,
       tableConfig: {
         hashKey: 'curated_rec_id',
+        rangeKey: 'lastUpdated',
         attribute: [
           {
             name: 'curated_rec_id',

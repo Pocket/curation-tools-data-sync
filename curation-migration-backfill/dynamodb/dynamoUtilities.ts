@@ -14,6 +14,8 @@ import {
 } from '@aws-sdk/lib-dynamodb';
 import config from '../config';
 import { CuratedItemRecord } from './types';
+import { dbClient } from './dynamoDbClient';
+import any = jasmine.any;
 
 /***
  * Requirements:
@@ -207,16 +209,20 @@ export const truncateDb = async (
 ): Promise<void> => {
   const rows = await scanAllRows(dbClient);
 
-  rows.Items?.forEach(async function (element, _) {
+  let items = rows.Items as any;
+  for (let r of items) {
     await dbClient.send(
       new DeleteCommand({
         TableName: config.aws.dynamoDB.curationMigrationTable,
         Key: {
-          curated_rec_id: element,
+          curated_rec_id: r.curated_rec_id,
         },
       })
     );
-  });
+  }
+
+  const t = await scanAllRows(dbClient);
+  console.log(t);
 };
 
 /**

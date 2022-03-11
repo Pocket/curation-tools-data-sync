@@ -45,6 +45,8 @@ describe('dynamodb read and write test', () => {
   ];
 
   beforeAll(async () => {
+    await truncateDb(dbClient);
+
     const insertRecord = curatedItemRecords.map(async (item) => {
       await insertCuratedItem(dbClient, item);
     });
