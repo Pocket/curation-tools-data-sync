@@ -47,18 +47,11 @@ export class DynamoDB extends Resource {
             name: 'scheduledItemExternalId',
             type: 'S',
           },
-          //todo: can we use lastUpdatedAt as range key when all the partition key are different?
-          // {
-          // TODO: having approvedItemExternalId as index would be useful if we need to rollback a particular item.
-          //in this case, can we make the approvedItemExternalId secondary index
-          //   name: 'approvedItemExternalId',
-          //   type: 'S',
-          // },
-          // {
-          //   // last updated unix timestamp, incase we need to filter by last updated date (for rollbacks)
-          //   name: 'lastUpdated',
-          //   type: 'N',
-          // },
+          {
+            // last updated unix timestamp, incase we need to filter by last updated date (for rollbacks)
+            name: 'lastUpdated',
+            type: 'N',
+          },
         ],
         //for curatedItem datasync - we will get the externalId of the scheduledItems
         // then we can retrieve curated_rec_id from this index
