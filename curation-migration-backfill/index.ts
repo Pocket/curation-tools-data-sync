@@ -3,10 +3,10 @@ import config from './config';
 import {
   getByCuratedRecId,
   insertCuratedItem,
-  truncateDb,
 } from './dynamodb/dynamoUtilities';
 import { dbClient } from './dynamodb/dynamoDbClient';
 import { CuratedItemRecord } from './dynamodb/types';
+import { ScheduledSurfaceGuid } from './types';
 
 export enum EVENT {
   CURATION_MIGRATION_BACKFILL = 'curation-migration-backfill',
@@ -26,7 +26,7 @@ export async function handlerFn(event: any) {
     console.log('executing read from dynamo');
     const itemToBeAdded: CuratedItemRecord = {
       curatedRecId: 10,
-      scheduledSurfaceGuid: 'NEW_TAB_EN_US',
+      scheduledSurfaceGuid: ScheduledSurfaceGuid.NEW_TAB_EN_US,
       scheduledItemExternalId: 'random-scheduled-guid-10',
       approvedItemExternalId: 'random-approved-guid-10',
       lastUpdatedAt: Math.round(new Date().getTime() / 1000),

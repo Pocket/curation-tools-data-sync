@@ -2,6 +2,7 @@ import { handlerFn } from './index';
 import { CuratedItemRecord } from './dynamodb/types';
 import { getByCuratedRecId, truncateDb } from './dynamodb/dynamoUtilities';
 import { dbClient } from './dynamodb/dynamoDbClient';
+import { ScheduledSurfaceGuid } from './types';
 
 describe('test placeholder', () => {
   afterAll(async () => {
@@ -18,6 +19,8 @@ describe('test placeholder', () => {
     expect(res?.curatedRecId).toEqual(10);
     expect(res?.approvedItemExternalId).toEqual('random-approved-guid-10');
     expect(res?.scheduledItemExternalId).toEqual('random-scheduled-guid-10');
-    expect(res?.scheduledSurfaceGuid).toEqual('NEW_TAB_EN_US');
+    expect(res?.scheduledSurfaceGuid).toEqual(
+      ScheduledSurfaceGuid.NEW_TAB_EN_US
+    );
   });
 });

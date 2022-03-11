@@ -14,6 +14,7 @@ import {
 } from '@aws-sdk/lib-dynamodb';
 import config from '../config';
 import { CuratedItemRecord } from './types';
+import { ScheduledSurfaceGuid } from '../types';
 import { dbClient } from './dynamoDbClient';
 import any = jasmine.any;
 
@@ -112,15 +113,15 @@ export const getByCuratedRecId = async (
  */
 export const getByScheduledSurfaceGuid = async (
   dbClient,
-  //todo: can be a enum as we are only getting 4 new tabs
-  scheduledSurfaceGuid: string
+  scheduledSurfaceGuid: ScheduledSurfaceGuid
 ): Promise<CuratedItemRecord[]> => {
   const input: QueryCommandInput = {
     TableName: config.aws.dynamoDB.curationMigrationTable,
     IndexName: 'scheduledSurfaceGuid-GSI',
     KeyConditionExpression: 'scheduledSurfaceGuid = :scheduledSurfaceGuid',
+    //todo: search by lastUpdatedAt
     ExpressionAttributeValues: {
-      ':scheduledSurfaceGuid': scheduledSurfaceGuid,
+      ':scheduledSurfaceGuid': scheduledSurfaceGuid.toString(),
     },
   };
   const res: QueryCommandOutput = await dbClient.send(new QueryCommand(input));
