@@ -27,6 +27,7 @@ export class DynamoDB extends Resource {
     // if config changes here, that file should also be updated
     return new ApplicationDynamoDBTable(this, `curation-migration`, {
       tags: config.tags,
+      preventDestroyTable: !config.isDev,
       prefix: `${config.shortName}-${config.environment}`,
       capacityMode: ApplicationDynamoDBTableCapacityMode.ON_DEMAND,
       tableConfig: {
