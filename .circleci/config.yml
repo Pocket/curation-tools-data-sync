@@ -229,7 +229,7 @@ jobs:
           password: $DOCKERHUB_PASSWORD
         environment:
           DEBUG: 1
-          SERVICES: sqs
+          SERVICES: dynamodb
           DATA_DIR: /tmp/localstack/data
           EXTRA_CORS_ALLOWED_HEADERS: Content-Disposition, Content-Type, x-amz-acl
           EXTRA_CORS_EXPOSE_HEADERS: ETag
