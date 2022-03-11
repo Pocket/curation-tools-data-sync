@@ -22,7 +22,8 @@ export async function handlerFn(event: any) {
   Sentry.captureMessage(`testing sentry -> ` + JSON.stringify(event));
 
   //todo: temp code to check dynamo-lamba integration, can be removed later.
-  if (event == 'dynamo') {
+  if (event['dynamo']) {
+    console.log('executing read from dynamo');
     const itemToBeAdded: CuratedItemRecord = {
       curatedRecId: 10,
       scheduledSurfaceGuid: 'NEW_TAB_EN_US',

@@ -34,7 +34,7 @@ export class DynamoDB extends Resource {
         attribute: [
           {
             name: 'curated_rec_id',
-            type: 'S',
+            type: 'N',
           },
           //feedName of the item - e.g NEW_TAB_EN_US, incase we need to filter by feed type (for rollbacks)
           {
