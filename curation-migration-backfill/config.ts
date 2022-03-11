@@ -19,7 +19,7 @@ const config = {
       curationMigrationTable:
         process.env.CURATION_MIGRATION_TABLE || 'curation_migration_table',
       curatedRecIdHashKey:
-        process.env.CURATION_MIGRATION_TABLE_HASH_KEY || 'curated_rec_id',
+        process.env.CURATION_MIGRATION_TABLE_HASH_KEY || 'curatedRecId',
       scheduledItem_ExternalId_GSI: 'scheduledItemExternalId',
     },
   },

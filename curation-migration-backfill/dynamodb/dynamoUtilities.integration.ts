@@ -57,7 +57,7 @@ describe('dynamodb read and write test', () => {
     await truncateDb(dbClient);
   });
 
-  it('should add curtedItem and get by curated_rec_id', async () => {
+  it('should add curtedItem and get by curatedRecId', async () => {
     const itemToBeAdded: CuratedItemRecord = {
       curatedRecId: 5,
       scheduledSurfaceGuid: 'NEW_TAB_EN_INTL',

@@ -36,7 +36,7 @@ class CurationToolsDataSync extends TerraformStack {
     const vpc = new PocketVPC(this, 'pocket-shared-vpc');
     const pagerDuty = this.createPagerDuty();
 
-    //dynamo db to map curated_rec_id - scheduledItem's externalId and store approvedItem's externalId
+    //dynamo db to map curatedRecId - scheduledItem's externalId and store approvedItem's externalId
     const idMapperDynamoDb = new DynamoDB(this, 'curation-migration-id-mapper');
 
     //bucket for storing all the required csv files

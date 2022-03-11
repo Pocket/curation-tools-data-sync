@@ -2,13 +2,13 @@
   "TableName": "curation_migration_table",
   "KeySchema": [
     {
-      "AttributeName": "curated_rec_id",
+      "AttributeName": "curatedRecId",
       "KeyType": "HASH"
     }
   ],
   "AttributeDefinitions": [
     {
-      "AttributeName": "curated_rec_id",
+      "AttributeName": "curatedRecId",
       "AttributeType": "N"
     },
     {

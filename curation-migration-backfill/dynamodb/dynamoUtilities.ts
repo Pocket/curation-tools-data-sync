@@ -35,7 +35,7 @@ export const generateInsertParameters = (
   return {
     TableName: config.aws.dynamoDB.curationMigrationTable,
     Item: {
-      curated_rec_id: curatedItemRecord.curatedRecId,
+      curatedRecId: curatedItemRecord.curatedRecId,
       scheduledSurfaceGuid: curatedItemRecord.scheduledSurfaceGuid,
       scheduledItemExternalId: curatedItemRecord.scheduledItemExternalId,
       approvedItemExternalId: curatedItemRecord.approvedItemExternalId,
@@ -72,14 +72,14 @@ export const deleteItemByCuratedRecId = async (
     new DeleteCommand({
       TableName: config.aws.dynamoDB.curationMigrationTable,
       Key: {
-        curated_rec_id: curatedRecId,
+        curatedRecId: curatedRecId,
       },
     })
   );
 };
 
 /**
- * retrieves item record by curated_rec_id
+ * retrieves item record by curatedRecId
  * @param curatedRecId curated feeds itemId in the readitla-tmp database
  * @returns CuratedItemRecord matching curated item record
  */
@@ -90,14 +90,14 @@ export const getByCuratedRecId = async (
   const input: GetCommandInput = {
     TableName: config.aws.dynamoDB.curationMigrationTable,
     Key: {
-      curated_rec_id: curatedRecId,
+      curatedRecId: curatedRecId,
     },
   };
 
   const res = await dbClient.send(new GetCommand(input));
 
   return {
-    curatedRecId: res.Item?.curated_rec_id,
+    curatedRecId: res.Item?.curatedRecId,
     scheduledSurfaceGuid: res.Item?.scheduledSurfaceGuid,
     scheduledItemExternalId: res.Item?.scheduledItemExternalId,
     approvedItemExternalId: res.Item?.approvedItemExternalId,
@@ -140,7 +140,7 @@ export const getByScheduledSurfaceGuid = async (
     return res.Items.map((item): CuratedItemRecord => {
       // force type safety
       return {
-        curatedRecId: item.curated_rec_id,
+        curatedRecId: item.curatedRecId,
         scheduledSurfaceGuid: item.scheduledSurfaceGuid,
         scheduledItemExternalId: item.scheduledItemExternalId,
         approvedItemExternalId: item.approvedItemExternalId,
@@ -186,7 +186,7 @@ export const getByScheduledItemExternalId = async (
     return res.Items.map((item): CuratedItemRecord => {
       // force type safety
       return {
-        curatedRecId: item.curated_rec_id,
+        curatedRecId: item.curatedRecId,
         scheduledSurfaceGuid: item.scheduledSurfaceGuid,
         scheduledItemExternalId: item.scheduledItemExternalId,
         approvedItemExternalId: item.approvedItemExternalId,
@@ -215,7 +215,7 @@ export const truncateDb = async (
       new DeleteCommand({
         TableName: config.aws.dynamoDB.curationMigrationTable,
         Key: {
-          curated_rec_id: r.curated_rec_id,
+          curatedRecId: r.curatedRecId,
         },
       })
     );
