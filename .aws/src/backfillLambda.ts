@@ -59,6 +59,7 @@ export class BackfillLambda extends Resource {
             actions: [
               'dynamodb:BatchWriteItem',
               'dynamodb:PutItem',
+              'dynamodb:GetItem',
               'dynamodb:DescribeTable',
               'dynamodb:UpdateItem',
               'dynamodb:Query',
