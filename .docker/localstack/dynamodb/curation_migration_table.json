@@ -22,7 +22,7 @@
   ],
   "GlobalSecondaryIndexes": [
     {
-      "IndexName": "scheduledItems-externalId-GSI",
+      "IndexName": "scheduledItemExternalId-GSI",
       "KeySchema": [
         {
           "AttributeName": "scheduledItemExternalId",

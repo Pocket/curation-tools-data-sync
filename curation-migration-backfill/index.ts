@@ -1,5 +1,12 @@
 import * as Sentry from '@sentry/serverless';
 import config from './config';
+import { wrapEventFunction } from '@sentry/serverless/dist/gcpfunction';
+import {
+  getByCuratedRecId,
+  insertCuratedItem,
+} from './dynamodb/dynamoUtilities';
+import { dbClient } from './dynamodb/dynamoDbClient';
+import { CuratedItemRecord } from './dynamodb/types';
 
 export enum EVENT {
   CURATION_MIGRATION_BACKFILL = 'curation-migration-backfill',
@@ -13,6 +20,20 @@ export enum EVENT {
 export async function handlerFn(event: any) {
   console.log(JSON.stringify(event));
   Sentry.captureMessage(`testing sentry -> ` + JSON.stringify(event));
+
+  //todo: temp code to check dynamo-lamba integration, can be removed later.
+  if (event == 'dynamo') {
+    const itemToBeAdded = {
+      curatedRecId: 10,
+      scheduledSurfaceGuid: 'NEW_TAB_EN_US',
+      scheduledItemExternalId: 'random-scheduled-guid-10',
+      approvedItemExternalId: 'random-approved-guid-10',
+      lastUpdated: Math.round(new Date().getTime() / 1000),
+    };
+    await insertCuratedItem(dbClient, itemToBeAdded);
+    const res: CuratedItemRecord = await getByCuratedRecId(dbClient, 10);
+    console.log(res);
+  }
 }
 
 Sentry.AWSLambda.init({

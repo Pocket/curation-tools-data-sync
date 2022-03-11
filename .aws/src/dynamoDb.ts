@@ -48,9 +48,8 @@ export class DynamoDB extends Resource {
           },
           //todo: can we use lastUpdatedAt as range key when all the partition key are different?
           // {
-          //   //TODO: having approvedItemExternalId as index would be useful if we have to send
-          // unapproveApprovedCorpus mutation
-          //   // externalId of the approvedItem table in curatedCorpusApi
+          // TODO: having approvedItemExternalId as index would be useful if we need to rollback a particular item.
+          //in this case, can we make the approvedItemExternalId secondary index
           //   name: 'approvedItemExternalId',
           //   type: 'S',
           // },
@@ -64,7 +63,7 @@ export class DynamoDB extends Resource {
         // then we can retrieve curated_rec_id from this index
         globalSecondaryIndex: [
           {
-            name: 'scheduledItems-externalId-GSI',
+            name: 'scheduledItemExternalId-GSI',
             hashKey: 'scheduledItemExternalId',
             projectionType: 'ALL',
           },
