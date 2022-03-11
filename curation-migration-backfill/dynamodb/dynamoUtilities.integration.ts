@@ -13,34 +13,34 @@ describe('dynamodb read and write test', () => {
   let timestamp1 = Math.round(new Date('2020-10-10').getTime() / 1000);
   let timestamp2 = Math.round(new Date('2021-10-10').getTime() / 1000);
 
-  let curatedItemRecords = [
+  let curatedItemRecords: CuratedItemRecord[] = [
     {
       curatedRecId: 1,
       scheduledSurfaceGuid: 'NEW_TAB_EN_GB',
       scheduledItemExternalId: 'random-scheduled-guid-1',
       approvedItemExternalId: 'random-approved-guid-1',
-      lastUpdated: Math.round(new Date().getTime() / 1000),
+      lastUpdatedAt: Math.round(new Date().getTime() / 1000),
     },
     {
       curatedRecId: 2,
       scheduledSurfaceGuid: 'NEW_TAB_EN_US',
       scheduledItemExternalId: 'random-scheduled-guid-2',
       approvedItemExternalId: 'random-approved-guid-2',
-      lastUpdated: timestamp1,
+      lastUpdatedAt: timestamp1,
     },
     {
       curatedRecId: 3,
       scheduledSurfaceGuid: 'NEW_TAB_EN_US',
       scheduledItemExternalId: 'random-scheduled-guid-3',
       approvedItemExternalId: 'random-approved-guid-3',
-      lastUpdated: timestamp1,
+      lastUpdatedAt: timestamp1,
     },
     {
       curatedRecId: 4,
       scheduledSurfaceGuid: 'NEW_TAB_EN_GB',
       scheduledItemExternalId: 'random-scheduled-guid-4',
       approvedItemExternalId: 'random-approved-guid-4',
-      lastUpdated: timestamp2,
+      lastUpdatedAt: timestamp2,
     },
   ];
 
@@ -58,12 +58,12 @@ describe('dynamodb read and write test', () => {
   });
 
   it('should add curtedItem and get by curated_rec_id', async () => {
-    const itemToBeAdded = {
+    const itemToBeAdded: CuratedItemRecord = {
       curatedRecId: 5,
       scheduledSurfaceGuid: 'NEW_TAB_EN_INTL',
       scheduledItemExternalId: 'random-scheduled-guid-5',
       approvedItemExternalId: 'random-approved-guid-5',
-      lastUpdated: timestamp2,
+      lastUpdatedAt: timestamp2,
     };
     await insertCuratedItem(dbClient, itemToBeAdded);
     const res: CuratedItemRecord = await getByCuratedRecId(
@@ -76,7 +76,7 @@ describe('dynamodb read and write test', () => {
     expect(res?.curatedRecId).toEqual(5);
     expect(res?.scheduledItemExternalId).toEqual('random-scheduled-guid-5');
     expect(res?.approvedItemExternalId).toEqual('random-approved-guid-5');
-    expect(res?.lastUpdated).toEqual(timestamp2);
+    expect(res?.lastUpdatedAt).toEqual(timestamp2);
     expect(res?.scheduledSurfaceGuid).toEqual('NEW_TAB_EN_INTL');
   });
 
@@ -92,12 +92,12 @@ describe('dynamodb read and write test', () => {
     expect(res?.[0].scheduledItemExternalId).toEqual('random-scheduled-guid-2');
     expect(res?.[0].approvedItemExternalId).toEqual('random-approved-guid-2');
     expect(res?.[0].scheduledSurfaceGuid).toEqual('NEW_TAB_EN_US');
-    expect(res?.[0].lastUpdated).toEqual(timestamp1);
+    expect(res?.[0].lastUpdatedAt).toEqual(timestamp1);
     expect(res?.[1].curatedRecId).toEqual(3);
     expect(res?.[1].scheduledItemExternalId).toEqual('random-scheduled-guid-3');
     expect(res?.[1].approvedItemExternalId).toEqual('random-approved-guid-3');
     expect(res?.[1].scheduledSurfaceGuid).toEqual('NEW_TAB_EN_US');
-    expect(res?.[1].lastUpdated).toEqual(timestamp1);
+    expect(res?.[1].lastUpdatedAt).toEqual(timestamp1);
   });
 
   it('should get curatedItem by scheduledItems external Id', async () => {
@@ -111,7 +111,7 @@ describe('dynamodb read and write test', () => {
     expect(res?.[0].scheduledItemExternalId).toEqual('random-scheduled-guid-4');
     expect(res?.[0].approvedItemExternalId).toEqual('random-approved-guid-4');
     expect(res?.[0].scheduledSurfaceGuid).toEqual('NEW_TAB_EN_GB');
-    expect(res?.[0].lastUpdated).toEqual(timestamp2);
+    expect(res?.[0].lastUpdatedAt).toEqual(timestamp2);
   });
 
   it('should delete a single record from the dynamo db', async () => {

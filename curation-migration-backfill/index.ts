@@ -23,12 +23,12 @@ export async function handlerFn(event: any) {
 
   //todo: temp code to check dynamo-lamba integration, can be removed later.
   if (event == 'dynamo') {
-    const itemToBeAdded = {
+    const itemToBeAdded: CuratedItemRecord = {
       curatedRecId: 10,
       scheduledSurfaceGuid: 'NEW_TAB_EN_US',
       scheduledItemExternalId: 'random-scheduled-guid-10',
       approvedItemExternalId: 'random-approved-guid-10',
-      lastUpdated: Math.round(new Date().getTime() / 1000),
+      lastUpdatedAt: Math.round(new Date().getTime() / 1000),
     };
     await insertCuratedItem(dbClient, itemToBeAdded);
     const res: CuratedItemRecord = await getByCuratedRecId(dbClient, 10);

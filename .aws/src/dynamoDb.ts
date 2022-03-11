@@ -31,7 +31,6 @@ export class DynamoDB extends Resource {
       capacityMode: ApplicationDynamoDBTableCapacityMode.ON_DEMAND,
       tableConfig: {
         hashKey: 'curated_rec_id',
-        rangeKey: 'lastUpdated',
         attribute: [
           {
             name: 'curated_rec_id',
@@ -49,7 +48,7 @@ export class DynamoDB extends Resource {
           },
           {
             // last updated unix timestamp, incase we need to filter by last updated date (for rollbacks)
-            name: 'lastUpdated',
+            name: 'lastUpdatedAt',
             type: 'N',
           },
         ],
@@ -64,6 +63,7 @@ export class DynamoDB extends Resource {
           {
             name: 'scheduledSurfaceGuid-GSI',
             hashKey: 'scheduledSurfaceGuid',
+            rangeKey: 'lastUpdatedAt',
             projectionType: 'ALL',
           },
         ],

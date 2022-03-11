@@ -18,6 +18,10 @@
     {
       "AttributeName": "scheduledSurfaceGuid",
       "AttributeType": "S"
+    },
+    {
+      "AttributeName": "lastUpdatedAt",
+      "AttributeType": "N"
     }
   ],
   "GlobalSecondaryIndexes": [
@@ -43,6 +47,10 @@
         {
           "AttributeName": "scheduledSurfaceGuid",
           "KeyType": "HASH"
+        },
+        {
+          "AttributeName": "lastUpdatedAt",
+          "KeyType": "RANGE"
         }
       ],
       "Projection": {

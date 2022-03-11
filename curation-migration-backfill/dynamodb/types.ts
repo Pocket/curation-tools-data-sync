@@ -8,7 +8,7 @@ export type CuratedItemRecord = {
   //externalId of the approvedItem in the curatedCorpusApi
   approvedItemExternalId: string;
   //last updated time in unix timestamp
-  lastUpdated: number;
+  lastUpdatedAt: number;
   //feedName of the item - e.g NEW_TAB_EN_US
   scheduledSurfaceGuid: string;
 };

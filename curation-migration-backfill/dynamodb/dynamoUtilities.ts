@@ -39,7 +39,7 @@ export const generateInsertParameters = (
       scheduledSurfaceGuid: curatedItemRecord.scheduledSurfaceGuid,
       scheduledItemExternalId: curatedItemRecord.scheduledItemExternalId,
       approvedItemExternalId: curatedItemRecord.approvedItemExternalId,
-      lastUpdated: curatedItemRecord.lastUpdated,
+      lastUpdatedAt: curatedItemRecord.lastUpdatedAt,
     },
   };
 };
@@ -101,7 +101,7 @@ export const getByCuratedRecId = async (
     scheduledSurfaceGuid: res.Item?.scheduledSurfaceGuid,
     scheduledItemExternalId: res.Item?.scheduledItemExternalId,
     approvedItemExternalId: res.Item?.approvedItemExternalId,
-    lastUpdated: res.Item?.lastUpdated,
+    lastUpdatedAt: res.Item?.lastUpdatedAt,
   };
 };
 
@@ -144,7 +144,7 @@ export const getByScheduledSurfaceGuid = async (
         scheduledSurfaceGuid: item.scheduledSurfaceGuid,
         scheduledItemExternalId: item.scheduledItemExternalId,
         approvedItemExternalId: item.approvedItemExternalId,
-        lastUpdated: item.lastUpdated,
+        lastUpdatedAt: item.lastUpdatedAt,
       };
     });
   } else {
@@ -190,7 +190,7 @@ export const getByScheduledItemExternalId = async (
         scheduledSurfaceGuid: item.scheduledSurfaceGuid,
         scheduledItemExternalId: item.scheduledItemExternalId,
         approvedItemExternalId: item.approvedItemExternalId,
-        lastUpdated: item.lastUpdated,
+        lastUpdatedAt: item.lastUpdatedAt,
       };
     });
   } else {
