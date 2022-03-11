@@ -9,7 +9,6 @@ import {
   PocketVPC,
 } from '@pocket-tools/terraform-modules';
 import { getEnvVariableValues } from './utilities';
-import { DynamoDB } from './dynamoDb';
 
 export class BackfillLambda extends Resource {
   constructor(
@@ -38,6 +37,8 @@ export class BackfillLambda extends Resource {
         timeout: 120,
         environment: {
           CURATION_MIGRATION_TABLE: curationMigrationTable.dynamodb.name,
+          CURATION_MIGRATION_TABLE_HASH_KEY:
+            curationMigrationTable.dynamodb.hashKey,
           REGION: vpc.region,
           SENTRY_DSN: sentryDsn,
           GIT_SHA: gitSha,

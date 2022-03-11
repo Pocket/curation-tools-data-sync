@@ -1,0 +1,61 @@
+{
+  "TableName": "curation_migration_table",
+  "KeySchema": [
+    {
+      "AttributeName": "curated_rec_id",
+      "KeyType": "HASH"
+    }
+  ],
+  "AttributeDefinitions": [
+    {
+      "AttributeName": "curated_rec_id",
+      "AttributeType": "N"
+    },
+    {
+      "AttributeName": "scheduledItemExternalId",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "scheduledSurfaceGuid",
+      "AttributeType": "S"
+    }
+  ],
+  "GlobalSecondaryIndexes": [
+    {
+      "IndexName": "scheduledItems-externalId-GSI",
+      "KeySchema": [
+        {
+          "AttributeName": "scheduledItemExternalId",
+          "KeyType": "HASH"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "ALL"
+      },
+      "ProvisionedThroughput": {
+        "ReadCapacityUnits": 5,
+        "WriteCapacityUnits": 5
+      }
+    },
+    {
+      "IndexName": "scheduledSurfaceGuid-GSI",
+      "KeySchema": [
+        {
+          "AttributeName": "scheduledSurfaceGuid",
+          "KeyType": "HASH"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "ALL"
+      },
+      "ProvisionedThroughput": {
+        "ReadCapacityUnits": 5,
+        "WriteCapacityUnits": 5
+      }
+    }
+  ],
+  "ProvisionedThroughput": {
+    "ReadCapacityUnits": 5,
+    "WriteCapacityUnits": 5
+  }
+}

@@ -25,9 +25,9 @@ export class DynamoDB extends Resource {
   private setupCurationMigrationTable() {
     // note that this config is mirrored in .docker/localstack/dynamodb/
     // if config changes here, that file should also be updated
-    return new ApplicationDynamoDBTable(this, `prospects`, {
+    return new ApplicationDynamoDBTable(this, `curation-migration`, {
       tags: config.tags,
-      prefix: `${config.shortName}-${config.environment}-Prospects`,
+      prefix: `${config.shortName}-${config.environment}`,
       capacityMode: ApplicationDynamoDBTableCapacityMode.ON_DEMAND,
       tableConfig: {
         hashKey: 'curated_rec_id',
@@ -40,12 +40,25 @@ export class DynamoDB extends Resource {
           },
           {
             // externalId of the scheduledItem table in curatedCorpusApi
-            name: 'externalIdScheduledItems',
+            name: 'scheduledItemExternalId',
             type: 'S',
           },
+          //todo: can we use lastUpdatedAt as range key when all the partition key are different?
+          // {
+          //   //TODO: having approvedItemExternalId as index would be useful if we have to send
+          // unapproveApprovedCorpus mutation
+          //   // externalId of the approvedItem table in curatedCorpusApi
+          //   name: 'approvedItemExternalId',
+          //   type: 'S',
+          // },
+          // {
+          //   // last updated unix timestamp, incase we need to filter by last updated date (for rollbacks)
+          //   name: 'lastUpdated',
+          //   type: 'N',
+          // },
+          //feedName of the item - e.g NEW_TAB_EN_US, incase we need to filter by feed type (for rollbacks)
           {
-            // externalId of the approvedItem table in curatedCorpusApi
-            name: 'externalIdApprovedItems',
+            name: 'scheduledSurfaceGuid',
             type: 'S',
           },
         ],
@@ -53,8 +66,8 @@ export class DynamoDB extends Resource {
         // then we can retrieve curated_rec_id from this index
         globalSecondaryIndex: [
           {
-            name: 'scheduledItems-externalId',
-            hashKey: 'externalIdScheduledItems',
+            name: 'scheduledItems-externalId-GSI',
+            hashKey: 'scheduledItemExternalId',
             projectionType: 'ALL',
             readCapacity: 5,
             writeCapacity: 5,
