@@ -38,6 +38,11 @@ export class DynamoDB extends Resource {
             name: 'curated_rec_id',
             type: 'S',
           },
+          //feedName of the item - e.g NEW_TAB_EN_US, incase we need to filter by feed type (for rollbacks)
+          {
+            name: 'scheduledSurfaceGuid',
+            type: 'S',
+          },
           {
             // externalId of the scheduledItem table in curatedCorpusApi
             name: 'scheduledItemExternalId',
@@ -56,11 +61,6 @@ export class DynamoDB extends Resource {
           //   name: 'lastUpdated',
           //   type: 'N',
           // },
-          //feedName of the item - e.g NEW_TAB_EN_US, incase we need to filter by feed type (for rollbacks)
-          {
-            name: 'scheduledSurfaceGuid',
-            type: 'S',
-          },
         ],
         //for curatedItem datasync - we will get the externalId of the scheduledItems
         // then we can retrieve curated_rec_id from this index
@@ -68,6 +68,13 @@ export class DynamoDB extends Resource {
           {
             name: 'scheduledItems-externalId-GSI',
             hashKey: 'scheduledItemExternalId',
+            projectionType: 'ALL',
+            readCapacity: 5,
+            writeCapacity: 5,
+          },
+          {
+            name: 'scheduledSurfaceGuid-GSI',
+            hashKey: 'scheduledSurfaceGuid',
             projectionType: 'ALL',
             readCapacity: 5,
             writeCapacity: 5,
