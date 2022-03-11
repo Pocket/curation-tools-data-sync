@@ -31,8 +31,6 @@ export class DynamoDB extends Resource {
       capacityMode: ApplicationDynamoDBTableCapacityMode.ON_DEMAND,
       tableConfig: {
         hashKey: 'curated_rec_id',
-        writeCapacity: 5,
-        readCapacity: 5,
         attribute: [
           {
             name: 'curated_rec_id',
@@ -69,15 +67,11 @@ export class DynamoDB extends Resource {
             name: 'scheduledItems-externalId-GSI',
             hashKey: 'scheduledItemExternalId',
             projectionType: 'ALL',
-            readCapacity: 5,
-            writeCapacity: 5,
           },
           {
             name: 'scheduledSurfaceGuid-GSI',
             hashKey: 'scheduledSurfaceGuid',
             projectionType: 'ALL',
-            readCapacity: 5,
-            writeCapacity: 5,
           },
         ],
       },
