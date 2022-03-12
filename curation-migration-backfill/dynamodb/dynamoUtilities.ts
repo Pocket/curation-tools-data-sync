@@ -221,9 +221,6 @@ export const truncateDb = async (
       })
     );
   }
-
-  const t = await scanAllRows(dbClient);
-  console.log(t);
 };
 
 /**
