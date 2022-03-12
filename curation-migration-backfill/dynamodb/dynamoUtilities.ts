@@ -15,17 +15,6 @@ import {
 import config from '../config';
 import { CuratedItemRecord } from './types';
 import { ScheduledSurfaceGuid } from '../types';
-import { dbClient } from './dynamoDbClient';
-import any = jasmine.any;
-
-/***
- * Requirements:
- * 1. get by curatedRecId
- * 2. get by externalIdScheduledItems
- * 3. add by curatedRecId (/)
- * 4. delete by curatedRecId
- * 5. truncate table. (/)
- */
 
 /**
  * generate insert command parameter from curatedItemRecord

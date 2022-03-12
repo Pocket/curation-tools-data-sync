@@ -10,8 +10,8 @@
     "test-spec": "jest \"\\.spec\\.ts\"",
     "test-integration": "jest \"\\.integration\\.ts\" --runInBand",
     "test-all": "npm run test-spec && npm run test-integration",
-    "lint-check": "eslint --fix-dry-run \"src/**/*.ts\"",
-    "lint-fix": "eslint --fix \"src/**/*.ts\""
+    "lint-check": "eslint --fix-dry-run \"curation-*/**/*.ts\"",
+    "lint-fix": "eslint --fix \"curation*/**/*.ts\""
   },
   "repository": {
     "type": "git",
