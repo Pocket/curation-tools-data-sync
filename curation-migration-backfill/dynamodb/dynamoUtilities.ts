@@ -43,7 +43,6 @@ export const insertCuratedItem = async (
   dbClient: DynamoDBDocumentClient,
   curatedItemRecord: CuratedItemRecord
 ): Promise<void> => {
-  // convert the prospect to dynamo insert format
   const params = generateInsertParameters(curatedItemRecord);
 
   await dbClient.send(new PutCommand(params));
@@ -199,8 +198,8 @@ export const truncateDb = async (
 ): Promise<void> => {
   const rows = await scanAllRows(dbClient);
 
-  let items = rows.Items as any;
-  for (let r of items) {
+  const items = rows.Items as any;
+  for (const r of items) {
     await dbClient.send(
       new DeleteCommand({
         TableName: config.aws.dynamoDB.curationMigrationTable,

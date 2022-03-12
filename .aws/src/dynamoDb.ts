@@ -19,7 +19,8 @@ export class DynamoDB extends Resource {
   }
 
   /**
-   * Sets up the dynamodb table where the prospects will live
+   * Sets up the dynamodb table where the ids of readitla-tmp's curatedItems will be mapped
+   * with curatedCorpusApi's scheduledItems
    * @private
    */
   private setupCurationMigrationTable() {

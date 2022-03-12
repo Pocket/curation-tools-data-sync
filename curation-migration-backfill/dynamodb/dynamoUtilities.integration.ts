@@ -11,10 +11,10 @@ import {
 import { dbClient } from './dynamoDbClient';
 
 describe('dynamodb read and write test', () => {
-  let timestamp1 = Math.round(new Date('2020-10-10').getTime() / 1000);
-  let timestamp2 = Math.round(new Date('2021-10-10').getTime() / 1000);
+  const timestamp1 = Math.round(new Date('2020-10-10').getTime() / 1000);
+  const timestamp2 = Math.round(new Date('2021-10-10').getTime() / 1000);
 
-  let curatedItemRecords: CuratedItemRecord[] = [
+  const curatedItemRecords: CuratedItemRecord[] = [
     {
       curatedRecId: 1,
       scheduledSurfaceGuid: ScheduledSurfaceGuid.NEW_TAB_EN_GB,
