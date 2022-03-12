@@ -212,8 +212,8 @@ jobs:
       - store_artifacts:
           path: /tmp/build.zip
 
-  test_functional:
-    description: Run functional tests against external services, e.g. Localstack
+  test_integration:
+    description: Run integration tests against external services, e.g. Localstack
     docker:
       - image: circleci/node:16
         auth:
@@ -241,7 +241,7 @@ jobs:
           command: ./.circleci/scripts/setup.sh --aws
       - run:
           name: run tests
-          command: npm run test-functional  -- --ci --watchAll=false
+          command: npm run test-integration  -- --ci --watchAll=false
 
   test_specs:
     description: Run spec tests
@@ -267,10 +267,10 @@ workflows:
           <<: *not_main
           context: pocket
 
-      - test_functional:
+      - test_integration:
           <<: *not_main
           context: pocket
-          name: test_functional
+          name: test_integration
 
       - run_code_build:
           <<: *only_dev
