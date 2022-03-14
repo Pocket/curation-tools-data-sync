@@ -2,7 +2,6 @@ import * as Sentry from '@sentry/serverless';
 import config from './config';
 import { SQSEvent } from 'aws-lambda';
 import fetch from 'node-fetch';
-import { setTimeout } from 'timers/promises';
 
 export enum EVENT {
   CURATION_MIGRATION_BACKFILL = 'curation-migration-backfill',
@@ -44,6 +43,10 @@ interface CorpusInput {
   scheduledDate: string; // YYYY-MM-DD
   scheduledSurfaceGuid: string;
 }
+
+// ୧༼ ಠ益ಠ ༽୨  aws and their old node runtimes
+const sleep = async (ms: number) =>
+  await new Promise((resolve) => setTimeout(resolve, ms));
 
 type ProspectInfo = Pick<
   CorpusInput,
@@ -142,7 +145,7 @@ export async function handlerFn(event: SQSEvent) {
     const message: BackfillMessage = JSON.parse(record.body);
     const corpusInput = await hydrateCorpusInput(message);
     // Wait a sec... don't barrage the api. We're just backfilling here.
-    await setTimeout(1000);
+    await sleep(1000);
     // Here's where you'd call the mutation instead of adding data to array
     // TODO
     res[index] = corpusInput;
