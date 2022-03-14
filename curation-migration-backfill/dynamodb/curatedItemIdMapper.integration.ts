@@ -6,8 +6,8 @@ import {
   getByScheduledItemExternalId,
   getByScheduledSurfaceGuid,
   insertCuratedItem,
-  truncateDb,
-} from './dynamoUtilities';
+} from './curatedItemIdMapper';
+import { truncateDb } from './dynamoUtilities';
 import { dbClient } from './dynamoDbClient';
 
 describe('dynamodb read and write test', () => {
@@ -58,7 +58,7 @@ describe('dynamodb read and write test', () => {
     await truncateDb(dbClient);
   });
 
-  it('should add curtedItem and get by curatedRecId', async () => {
+  it('should add curatedItem and get by curatedRecId', async () => {
     const itemToBeAdded: CuratedItemRecord = {
       curatedRecId: 5,
       scheduledSurfaceGuid: ScheduledSurfaceGuid.NEW_TAB_EN_INTL,
@@ -72,7 +72,6 @@ describe('dynamodb read and write test', () => {
       itemToBeAdded.curatedRecId
     );
 
-    console.log(res);
     expect(res).not.toBeUndefined();
     expect(res?.curatedRecId).toEqual(5);
     expect(res?.scheduledItemExternalId).toEqual('random-scheduled-guid-5');

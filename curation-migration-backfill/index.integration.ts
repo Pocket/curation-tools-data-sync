@@ -1,10 +1,11 @@
 import { handlerFn } from './index';
 import { CuratedItemRecord } from './dynamodb/types';
-import { getByCuratedRecId, truncateDb } from './dynamodb/dynamoUtilities';
+import { truncateDb } from './dynamodb/dynamoUtilities';
 import { dbClient } from './dynamodb/dynamoDbClient';
 import { ScheduledSurfaceGuid } from './types';
+import { getByCuratedRecId } from './dynamodb/curatedItemIdMapper';
 
-describe('test placeholder', () => {
+describe('test to read dynamoDb data from lambda code', () => {
   afterAll(async () => {
     await truncateDb(dbClient);
   });
@@ -14,7 +15,6 @@ describe('test placeholder', () => {
     await handlerFn('dynamo');
     const res: CuratedItemRecord = await getByCuratedRecId(dbClient, 10);
 
-    console.log(res);
     expect(res).not.toBeUndefined();
     expect(res?.curatedRecId).toEqual(10);
     expect(res?.approvedItemExternalId).toEqual('random-approved-guid-10');

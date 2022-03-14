@@ -3,7 +3,7 @@ import config from './config';
 import {
   getByCuratedRecId,
   insertCuratedItem,
-} from './dynamodb/dynamoUtilities';
+} from './dynamodb/curatedItemIdMapper';
 import { dbClient } from './dynamodb/dynamoDbClient';
 import { CuratedItemRecord } from './dynamodb/types';
 import { ScheduledSurfaceGuid } from './types';
