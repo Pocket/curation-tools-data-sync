@@ -5,25 +5,16 @@ import {
   RemoteBackend,
   TerraformStack,
 } from 'cdktf';
-import {
-  AwsProvider,
-  DataAwsCallerIdentity,
-  DataAwsRegion,
-  S3Bucket,
-} from '@cdktf/provider-aws';
+import { AwsProvider, S3Bucket } from '@cdktf/provider-aws';
 
 import { config } from './config';
-import {
-  ApplicationSQSQueue,
-  PocketPagerDuty,
-  PocketSQSProps,
-  PocketVPC,
-} from '@pocket-tools/terraform-modules';
+import { PocketPagerDuty, PocketVPC } from '@pocket-tools/terraform-modules';
 import { PagerdutyProvider } from '@cdktf/provider-pagerduty';
 import { LocalProvider } from '@cdktf/provider-local';
 import { NullProvider } from '@cdktf/provider-null';
 import { ArchiveProvider } from '@cdktf/provider-archive';
 import { BackfillLambda } from './backfillLambda';
+import { DynamoDB } from './dynamoDb';
 
 //todo: change class name to your service name
 class CurationToolsDataSync extends TerraformStack {
@@ -45,8 +36,19 @@ class CurationToolsDataSync extends TerraformStack {
     const vpc = new PocketVPC(this, 'pocket-shared-vpc');
     const pagerDuty = this.createPagerDuty();
 
+    //dynamo db to map curatedRecId - scheduledItem's externalId and store approvedItem's externalId
+    const idMapperDynamoDb = new DynamoDB(this, 'curation-migration-id-mapper');
+
+    //bucket for storing all the required csv files
     this.createMigrationBucket();
-    new BackfillLambda(this, 'backfill-lambda', vpc, pagerDuty);
+
+    new BackfillLambda(
+      this,
+      'backfill-lambda',
+      vpc,
+      idMapperDynamoDb.curationMigrationTable,
+      pagerDuty
+    );
   }
 
   /**
