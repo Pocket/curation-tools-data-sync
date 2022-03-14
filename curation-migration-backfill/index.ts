@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/serverless';
 import config from './config';
-import { SQSEvent } from 'aws-lambda';
+import { SQSEvent, SQSBatchResponse, SQSBatchItemFailure } from 'aws-lambda';
 import fetch from 'node-fetch';
 
 export enum EVENT {
@@ -137,23 +137,24 @@ async function fetchProspectData(url: string): Promise<ProspectInfo> {
  * to make unit-testing easier.
  * Takes event from cloudwatch to initiatie the migration
  */
-export async function handlerFn(event: SQSEvent) {
+export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
   // Not using map since we want to block after each record
-  const res = Array(event.Records.length);
-  let index = 0;
+  const batchFailures: SQSBatchItemFailure[] = [];
   for await (const record of event.Records) {
-    const message: BackfillMessage = JSON.parse(record.body);
-    const corpusInput = await hydrateCorpusInput(message);
-    // Wait a sec... don't barrage the api. We're just backfilling here.
-    await sleep(1000);
-    // Here's where you'd call the mutation instead of adding data to array
-    // TODO
-    res[index] = corpusInput;
-    index += 1;
+    try {
+      const message: BackfillMessage = JSON.parse(record.body);
+      const corpusInput = await hydrateCorpusInput(message);
+      // Wait a sec... don't barrage the api. We're just backfilling here.
+      await sleep(1000);
+      // TODO
+      // Here's where you'd call the import mutation instead
+      console.log(corpusInput);
+    } catch (error) {
+      batchFailures.push({ itemIdentifier: record.messageId });
+      Sentry.captureException(error);
+    }
   }
-  // Can remove this once we actually call the mutation
-  // And update the tests to check the arguments instead
-  return res;
+  return { batchItemFailures: batchFailures };
 }
 
 Sentry.AWSLambda.init({
