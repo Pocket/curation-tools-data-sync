@@ -28,7 +28,7 @@ interface CorpusInput {
   url: string;
   title: string;
   excerpt: string;
-  status: 'RECOMMENDATION'; // ?
+  status: 'RECOMMENDATION';
   language: string;
   publisher: string;
   imageUrl: string;
