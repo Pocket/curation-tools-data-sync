@@ -14,5 +14,8 @@ enum Curator {
 }
 
 export function getCurator(oldCuratorName: string) {
-  return Curator[oldCuratorName];
+  if (Curator[oldCuratorName] == undefined) {
+    return `ad|Mozilla-LDAP|unknown`;
+  }
+  return `ad|Mozilla-LDAP|${Curator[oldCuratorName]}`;
 }
