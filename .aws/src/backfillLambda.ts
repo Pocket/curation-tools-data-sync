@@ -31,6 +31,7 @@ export class BackfillLambda extends Resource {
         visibilityTimeoutSeconds: 150,
         maxReceiveCount: 3,
       },
+      functionResponseTypes: ['ReportBatchItemFailures'],
       lambda: {
         runtime: LAMBDA_RUNTIMES.NODEJS14,
         handler: 'index.handler',
