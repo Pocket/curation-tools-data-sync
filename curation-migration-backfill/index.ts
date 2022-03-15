@@ -105,10 +105,10 @@ function curatorToSsoUser(curator: string | null): string {
 function languageExtractor(lang: string | null, scheduledSurfaceGuid: string) {
   // Valid language record
   if (!(lang == null || lang === '')) {
-    return lang;
+    return lang.toUpperCase();
   }
   // Default fallbacks
-  return scheduledSurfaceGuid.toLowerCase().includes('de') ? 'de' : 'en';
+  return scheduledSurfaceGuid.toLowerCase().includes('de') ? 'DE' : 'EN';
 }
 
 /**

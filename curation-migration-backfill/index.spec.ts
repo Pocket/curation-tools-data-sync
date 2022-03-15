@@ -56,7 +56,7 @@ describe('curation migration', () => {
       //     title: 'Equine dentist wins lottery',
       //     excerpt: `"It's kind of against my job description," said Dr. Orsteeth, "but this is definitely a case where I don't want to look a gift horse in the mouth!"`,
       //     status: 'RECOMMENDATION',
-      //     language: 'en',
+      //     language: 'EN',
       //     publisher: 'Gums Weekly',
       //     imageUrl: 'https://some-image.png',
       //     topic: 'entertainment',
