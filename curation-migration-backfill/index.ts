@@ -61,7 +61,48 @@ const feedIdToGuid = {
   8: 'NEW_TAB_EN_INTL',
 };
 
-const ssoPrefix = 'ad|Mozilla-LDAP|';
+function curatorToSsoUser(curator: string | null) {
+  if (curator == null) {
+    throw new Error('`curator` field must not be null.');
+  }
+  const curatorSsoMap = {
+    cohara: 'ad|Mozilla-LDAP|cohara',
+    adalenberg: 'ad|Mozilla-LDAP|adalenberg',
+    amaoz: 'ad|Mozilla-LDAP|amaoz',
+    tillrunge: 'ad|Mozilla-LDAP|trunge',
+    juergen: 'ad|Mozilla-LDAP|jleidinger',
+    psommer: 'ad|Mozilla-LDAP|psommer',
+    hello: 'ad|Mozilla-LDAP|dgeorgi',
+    michellelewis: 'ad|Mozilla-LDAP|mlewis',
+    maddyroache: 'ad|Mozilla-LDAP|mroache',
+    eeleode: 'ad|Mozilla-LDAP|eeleode',
+  };
+  const ssoUser = curatorSsoMap[curator];
+  if (ssoUser != null) {
+    return ssoUser;
+  } else {
+    throw new Error(
+      `curator value '${curator}' has no valid mapping to SSO User`
+    );
+  }
+}
+
+/**
+ * Extracts the language field from record.
+ * If feed contains 'de' in the name, default to 'de'. Otherwise,
+ * default to 'en' when language field is null or empty.
+ * @param lang string with two-digit language code (can be empty or null)
+ * @param scheduledSurfaceGuid the scheduled surface guid, for fallback behavior
+ * if lang is empty or null
+ */
+function languageExtractor(lang: string | null, scheduledSurfaceGuid: string) {
+  // Valid language record
+  if (!(lang == null || lang === '')) {
+    return lang;
+  }
+  // Default fallbacks
+  return scheduledSurfaceGuid.toLowerCase().includes('de') ? 'de' : 'en';
+}
 
 /**
  * Convert epoch to UTC date (YYYY-MM-DD).
@@ -77,13 +118,15 @@ async function hydrateCorpusInput(
   record: BackfillMessage
 ): Promise<CorpusInput> {
   const prospectData = await fetchProspectData(record.resolved_url);
-  const curator = record.curator ? `${ssoPrefix}${record.curator}` : 'unknown';
+  const curator = curatorToSsoUser(record.curator);
+  const surfaceGuid = feedIdToGuid[record.feed_id];
+  const language = languageExtractor(record.lang, surfaceGuid);
   const corpusInput = {
     url: record.resolved_url,
     title: record.title,
     excerpt: record.excerpt,
     status: 'RECOMMENDATION' as const,
-    language: record.lang,
+    language: language,
     imageUrl: record.image_src,
     topic: record.topic_name,
     source: 'BACKFILL' as const,
@@ -92,7 +135,7 @@ async function hydrateCorpusInput(
     createdBy: curator,
     updatedBy: curator,
     scheduledDate: epochToDateString(record.time_live),
-    scheduledSurfaceGuid: feedIdToGuid[record.feed_id],
+    scheduledSurfaceGuid: surfaceGuid,
     ...prospectData,
   };
   return corpusInput;

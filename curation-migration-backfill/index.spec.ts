@@ -11,7 +11,7 @@ describe('curation migration', () => {
     time_updated: 999999999,
     title: 'Equine dentist wins lottery',
     excerpt: `"It's kind of against my job description," said Dr. Orsteeth, "but this is definitely a case where I don't want to look a gift horse in the mouth!"`,
-    curator: 'btownie',
+    curator: 'cohara',
     image_src: 'https://some-image.png',
     resolved_id: '123',
     resolved_url: 'https://yougotgums.com',
@@ -65,8 +65,8 @@ describe('curation migration', () => {
       //     isSyndicated: true,
       //     createdAt: 1647042571,
       //     updatedAt: 1647042571,
-      //     createdBy: 'ad|Mozilla-LDAP|btownie',
-      //     updatedBy: 'ad|Mozilla-LDAP|btownie',
+      //     createdBy: 'ad|Mozilla-LDAP|cohara',
+      //     updatedBy: 'ad|Mozilla-LDAP|cohara',
       //     scheduledDate: '2022-03-11',
       //     scheduledSurfaceGuid: 'NEW_TAB_EN_INTL',
       //   },
@@ -103,7 +103,7 @@ describe('curation migration', () => {
       const actual = await handlerFn(fakeEvent);
       expect(actual).toEqual({ batchItemFailures: [{ itemIdentifier: '1' }] });
     });
-    it('sets curator to "unknown" if null', async () => {
+    it('throws an error if curator is null', async () => {
       const anotherRecord = { ...record, curator: null };
       nock(config.AdminApi)
         .post('/')
@@ -117,10 +117,29 @@ describe('curation migration', () => {
           },
         });
       const fakeEvent = {
-        Records: [{ body: JSON.stringify(anotherRecord) }],
+        Records: [{ messageId: '1', body: JSON.stringify(anotherRecord) }],
       } as unknown as SQSEvent;
-      await handlerFn(fakeEvent);
-      // TODO: check args for 'unknown' or whatever we decide on...
+      const actual = await handlerFn(fakeEvent);
+      expect(actual).toEqual({ batchItemFailures: [{ itemIdentifier: '1' }] });
+    });
+    it('throws an error if curator cannot be mapped to sso user', async () => {
+      const anotherRecord = { ...record, curator: 'countdracula' };
+      nock(config.AdminApi)
+        .post('/')
+        .reply(200, {
+          data: {
+            getUrlMetadata: {
+              isSyndicated: true,
+              isCollection: false,
+              publisher: 'Gums Weekly',
+            },
+          },
+        });
+      const fakeEvent = {
+        Records: [{ messageId: '1', body: JSON.stringify(anotherRecord) }],
+      } as unknown as SQSEvent;
+      const actual = await handlerFn(fakeEvent);
+      expect(actual).toEqual({ batchItemFailures: [{ itemIdentifier: '1' }] });
     });
   });
 });
