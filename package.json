@@ -8,6 +8,7 @@
     "test-ci": "npm test",
     "test:watch": "npm test -- --watchAll",
     "test-spec": "jest \"\\.spec\\.ts\"",
+    "test-functional": "jest \"\\.functional\\.ts\" --runInBand",
     "test-integration": "jest \"\\.integration\\.ts\" --runInBand",
     "test-all": "npm run test-spec && npm run test-integration",
     "lint-check": "eslint --fix-dry-run \"curation-*/**/*.ts\"",
