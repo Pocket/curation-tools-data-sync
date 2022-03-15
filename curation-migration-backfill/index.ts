@@ -37,9 +37,9 @@ interface CorpusInput {
   isCollection: boolean;
   isSyndicated: boolean;
   createdAt: number;
-  createdBy: string | null;
+  createdBy: string;
   updatedAt: number;
-  updatedBy: string | null;
+  updatedBy: string;
   scheduledDate: string; // YYYY-MM-DD
   scheduledSurfaceGuid: string;
 }
