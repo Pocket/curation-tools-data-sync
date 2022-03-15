@@ -103,7 +103,7 @@ describe('curation migration', () => {
       const actual = await handlerFn(fakeEvent);
       expect(actual).toEqual({ batchItemFailures: [{ itemIdentifier: '1' }] });
     });
-    it('throws an error if curator is null', async () => {
+    it('returns batch item failure if curator is null', async () => {
       const anotherRecord = { ...record, curator: null };
       nock(config.AdminApi)
         .post('/')
@@ -122,7 +122,7 @@ describe('curation migration', () => {
       const actual = await handlerFn(fakeEvent);
       expect(actual).toEqual({ batchItemFailures: [{ itemIdentifier: '1' }] });
     });
-    it('throws an error if curator cannot be mapped to sso user', async () => {
+    it('returns batch item failure if curator cannot be mapped to sso user', async () => {
       const anotherRecord = { ...record, curator: 'countdracula' };
       nock(config.AdminApi)
         .post('/')

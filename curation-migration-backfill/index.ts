@@ -44,16 +44,16 @@ interface CorpusInput {
   scheduledSurfaceGuid: string;
 }
 
-// ୧༼ ಠ益ಠ ༽୨  aws and their old node runtimes
-const sleep = async (ms: number) =>
-  await new Promise((resolve) => setTimeout(resolve, ms));
-
 type ProspectInfo = Pick<
   CorpusInput,
   'isCollection' | 'isSyndicated' | 'publisher'
 >;
 
-// Some data mappings
+// ୧༼ ಠ益ಠ ༽୨  aws and their old node runtimes
+const sleep = async (ms: number) =>
+  await new Promise((resolve) => setTimeout(resolve, ms));
+
+// Data mapping of feed ID to the new tab guid
 const feedIdToGuid = {
   1: 'NEW_TAB_EN_US',
   3: 'NEW_TAB_DE_DE',
@@ -61,7 +61,14 @@ const feedIdToGuid = {
   8: 'NEW_TAB_EN_INTL',
 };
 
-function curatorToSsoUser(curator: string | null) {
+/**
+ * Map curator from BackfillRecord to the SSO user.
+ * This is a complete list of all the curators in the
+ * data set we are backfilling as of 15 Mar 2022.
+ * If the record has a null curator or a curator that
+ * does not map, throw an error instead.
+ */
+function curatorToSsoUser(curator: string | null): string {
   if (curator == null) {
     throw new Error('`curator` field must not be null.');
   }
@@ -114,6 +121,12 @@ export function epochToDateString(epoch: number): string {
   return `${date.getUTCFullYear()}-${padMonthString}-${date.getUTCDate()}`;
 }
 
+/**
+ * Transform a BackfillMessage to the input required for importing
+ * approvedItems for backfill. Validates fields, applies defaults
+ * for some fields where required, and pulls additional
+ * data from prospect-api.
+ */
 async function hydrateCorpusInput(
   record: BackfillMessage
 ): Promise<CorpusInput> {
