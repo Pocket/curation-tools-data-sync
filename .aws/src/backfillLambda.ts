@@ -2,6 +2,7 @@ import { Resource } from 'cdktf';
 import { Construct } from 'constructs';
 import { config } from './config';
 import {
+  ApplicationDynamoDBTable,
   LAMBDA_RUNTIMES,
   PocketPagerDuty,
   PocketSQSWithLambdaTarget,
@@ -14,6 +15,7 @@ export class BackfillLambda extends Resource {
     scope: Construct,
     private name: string,
     private vpc: PocketVPC,
+    private curationMigrationTable: ApplicationDynamoDBTable,
     pagerDuty?: PocketPagerDuty
   ) {
     super(scope, name);
@@ -29,11 +31,15 @@ export class BackfillLambda extends Resource {
         visibilityTimeoutSeconds: 150,
         maxReceiveCount: 3,
       },
+      functionResponseTypes: ['ReportBatchItemFailures'],
       lambda: {
         runtime: LAMBDA_RUNTIMES.NODEJS14,
         handler: 'index.handler',
         timeout: 120,
         environment: {
+          CURATION_MIGRATION_TABLE: curationMigrationTable.dynamodb.name,
+          CURATION_MIGRATION_TABLE_HASH_KEY:
+            curationMigrationTable.dynamodb.hashKey,
           REGION: vpc.region,
           SENTRY_DSN: sentryDsn,
           GIT_SHA: gitSha,
@@ -49,6 +55,21 @@ export class BackfillLambda extends Resource {
           accountId: vpc.accountId,
         },
         executionPolicyStatements: [
+          {
+            effect: 'Allow',
+            actions: [
+              'dynamodb:BatchWriteItem',
+              'dynamodb:PutItem',
+              'dynamodb:GetItem',
+              'dynamodb:DescribeTable',
+              'dynamodb:UpdateItem',
+              'dynamodb:Query',
+            ],
+            resources: [
+              curationMigrationTable.dynamodb.arn,
+              `${curationMigrationTable.dynamodb.arn}/*`,
+            ],
+          },
           {
             actions: ['secretsmanager:GetSecretValue', 'kms:Decrypt'],
             resources: [

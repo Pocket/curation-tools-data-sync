@@ -192,6 +192,9 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
       // TODO
       // Here's where you'd call the import mutation instead
       console.log(corpusInput);
+      // TODO
+      // If the import succeeds, add mapping record to dynamodb
+      // await createCuratedItem(corpusInput) // method does not yet exist; should hydrate object and call insertCuratedItem internally
     } catch (error) {
       batchFailures.push({ itemIdentifier: record.messageId });
       Sentry.captureException(error);

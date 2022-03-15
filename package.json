@@ -9,8 +9,10 @@
     "test:watch": "npm test -- --watchAll",
     "test-spec": "jest \"\\.spec\\.ts\"",
     "test-functional": "jest \"\\.functional\\.ts\" --runInBand",
-    "lint-check": "eslint --fix-dry-run \"src/**/*.ts\"",
-    "lint-fix": "eslint --fix \"curation-*/**/*.ts\""
+    "test-integration": "jest \"\\.integration\\.ts\" --runInBand",
+    "test-all": "npm run test-spec && npm run test-integration",
+    "lint-check": "eslint --fix-dry-run \"curation-*/**/*.ts\"",
+    "lint-fix": "eslint --fix \"curation*/**/*.ts\""
   },
   "repository": {
     "type": "git",
@@ -23,7 +25,6 @@
   },
   "homepage": "https://github.com/Pocketcuration-tools-data-sync#readme",
   "dependencies": {
-    "@apollo/federation": "^0.35.3",
     "@pocket-tools/apollo-utils": "^2.2.0",
     "@sentry/node": "^6.17.8",
     "@sentry/tracing": "^6.17.7",
@@ -43,16 +44,17 @@
     "node-fetch": "^2.6.7"
   },
   "devDependencies": {
+    "@pocket-tools/eslint-config": "^1.0.0",
     "@types/aws-lambda": "^8.10.93",
     "@types/chai": "^4.2.22",
     "@types/chai-as-promised": "^7.1.4",
     "@types/jest": "^27.4.1",
-    "@types/node": "^14.0.0",
-    "@typescript-eslint/eslint-plugin": "^5.14.0",
-    "@typescript-eslint/parser": "^5.14.0",
+    "@types/node": "^14.17.20",
+    "@typescript-eslint/eslint-plugin": "^5.15.0",
+    "@typescript-eslint/parser": "^5.15.0",
     "chai": "^4.3.6",
     "chai-as-promised": "^7.1.1",
-    "eslint": "^8.10.0",
+    "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.0.0",
     "jest": "^27.5.1",
