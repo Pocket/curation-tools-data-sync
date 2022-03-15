@@ -1,5 +1,4 @@
-import { CuratedItemRecord } from './types';
-import { ScheduledSurfaceGuid } from '../types';
+import { CuratedItemRecord, ScheduledSurfaceGuid } from './types';
 import {
   deleteItemByCuratedRecId,
   getByCuratedRecId,

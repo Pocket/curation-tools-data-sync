@@ -1,4 +1,4 @@
-import { CuratedItemRecord } from './types';
+import { CuratedItemRecord, ScheduledSurfaceGuid } from './types';
 import {
   DeleteCommand,
   DynamoDBDocumentClient,
@@ -11,7 +11,6 @@ import {
   QueryCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
 import config from '../config';
-import { ScheduledSurfaceGuid } from '../types';
 import * as Sentry from '@sentry/serverless';
 
 /**

@@ -1,5 +1,11 @@
 import { NativeAttributeValue } from '@aws-sdk/util-dynamodb';
-import { ScheduledSurfaceGuid } from '../types';
+
+export enum ScheduledSurfaceGuid {
+  NEW_TAB_EN_US = 'NEW_TAB_EN_US',
+  NEW_TAB_EN_GB = 'NEW_TAB_EN_GB',
+  NEW_TAB_EN_INTL = 'NEW_TAB_EN_INTL',
+  NEW_TAB_DE_DE = 'NEW_TAB_DE_DE',
+}
 
 export type CuratedItemRecord = {
   //curated feeds itemId in the readitla-tmp database
