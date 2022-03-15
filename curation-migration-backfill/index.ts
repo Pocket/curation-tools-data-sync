@@ -131,7 +131,7 @@ async function hydrateCorpusInput(
     topic: record.topic_name,
     source: 'BACKFILL' as const,
     createdAt: record.time_added,
-    updatedAt: record.time_added, // dropping time_updated since we don't know updatedBy
+    updatedAt: record.time_updated,
     createdBy: curator,
     updatedBy: curator,
     scheduledDate: epochToDateString(record.time_live),
