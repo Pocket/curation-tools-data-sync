@@ -45,7 +45,6 @@ describe('jwt test', function () {
   it('should generate jwt from given private key', () => {
     const token = generateJwt(testPrivateKey);
 
-
     const result = jwt.verify(token, jwkToPem(testPublicKey), {
       complete: true,
     }) as jwt.Jwt;
