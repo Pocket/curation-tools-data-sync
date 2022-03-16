@@ -7,7 +7,7 @@ import config from './config';
 const client = new SecretsManagerClient({ region: config.aws.region });
 
 //https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-secrets-manager/classes/getsecretvaluecommand.html
-export async function getFxaPrivateKey() {
+export async function getCurationToolsDataSyncPrivateKey() {
   try {
     const secret = await client.send(
       new GetSecretValueCommand({
