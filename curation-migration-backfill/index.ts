@@ -2,6 +2,10 @@ import * as Sentry from '@sentry/serverless';
 import config from './config';
 import { SQSEvent, SQSBatchResponse, SQSBatchItemFailure } from 'aws-lambda';
 import fetch from 'node-fetch';
+import { backOff } from 'exponential-backoff';
+
+import { importApprovedCuratedCorpusItem } from './externalCaller/curatedCorpusApiCaller';
+//import { ImportApprovedCuratedCorpusItemPayload } from './types';
 
 export enum EVENT {
   CURATION_MIGRATION_BACKFILL = 'curation-migration-backfill',
@@ -24,7 +28,7 @@ interface BackfillMessage {
   slug: string;
 }
 
-interface CorpusInput {
+export interface CorpusInput {
   url: string;
   title: string;
   excerpt: string;
@@ -122,6 +126,31 @@ export function epochToDateString(epoch: number): string {
 }
 
 /**
+ *
+ */
+export async function callImportMutation(data: CorpusInput) {
+  const backOffOptions = {
+    numOfAttempts: 3,
+  };
+
+  try {
+    const res: any = await backOff(
+      () => importApprovedCuratedCorpusItem(data),
+      backOffOptions
+    );
+    if (res.statusCode == 200 && res.errors != null) {
+      throw new Error(
+        `Failed to retrieve data from curated-corpus-api.\n GraphQL Errors: ${JSON.stringify(
+          res.errors
+        )}`
+      );
+    }
+  } catch (e) {
+    throw new Error(e);
+  }
+}
+
+/**
  * Transform a BackfillMessage to the input required for importing
  * approvedItems for backfill. Validates fields, applies defaults
  * for some fields where required, and pulls additional
@@ -204,6 +233,8 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
       await sleep(1000);
       // TODO
       // Here's where you'd call the import mutation instead
+      callImportMutation(corpusInput);
+
       console.log(corpusInput);
       // TODO
       // If the import succeeds, add mapping record to dynamodb

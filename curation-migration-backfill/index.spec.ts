@@ -1,4 +1,10 @@
-import { epochToDateString, handlerFn } from './';
+import {
+  callImportMutation,
+  CorpusInput,
+  epochToDateString,
+  handlerFn,
+} from './';
+import * as CuratedCorpusApi from './externalCaller/curatedCorpusApiCaller';
 import nock from 'nock';
 import config from './config';
 import { SQSEvent } from 'aws-lambda';
@@ -141,5 +147,46 @@ describe('curation migration', () => {
       const actual = await handlerFn(fakeEvent);
       expect(actual).toEqual({ batchItemFailures: [{ itemIdentifier: '1' }] });
     });
+  });
+});
+
+describe('test for importApprovedCuratedCorpusItem', () => {
+  const input: CorpusInput = {
+    url: 'https://test.com/docker',
+    title: 'Find Out How I Cured My Docker In 2 Days',
+    excerpt: 'A short summary of what this story is about',
+    imageUrl: 'https://test.com/image.png',
+    source: 'BACKFILL',
+    status: 'RECOMMENDATION',
+    language: 'EN',
+    publisher: 'Convective Cloud',
+    topic: 'TECHNOLOGY',
+    isCollection: false,
+    isSyndicated: false,
+    createdAt: 1647312676,
+    createdBy: 'ad|Mozilla-LDAP|swing',
+    updatedAt: 1647312676,
+    updatedBy: 'ad|Mozilla-LDAP|swing',
+    scheduledDate: '2022-02-02',
+    scheduledSurfaceGuid: 'NEW_TAB_EN_US',
+  };
+
+  it.skip('mutation returns response', async () => {
+    // const result = await CuratedCorpusApi.callImportMutation(input);
+    // console.log(result);
+  });
+
+  it('mutation retries 3 times before throwing error', async () => {
+    nock(config.AdminApi).post('/').reply(500, {
+      data: {},
+    });
+    jest.mock('./externalCaller/curatedCorpusApiCaller');
+
+    const curatedCorpusCallerSpy = jest.spyOn(
+      CuratedCorpusApi,
+      'importApprovedCuratedCorpusItem'
+    );
+    await callImportMutation(input);
+    expect(curatedCorpusCallerSpy).toBeCalledTimes(3);
   });
 });
