@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import jwkToPem from 'jwk-to-pem';
+import config from './config';
 
 // this is the required subset of properties required by the admin-api gateway
 // https://github.com/Pocket/admin-api/blob/a0bb468cece3ba5bc1a00e1098652a49d433a81d/src/jwtUtils.ts#L98
@@ -23,16 +24,14 @@ export function generateJwt(privateKey) {
   const now = Math.round(Date.now() / 1000);
 
   const payload: JwtPayload = {
-    iss: 'https://getpocket.com',
-    aud: '',
+    iss: config.jwt.iss,
+    aud: config.jwt.aud,
     iat: now,
     exp: now + 60 * 5, //expires in 5 mins
-    name: 'Backfill McUser',
-    identities: [{ userId: 'backfill-user' }],
+    name: config.jwt.name,
+    identities: [{ userId: config.jwt.userId }],
     // this group gives us full access in corpus API
-    'custom:groups': JSON.stringify([
-      'mozilliansorg_pocket_scheduled_surface_curator_full',
-    ]),
+    'custom:groups': JSON.stringify(config.jwt.groups),
   };
 
   return jwt.sign(payload, jwkToPem(privateKey, { private: true }), {

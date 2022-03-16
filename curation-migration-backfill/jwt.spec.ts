@@ -1,4 +1,5 @@
 import { generateJwt } from './jwt';
+import config from './config';
 import jwt from 'jsonwebtoken';
 import jwkToPem from 'jwk-to-pem';
 import sinon from 'sinon';
@@ -55,11 +56,9 @@ describe('jwt test', function () {
     expect(payload.iat).toEqual(now.getTime() / 1000);
     expect(payload.exp).toEqual(exp.getTime() / 1000);
     // Required by client-api for disambiguation
-    expect(payload.name).toEqual('Backfill McUser');
-    expect(payload['custom:groups']).toEqual(
-      JSON.stringify(['mozilliansorg_pocket_scheduled_surface_curator_full'])
-    );
-    expect(payload.identities).toEqual([{ userId: 'backfill-user' }]);
+    expect(payload.name).toEqual(config.jwt.name);
+    expect(payload['custom:groups']).toEqual(JSON.stringify(config.jwt.groups));
+    expect(payload.identities).toEqual([{ userId: config.jwt.userId }]);
     // Required by client-api for disambiguation
     expect(result.header.kid).toEqual('helloworld');
   });
