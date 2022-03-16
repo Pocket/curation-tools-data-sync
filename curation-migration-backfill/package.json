@@ -18,6 +18,8 @@
     "@aws-sdk/types": "^3.54.0",
     "@sentry/serverless": "^6.15.0",
     "aws-lambda": "^1.0.7",
+    "jsonwebtoken": "^8.5.1",
+    "jwk-to-pem": "^2.0.5",
     "node-fetch": "^2.6.7"
   }
 }
