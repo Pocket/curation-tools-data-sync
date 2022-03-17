@@ -1,9 +1,6 @@
-import {
-  callImportMutation,
-  CorpusInput,
-  epochToDateString,
-  handlerFn,
-} from './';
+import { callImportMutation, handlerFn } from './';
+import { CorpusInput } from './types';
+import { epochToDateString } from './lib';
 import * as CuratedCorpusApi from './externalCaller/curatedCorpusApiCaller';
 import nock from 'nock';
 import config from './config';

@@ -1,5 +1,5 @@
 //import { backOff } from 'exponential-backoff';
-import { CorpusInput } from '..';
+import { CorpusInput } from '../types';
 import config from '../config';
 import fetch from 'node-fetch';
 
