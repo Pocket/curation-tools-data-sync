@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/serverless';
 import config from './config';
 import { SQSEvent, SQSBatchResponse, SQSBatchItemFailure } from 'aws-lambda';
 import fetch from 'node-fetch';
+import { getTopicForCuratedCorpusApi } from './topicsMapper';
 
 export enum EVENT {
   CURATION_MIGRATION_BACKFILL = 'curation-migration-backfill',
@@ -141,7 +142,7 @@ async function hydrateCorpusInput(
     status: 'RECOMMENDATION' as const,
     language: language,
     imageUrl: record.image_src,
-    topic: record.topic_name,
+    topic: getTopicForCuratedCorpusApi(record.topic_name),
     source: 'BACKFILL' as const,
     createdAt: record.time_added,
     updatedAt: record.time_updated,
