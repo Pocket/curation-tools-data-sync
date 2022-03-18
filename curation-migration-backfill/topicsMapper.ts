@@ -36,7 +36,7 @@ export function getTopicForCuratedCorpusApi(input: string | null) {
     return null;
   }
   const topicForCuratedCorpusApi = TopicMappedToCuratedCorpusApi.get(input);
-  return topicForCuratedCorpusApi ? topicForCuratedCorpusApi : null;
+  return topicForCuratedCorpusApi ?? null;
 }
 
 export function getTopicForReaditLaTmpDatabase(input: string | null) {
@@ -44,9 +44,5 @@ export function getTopicForReaditLaTmpDatabase(input: string | null) {
     return null;
   }
 
-  if (TopicMappedToReaditlaTmpDb[input] == undefined) {
-    return null;
-  }
-
-  return TopicMappedToReaditlaTmpDb[input];
+  return TopicMappedToReaditlaTmpDb[input] ?? null;
 }
