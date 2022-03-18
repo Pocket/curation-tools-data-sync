@@ -30,7 +30,7 @@
     "@sentry/tracing": "^6.17.7"
   },
   "devDependencies": {
-    "@pocket-tools/eslint-config": "^1.0.0",
+    "@pocket-tools/eslint-config": "^1.1.0",
     "@types/aws-lambda": "^8.10.93",
     "@types/chai": "^4.2.22",
     "@types/chai-as-promised": "^7.1.4",
