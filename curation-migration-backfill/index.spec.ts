@@ -6,7 +6,7 @@ import nock from 'nock';
 import config from './config';
 import { SQSEvent } from 'aws-lambda';
 
-describe('curation migration', () => {
+describe.skip('curation migration', () => {
   const record = {
     curated_rec_id: '123',
     time_live: 1647042571,
@@ -147,7 +147,7 @@ describe('curation migration', () => {
   });
 });
 
-describe('test for importApprovedCuratedCorpusItem', () => {
+describe.only('test for importApprovedCuratedCorpusItem', () => {
   const input: CorpusInput = {
     url: 'https://test.com/docker',
     title: 'Find Out How I Cured My Docker In 2 Days',
@@ -173,17 +173,22 @@ describe('test for importApprovedCuratedCorpusItem', () => {
     // console.log(result);
   });
 
-  it('mutation retries 3 times before throwing error', async () => {
+  it.only('mutation retries 3 times before throwing error', async () => {
+    nock(config.AdminApi)
+      .post('/')
+      .times(2)
+      .replyWithError('Something went wrong');
+
     nock(config.AdminApi).post('/').reply(500, {
-      data: {},
+      data: 'bob',
     });
-    jest.mock('./externalCaller/curatedCorpusApiCaller');
 
     const curatedCorpusCallerSpy = jest.spyOn(
       CuratedCorpusApi,
       'importApprovedCuratedCorpusItem'
     );
-    await callImportMutation(input);
+    const res = await callImportMutation(input);
     expect(curatedCorpusCallerSpy).toBeCalledTimes(3);
+    expect(res).toEqual({ data: 'bob' });
   });
 });

@@ -1,4 +1,3 @@
-//import { backOff } from 'exponential-backoff';
 import { CorpusInput } from '../types';
 import config from '../config';
 import fetch from 'node-fetch';
@@ -36,6 +35,5 @@ export async function importApprovedCuratedCorpusItem(data: CorpusInput) {
 
   const jsonRes = await res.json();
 
-  //return jsonRes.data.importApprovedCuratedCorpusItem as ImportApprovedCuratedCorpusItemPayload;
   return jsonRes;
 }

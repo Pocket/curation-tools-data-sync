@@ -6,8 +6,7 @@ import { backOff } from 'exponential-backoff';
 
 import { fetchProspectData } from './externalCaller/prospectApiCaller';
 import { importApprovedCuratedCorpusItem } from './externalCaller/curatedCorpusApiCaller';
-//import { ImportApprovedCuratedCorpusItemPayload } from './types';
-import { BackfillMessage, CorpusInput, ProspectInfo } from './types';
+import { BackfillMessage, CorpusInput } from './types';
 
 import { hydrateCorpusInput, sleep } from './lib';
 
@@ -19,8 +18,10 @@ export async function callImportMutation(data: CorpusInput) {
     numOfAttempts: 3,
   };
 
+  let res: any;
+
   try {
-    const res: any = await backOff(
+    res = await backOff(
       () => importApprovedCuratedCorpusItem(data),
       backOffOptions
     );
@@ -34,6 +35,7 @@ export async function callImportMutation(data: CorpusInput) {
   } catch (e) {
     throw new Error(e);
   }
+  return res;
 }
 
 /**
