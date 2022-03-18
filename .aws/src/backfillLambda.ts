@@ -79,7 +79,20 @@ export class BackfillLambda extends Resource {
           },
         ],
         alarms: {
-          // TODO: set better alarm values
+          errors: {
+            // The backfill lambda will likely only run for 10-15 minutes total,
+            // so having more than one evaluation period is not necessary.
+            evaluationPeriods: 1,
+            period: 300, // 5 minutes
+            threshold: 50,
+            // TODO: remove this alarm from Dev when testing is complete
+            // actions: config.isDev
+            //   ? []
+            //   : [pagerDuty!.snsNonCriticalAlarmTopic.arn],
+
+            // For now, we need alerts in Dev, too
+            actions: [pagerDuty.snsNonCriticalAlarmTopic.arn],
+          },
         },
       },
       tags: config.tags,
