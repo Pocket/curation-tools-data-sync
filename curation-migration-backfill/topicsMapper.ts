@@ -31,12 +31,19 @@ Object.keys(TopicMappedToReaditlaTmpDb).forEach(
   }
 );
 
-export function getTopicForCuratedCorpusApi(input: string) {
+export function getTopicForCuratedCorpusApi(input: string | null) {
+  if (!input) {
+    return null;
+  }
   const topicForCuratedCorpusApi = TopicMappedToCuratedCorpusApi.get(input);
   return topicForCuratedCorpusApi ? topicForCuratedCorpusApi : null;
 }
 
-export function getTopicForReaditLaTmpDatabase(input: string) {
+export function getTopicForReaditLaTmpDatabase(input: string | null) {
+  if (!input) {
+    return null;
+  }
+
   if (TopicMappedToReaditlaTmpDb[input] == undefined) {
     return null;
   }
