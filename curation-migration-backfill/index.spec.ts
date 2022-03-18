@@ -168,20 +168,24 @@ describe.only('test for importApprovedCuratedCorpusItem', () => {
     scheduledSurfaceGuid: 'NEW_TAB_EN_US',
   };
 
-  it.skip('mutation returns response', async () => {
-    // const result = await CuratedCorpusApi.callImportMutation(input);
-    // console.log(result);
+  it.only('should return the correct mutation response', async () => {
+    const result = await callImportMutation(input);
+    console.log(result);
+
+    expect(2).toEqual(2);
   });
 
-  it.only('mutation retries 3 times before throwing error', async () => {
+  it.skip('should succeed on the third try after two failed tries', async () => {
+    const testResponse = {
+      data: 'test-successful-response',
+    };
+
     nock(config.AdminApi)
       .post('/')
       .times(2)
       .replyWithError('Something went wrong');
 
-    nock(config.AdminApi).post('/').reply(500, {
-      data: 'bob',
-    });
+    nock(config.AdminApi).post('/').reply(200, testResponse);
 
     const curatedCorpusCallerSpy = jest.spyOn(
       CuratedCorpusApi,
@@ -189,6 +193,29 @@ describe.only('test for importApprovedCuratedCorpusItem', () => {
     );
     const res = await callImportMutation(input);
     expect(curatedCorpusCallerSpy).toBeCalledTimes(3);
-    expect(res).toEqual({ data: 'bob' });
+    expect(res).toEqual(testResponse);
+  });
+
+  it.skip('should throw an error after three failed tries', async () => {
+    const testError = 'Something went wrong';
+    const curatedCorpusCallerSpy = jest.spyOn(
+      CuratedCorpusApi,
+      'importApprovedCuratedCorpusItem'
+    );
+
+    nock(config.AdminApi).post('/').times(3).replyWithError(testError);
+
+    await expect(callImportMutation(input)).rejects.toThrowError(testError);
+    expect(curatedCorpusCallerSpy).toBeCalledTimes(3);
+  });
+
+  it.skip('should throw an error after three failed tries', async () => {
+    nock(config.AdminApi)
+      .post('/')
+      .reply(200, {
+        errors: [{ message: 'test-error' }],
+      });
+
+    await expect(callImportMutation(input)).rejects.toThrowError();
   });
 });

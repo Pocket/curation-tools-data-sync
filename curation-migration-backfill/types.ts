@@ -84,3 +84,9 @@ export type ImportApprovedCuratedCorpusItemPayload = {
   approvedItem: ApprovedItem;
   scheduledItem: ScheduledItem;
 };
+
+export interface ImportApprovedCuratedCorpusItemMutationResponse {
+  data: {
+    importApprovedCuratedCorpusItem: ImportApprovedCuratedCorpusItemPayload;
+  };
+}

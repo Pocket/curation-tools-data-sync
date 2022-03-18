@@ -25,7 +25,7 @@ export async function callImportMutation(data: CorpusInput) {
       () => importApprovedCuratedCorpusItem(data),
       backOffOptions
     );
-    if (res.statusCode == 200 && res.errors != null) {
+    if (res.errors != null) {
       throw new Error(
         `Failed to retrieve data from curated-corpus-api.\n GraphQL Errors: ${JSON.stringify(
           res.errors
@@ -55,7 +55,7 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
       await sleep(1000);
       // TODO
       // Here's where you'd call the import mutation instead
-      callImportMutation(corpusInput);
+      const importMutationResponse = await callImportMutation(corpusInput);
 
       console.log(corpusInput);
       // TODO
