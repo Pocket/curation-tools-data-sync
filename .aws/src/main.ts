@@ -15,6 +15,7 @@ import { NullProvider } from '@cdktf/provider-null';
 import { ArchiveProvider } from '@cdktf/provider-archive';
 import { BackfillLambda } from './backfillLambda';
 import { DynamoDB } from './dynamoDb';
+import { DatasyncLambda } from './datasyncLambda';
 
 //todo: change class name to your service name
 class CurationToolsDataSync extends TerraformStack {
@@ -33,18 +34,28 @@ class CurationToolsDataSync extends TerraformStack {
       workspaces: [{ prefix: `${config.name}-` }],
     });
 
+    // ** shared infrastructure between backfill and datasync
     const vpc = new PocketVPC(this, 'pocket-shared-vpc');
     const pagerDuty = this.createPagerDuty();
-
     //dynamo db to map curatedRecId - scheduledItem's externalId and store approvedItem's externalId
     const idMapperDynamoDb = new DynamoDB(this, 'curation-migration-id-mapper');
 
+    // ** infrastructure for backfill process **
     //bucket for storing all the required csv files
     this.createMigrationBucket();
 
     new BackfillLambda(
       this,
       'backfill-lambda',
+      vpc,
+      idMapperDynamoDb.curationMigrationTable,
+      pagerDuty
+    );
+
+    // ** infrastructure for datasync process **
+    new DatasyncLambda(
+      this,
+      'datasync-lambda',
       vpc,
       idMapperDynamoDb.curationMigrationTable,
       pagerDuty
