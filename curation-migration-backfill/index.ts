@@ -11,9 +11,12 @@ import { BackfillMessage, CorpusInput } from './types';
 import { hydrateCorpusInput, sleep } from './lib';
 
 /**
- *
+ * Function that establishes the number of back off attempts
+ * and calls the importApprovedCuratedCorpusItem function. Catches and throws any errors
+ * as well as errors thrown by the mutation call
  */
 export async function callImportMutation(data: CorpusInput) {
+  // we've set the default number of retries to 3
   const backOffOptions = {
     numOfAttempts: 3,
   };
@@ -21,6 +24,7 @@ export async function callImportMutation(data: CorpusInput) {
   let res: any;
 
   try {
+    // call our mutation function
     res = await backOff(
       () => importApprovedCuratedCorpusItem(data),
       backOffOptions
@@ -53,13 +57,14 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
       const corpusInput = hydrateCorpusInput(message, prospectData);
       // Wait a sec... don't barrage the api. We're just backfilling here.
       await sleep(1000);
-      // TODO
-      // Here's where you'd call the import mutation instead
-      const importMutationResponse = await callImportMutation(corpusInput);
 
-      console.log(corpusInput);
-      // TODO
-      // If the import succeeds, add mapping record to dynamodb
+      // Call the import mutation
+      const importMutationResponse = await callImportMutation(corpusInput);
+      console.log(importMutationResponse);
+
+      //TODO: insert the importMutationResponse data into dynamo
+      //dynamoInsert()
+
       // await createCuratedItem(corpusInput) // method does not yet exist; should hydrate object and call insertCuratedItem internally
     } catch (error) {
       batchFailures.push({ itemIdentifier: record.messageId });

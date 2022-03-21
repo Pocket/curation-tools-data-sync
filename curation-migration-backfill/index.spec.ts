@@ -2,11 +2,28 @@ import { callImportMutation, handlerFn } from './';
 import { CorpusInput } from './types';
 import { epochToDateString } from './lib';
 import * as CuratedCorpusApi from './externalCaller/curatedCorpusApiCaller';
+import * as SecretManager from './secretManager';
+import * as Jwt from './jwt';
+import sinon from 'sinon';
 import nock from 'nock';
 import config from './config';
 import { SQSEvent } from 'aws-lambda';
 
-describe.skip('curation migration', () => {
+describe('curation migration', () => {
+  beforeAll(() => {
+    // mock the secrets manager call
+    sinon
+      .stub(SecretManager, 'getCurationToolsDataSyncPrivateKey')
+      .resolves('test-secret');
+
+    // mock the generate jwt function
+    sinon.stub(Jwt, 'generateJwt').returns('test-jwt');
+  });
+
+  afterAll(() => {
+    sinon.restore();
+  });
+
   const record = {
     curated_rec_id: '123',
     time_live: 1647042571,
@@ -23,6 +40,7 @@ describe.skip('curation migration', () => {
     feed_id: 8,
     slug: 'en-intl',
   };
+
   describe('epochToDateString', () => {
     it('works for for zero-padded months', async () => {
       const date = 1647042571; // 2022-03-11 23:49:31 UTC
@@ -77,7 +95,7 @@ describe.skip('curation migration', () => {
     });
     it('returns batch item failure if prospect-api has error, with partial success', async () => {
       nock(config.AdminApi)
-        .post('/')
+        .post('/') //prospect-api call for first event
         .reply(200, {
           data: {
             getUrlMetadata: {
@@ -87,7 +105,16 @@ describe.skip('curation migration', () => {
             },
           },
         })
-        .post('/')
+        .post('/') //curated-corpus-api call for first event
+        .reply(200, {
+          data: {
+            importApprovedItem: {
+              approvedItem: {},
+              scheduledItem: {},
+            },
+          },
+        })
+        .post('/') // failed prospect-api call for second event
         .reply(200, { errors: [{ message: 'server bork' }] });
       const fakeEvent = {
         Records: [
@@ -95,7 +122,9 @@ describe.skip('curation migration', () => {
           { messageId: '2', body: JSON.stringify(record) },
         ],
       } as unknown as SQSEvent;
+
       const actual = await handlerFn(fakeEvent);
+
       expect(actual).toEqual({ batchItemFailures: [{ itemIdentifier: '2' }] });
     });
     it('returns batch item failure if prospect-api returns null data', async () => {
@@ -144,10 +173,106 @@ describe.skip('curation migration', () => {
       const actual = await handlerFn(fakeEvent);
       expect(actual).toEqual({ batchItemFailures: [{ itemIdentifier: '1' }] });
     });
+
+    it('returns no batch item failures if curated-corpus-api request is successful', async () => {
+      // mock the first request to prospect-api to be successful.
+      // the second request (post) is made to curated-corpus-api
+      // both requests are times 2 since we are testing for two sqs events
+      nock(config.AdminApi)
+        .post('/')
+        .times(2)
+        .reply(200, {
+          data: {
+            getUrlMetadata: {
+              isSyndicated: true,
+              isCollection: false,
+              publisher: 'Gums Weekly',
+            },
+          },
+        });
+
+      nock(config.AdminApi)
+        .post('/')
+        .times(2)
+        .reply(200, {
+          data: {
+            importApprovedItem: {
+              approvedItem: {},
+              scheduledItem: {},
+            },
+          },
+        });
+
+      // create two fake sqs events
+      const fakeEvent = {
+        Records: [
+          { messageId: '1', body: JSON.stringify(record) },
+          { messageId: '2', body: JSON.stringify(record) },
+        ],
+      } as unknown as SQSEvent;
+
+      // call our lambda handler function
+      const actual = await handlerFn(fakeEvent);
+
+      // we should get no failed items
+      expect(actual).toEqual({
+        batchItemFailures: [],
+      });
+    });
+
+    it('returns batch item failure if curated-corpus-api request throws an error', async () => {
+      // mock the first request to prospect-api to be successful
+      // the second request (post) is made to curated-corpus-api, let's fail that one with a graphql error
+      nock(config.AdminApi)
+        .post('/')
+        .reply(200, {
+          data: {
+            getUrlMetadata: {
+              isSyndicated: true,
+              isCollection: false,
+              publisher: 'Gums Weekly',
+            },
+          },
+        })
+        .post('/')
+        .reply(200, {
+          errors: [{ message: 'test-graphql-error' }],
+        });
+
+      // create two fake sqs events
+      const fakeEvent = {
+        Records: [
+          { messageId: '1', body: JSON.stringify(record) },
+          { messageId: '2', body: JSON.stringify(record) },
+        ],
+      } as unknown as SQSEvent;
+
+      // call our lambda handler function
+      const actual = await handlerFn(fakeEvent);
+
+      // we should get two failed items
+      expect(actual).toEqual({
+        batchItemFailures: [{ itemIdentifier: '1' }, { itemIdentifier: '2' }],
+      });
+    });
   });
 });
 
-describe.only('test for importApprovedCuratedCorpusItem', () => {
+describe('callImportMutation function', () => {
+  beforeAll(() => {
+    // mock
+    sinon
+      .stub(SecretManager, 'getCurationToolsDataSyncPrivateKey')
+      .resolves('test-secret');
+
+    // mock the generate jwt function
+    sinon.stub(Jwt, 'generateJwt').returns('test-jwt');
+  });
+
+  afterAll(() => {
+    sinon.restore();
+  });
+
   const input: CorpusInput = {
     url: 'https://test.com/docker',
     title: 'Find Out How I Cured My Docker In 2 Days',
@@ -168,14 +293,7 @@ describe.only('test for importApprovedCuratedCorpusItem', () => {
     scheduledSurfaceGuid: 'NEW_TAB_EN_US',
   };
 
-  it.only('should return the correct mutation response', async () => {
-    const result = await callImportMutation(input);
-    console.log(result);
-
-    expect(2).toEqual(2);
-  });
-
-  it.skip('should succeed on the third try after two failed tries', async () => {
+  it('should succeed on the third try after two failed tries', async () => {
     const testResponse = {
       data: 'test-successful-response',
     };
@@ -196,8 +314,13 @@ describe.only('test for importApprovedCuratedCorpusItem', () => {
     expect(res).toEqual(testResponse);
   });
 
-  it.skip('should throw an error after three failed tries', async () => {
+  it('should throw an error after three failed tries', async () => {
     const testError = 'Something went wrong';
+
+    // const sinonSpy = sinon.spy(
+    //   CuratedCorpusApi,
+    //   'importApprovedCuratedCorpusItem'
+    // );
     const curatedCorpusCallerSpy = jest.spyOn(
       CuratedCorpusApi,
       'importApprovedCuratedCorpusItem'
@@ -209,7 +332,7 @@ describe.only('test for importApprovedCuratedCorpusItem', () => {
     expect(curatedCorpusCallerSpy).toBeCalledTimes(3);
   });
 
-  it.skip('should throw an error after three failed tries', async () => {
+  it('should throw an error if graphql response has errors', async () => {
     nock(config.AdminApi)
       .post('/')
       .reply(200, {
