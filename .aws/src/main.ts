@@ -6,7 +6,6 @@ import {
   TerraformStack,
 } from 'cdktf';
 import { AwsProvider, s3 } from '@cdktf/provider-aws';
-
 import { config } from './config';
 import { PocketPagerDuty, PocketVPC } from '@pocket-tools/terraform-modules';
 import { PagerdutyProvider } from '@cdktf/provider-pagerduty';
@@ -17,7 +16,6 @@ import { BackfillLambda } from './backfillLambda';
 import { DynamoDB } from './dynamoDb';
 import { DatasyncLambda } from './datasyncLambda';
 
-//todo: change class name to your service name
 class CurationToolsDataSync extends TerraformStack {
   constructor(scope: Construct, name: string) {
     super(scope, name);
@@ -96,15 +94,18 @@ class CurationToolsDataSync extends TerraformStack {
     });
   }
 
+  /**
+   * Create the migration S3 bucket
+   * This bucket is used to store all the required csv files
+   * @private
+   */
   private createMigrationBucket() {
-    const migrationBucket = new s3.S3Bucket(this, 'synthetic-s3-bucket', {
+    return new s3.S3Bucket(this, 'synthetic-s3-bucket', {
       bucket:
         `pocket-curation-migration-${config.environment}-backfill-bucket`.toLowerCase(),
       tags: config.tags,
       acl: 'private',
     });
-
-    return migrationBucket;
   }
 }
 

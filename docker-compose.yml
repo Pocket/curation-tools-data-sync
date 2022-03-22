@@ -17,3 +17,15 @@ services:
       - EXTRA_CORS_ALLOWED_HEADERS=Content-Disposition, Content-Type, x-amz-acl
       - EXTRA_CORS_EXPOSE_HEADERS=ETag
       - HOSTNAME_EXTERNAL=localstack
+
+  mysql:
+    image: mysql:5.6
+    env_file:
+      - ./.docker/local.env
+    ports:
+      - '3310:3306'
+    volumes:
+      - .docker/mysql/schema:/docker-entrypoint-initdb.d:delegated
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      - TZ=US/Central
