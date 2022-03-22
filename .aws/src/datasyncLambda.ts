@@ -36,7 +36,7 @@ export class DatasyncLambda extends Resource {
     let targetLambdaDLQ = this.createSqsForDlq();
 
     let eventBridgeTarget: PocketEventBridgeTargets = {
-      targetId: `${config.prefix}-datasync-target-lambda-id`,
+      targetId: `${config.prefix}-Datasync-Target-Lambda-Id`,
       arn: targetLambda.lambda.versionedLambda.arn,
       terraformResource: targetLambda.lambda.versionedLambda,
       deadLetterArn: targetLambdaDLQ.arn,
@@ -44,7 +44,7 @@ export class DatasyncLambda extends Resource {
 
     const dataSyncEventRuleConfig: PocketEventBridgeProps = {
       eventRule: {
-        name: `${config.prefix}-eventBridge-rule`,
+        name: `${config.prefix}-EventBridge-Rule`,
         pattern: {
           source: ['curation-migration-datasync'],
           'detail-type': [
@@ -63,7 +63,7 @@ export class DatasyncLambda extends Resource {
     let dataSyncEventRuleWithTargetObj =
       new PocketEventBridgeRuleWithMultipleTargets(
         this,
-        `${config.prefix}-eventBridge-rule`,
+        `${config.prefix}-EventBridge-Rule`,
         dataSyncEventRuleConfig
       );
 
@@ -71,7 +71,7 @@ export class DatasyncLambda extends Resource {
 
     new lambdafunction.LambdaPermission(
       this,
-      `-datasync-lambda-Function-permission`,
+      `${config.prefix}-Datasync-Lambda-Permission`,
       {
         action: 'lambda:InvokeFunction',
         functionName: targetLambda.lambda.versionedLambda.functionName,
@@ -85,9 +85,9 @@ export class DatasyncLambda extends Resource {
       }
     );
 
-    this.createDLQExecutionPolicyOnLambda(
-      targetLambda.lambda.lambdaExecutionRole,
-      targetLambdaDLQ
+    this.createPolicyForEventBridgeRuleToDlq(
+      targetLambdaDLQ,
+      dataSyncEventRuleWithTargetObj.getEventBridge().rule.arn
     );
   }
 
@@ -126,52 +126,49 @@ export class DatasyncLambda extends Resource {
         },
       },
     };
-    const targetLambda = new PocketVersionedLambda(
+    return new PocketVersionedLambda(
       this,
       `${config.prefix}-Datasync-Lambda`,
       lambdaConfig
     );
-
-    return targetLambda;
   }
 
-  //todo: connect this policy with lambda role.
-  private createDLQExecutionPolicyOnLambda(
-    executionRole: iam.IamRole,
-    sqsQueue: sqs.SqsQueue | sqs.DataAwsSqsQueue
-  ): iam.IamRolePolicyAttachment {
-    const lambdaSqsPolicy = new iam.IamPolicy(this, 'sqs-policy', {
-      name: `${config.prefix}-targetLambda-Dlq-policy`,
-      policy: new iam.DataAwsIamPolicyDocument(
-        this,
-        `targetLambda-Dlq-policy`,
-        {
-          statement: [
-            {
-              effect: 'Allow',
-              actions: [
-                'sqs:SendMessage',
-                'sqs:ReceiveMessage',
-                'sqs:DeleteMessage',
-                'sqs:GetQueueAttributes',
-                'sqs:ChangeMessageVisibility',
-              ],
-              resources: [sqsQueue.arn],
-            },
-          ],
-        }
-      ).json,
-      dependsOn: [executionRole],
-    });
-
-    return new iam.IamRolePolicyAttachment(
+  //todo: the policy seems correct, but the dlq is not receiving messages
+  //from eventbridge
+  private createPolicyForEventBridgeRuleToDlq(
+    sqsQueue: sqs.SqsQueue | sqs.DataAwsSqsQueue,
+    eventBridgeRuleArn: string
+  ) {
+    const eventBridgeRuleDlqPolicy = new iam.DataAwsIamPolicyDocument(
       this,
-      'execution-role-policy-attachment',
+      `${config.prefix}-EventBridge-DLQ-Policy`,
       {
-        role: executionRole.name,
-        policyArn: lambdaSqsPolicy.arn,
-        dependsOn: [executionRole, lambdaSqsPolicy],
+        statement: [
+          {
+            effect: 'Allow',
+            actions: ['sqs:SendMessage'],
+            resources: [sqsQueue.arn],
+            principals: [
+              {
+                identifiers: ['events.amazonaws.com'],
+                type: 'Service',
+              },
+            ],
+            condition: [
+              {
+                test: 'ArnEquals',
+                variable: 'aws:SourceArn',
+                values: [eventBridgeRuleArn],
+              },
+            ],
+          },
+        ],
       }
-    );
+    ).json;
+
+    return new sqs.SqsQueuePolicy(this, 'dlq-policy', {
+      queueUrl: sqsQueue.url,
+      policy: eventBridgeRuleDlqPolicy,
+    });
   }
 }
