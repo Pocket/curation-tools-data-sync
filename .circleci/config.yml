@@ -90,8 +90,8 @@ commands:
           description: Install dependencies for the curation migration backfill
           dir: curation-migration-backfill
       - setup_node:
-      description: Install dependencies for the curation migration datasync
-      dir: curation-migration-datasync
+          description: Install dependencies for the curation migration datasync
+          dir: curation-migration-datasync
 
 jobs:
   run_code_build:
