@@ -1,4 +1,4 @@
-import { Resource, TerraformResource } from 'cdktf';
+import { Resource } from 'cdktf';
 import { Construct } from 'constructs';
 import {
   ApplicationDynamoDBTable,
@@ -53,6 +53,9 @@ export class DatasyncLambda extends Resource {
             'delete-scheduled-item',
           ],
         },
+        //todo: this has to be created as seperate app construct in tf module
+        //if we need custom bus
+        //eventBusName: '${config.prefix}-datasync-event-bus',
       },
       targets: [{ ...eventBridgeTarget }],
     };
@@ -80,6 +83,11 @@ export class DatasyncLambda extends Resource {
           dataSyncEventRule.rule,
         ],
       }
+    );
+
+    this.createDLQExecutionPolicyOnLambda(
+      targetLambda.lambda.lambdaExecutionRole,
+      targetLambdaDLQ
     );
   }
 
