@@ -24,7 +24,7 @@ export async function importApprovedCuratedCorpusItem(data: CorpusInput) {
   }
 `;
 
-  // generate the jwt token
+  //admin api requires jwt token to fetch to add a scheduledItem
   const bearerToken = 'Bearer '.concat(
     generateJwt(await getCurationToolsDataSyncPrivateKey())
   );
@@ -34,7 +34,7 @@ export async function importApprovedCuratedCorpusItem(data: CorpusInput) {
     method: 'post',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: bearerToken,
+      //Authorization: bearerToken,
     },
     body: JSON.stringify({ query: mutation, variables }),
   });

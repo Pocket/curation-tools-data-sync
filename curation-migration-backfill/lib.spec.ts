@@ -45,10 +45,14 @@ describe('lib', () => {
     });
   });
 
-  describe('epochToDateString', () => {
-    it('should convert to YYYY-MM-DD UTC', () => {
-      expect(epochToDateString(1647553314)).toEqual('2022-03-17');
-      expect(epochToDateString(1647571314)).toEqual('2022-03-18');
+  describe('epochToDateString: should convert to YYYY-MM-DD UTC', () => {
+    it('works for for zero-padded months', async () => {
+      const date = 1647042571; // 2022-03-11 23:49:31 UTC
+      expect(epochToDateString(date)).toEqual('2022-03-11');
+    });
+    it('works for two-digit months', async () => {
+      const date = 1671032431; // 2022-12-14 15:40:31 UTC
+      expect(epochToDateString(date)).toEqual('2022-12-14');
     });
   });
 

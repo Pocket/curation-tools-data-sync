@@ -10,20 +10,6 @@ import config from './config';
 import { SQSEvent } from 'aws-lambda';
 
 describe('curation migration', () => {
-  beforeAll(() => {
-    // mock the secrets manager call
-    sinon
-      .stub(SecretManager, 'getCurationToolsDataSyncPrivateKey')
-      .resolves('test-secret');
-
-    // mock the generate jwt function
-    sinon.stub(Jwt, 'generateJwt').returns('test-jwt');
-  });
-
-  afterAll(() => {
-    sinon.restore();
-  });
-
   const record = {
     curated_rec_id: '123',
     time_live: 1647042571,
@@ -41,16 +27,20 @@ describe('curation migration', () => {
     slug: 'en-intl',
   };
 
-  describe('epochToDateString', () => {
-    it('works for for zero-padded months', async () => {
-      const date = 1647042571; // 2022-03-11 23:49:31 UTC
-      expect(epochToDateString(date)).toEqual('2022-03-11');
-    });
-    it('works for two-digit months', async () => {
-      const date = 1671032431; // 2022-12-14 15:40:31 UTC
-      expect(epochToDateString(date)).toEqual('2022-12-14');
-    });
+  beforeAll(() => {
+    // mock the secrets manager call
+    sinon
+      .stub(SecretManager, 'getCurationToolsDataSyncPrivateKey')
+      .resolves('test-secret');
+
+    // mock the generate jwt function
+    sinon.stub(Jwt, 'generateJwt').returns('test-jwt');
   });
+
+  afterAll(() => {
+    sinon.restore();
+  });
+
   describe('lambda handler', () => {
     it('formats record as expected', async () => {
       nock(config.AdminApi)
@@ -255,90 +245,5 @@ describe('curation migration', () => {
         batchItemFailures: [{ itemIdentifier: '1' }, { itemIdentifier: '2' }],
       });
     });
-  });
-});
-
-describe('callImportMutation function', () => {
-  beforeAll(() => {
-    // mock
-    sinon
-      .stub(SecretManager, 'getCurationToolsDataSyncPrivateKey')
-      .resolves('test-secret');
-
-    // mock the generate jwt function
-    sinon.stub(Jwt, 'generateJwt').returns('test-jwt');
-  });
-
-  afterAll(() => {
-    sinon.restore();
-  });
-
-  const input: CorpusInput = {
-    url: 'https://test.com/docker',
-    title: 'Find Out How I Cured My Docker In 2 Days',
-    excerpt: 'A short summary of what this story is about',
-    imageUrl: 'https://test.com/image.png',
-    source: 'BACKFILL',
-    status: 'RECOMMENDATION',
-    language: 'EN',
-    publisher: 'Convective Cloud',
-    topic: 'TECHNOLOGY',
-    isCollection: false,
-    isSyndicated: false,
-    createdAt: 1647312676,
-    createdBy: 'ad|Mozilla-LDAP|swing',
-    updatedAt: 1647312676,
-    updatedBy: 'ad|Mozilla-LDAP|swing',
-    scheduledDate: '2022-02-02',
-    scheduledSurfaceGuid: 'NEW_TAB_EN_US',
-  };
-
-  it('should succeed on the third try after two failed tries', async () => {
-    const testResponse = {
-      data: 'test-successful-response',
-    };
-
-    nock(config.AdminApi)
-      .post('/')
-      .times(2)
-      .replyWithError('Something went wrong');
-
-    nock(config.AdminApi).post('/').reply(200, testResponse);
-
-    const curatedCorpusCallerSpy = jest.spyOn(
-      CuratedCorpusApi,
-      'importApprovedCuratedCorpusItem'
-    );
-    const res = await callImportMutation(input);
-    expect(curatedCorpusCallerSpy).toBeCalledTimes(3);
-    expect(res).toEqual(testResponse);
-  });
-
-  it('should throw an error after three failed tries', async () => {
-    const testError = 'Something went wrong';
-
-    // const sinonSpy = sinon.spy(
-    //   CuratedCorpusApi,
-    //   'importApprovedCuratedCorpusItem'
-    // );
-    const curatedCorpusCallerSpy = jest.spyOn(
-      CuratedCorpusApi,
-      'importApprovedCuratedCorpusItem'
-    );
-
-    nock(config.AdminApi).post('/').times(3).replyWithError(testError);
-
-    await expect(callImportMutation(input)).rejects.toThrowError(testError);
-    expect(curatedCorpusCallerSpy).toBeCalledTimes(3);
-  });
-
-  it('should throw an error if graphql response has errors', async () => {
-    nock(config.AdminApi)
-      .post('/')
-      .reply(200, {
-        errors: [{ message: 'test-error' }],
-      });
-
-    await expect(callImportMutation(input)).rejects.toThrowError();
   });
 });
