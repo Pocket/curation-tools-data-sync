@@ -135,6 +135,7 @@ export class DatasyncLambda extends Resource {
 
   //todo: the policy seems correct, but the dlq is not receiving messages
   //from eventbridge
+  //https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-rule-dlq.html
   private createPolicyForEventBridgeRuleToDlq(
     sqsQueue: sqs.SqsQueue | sqs.DataAwsSqsQueue,
     eventBridgeRuleArn: string
