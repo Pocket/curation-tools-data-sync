@@ -4,6 +4,7 @@ import * as Sentry from '@sentry/serverless';
 export async function handlerFn(event: any) {
   Sentry.captureMessage(JSON.stringify(event));
   console.log(JSON.stringify(event));
+  throw new Error('fail this invocation');
 }
 
 Sentry.AWSLambda.init({
