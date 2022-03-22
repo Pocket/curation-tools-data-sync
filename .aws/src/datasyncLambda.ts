@@ -31,11 +31,11 @@ export class DatasyncLambda extends Resource {
   }
 
   private createEventBridgeRuleWithLambdaTargetAndDLQ() {
-    let targetLambda = this.createLambdaTarget();
+    const targetLambda = this.createLambdaTarget();
 
-    let targetLambdaDLQ = this.createSqsForDlq();
+    const targetLambdaDLQ = this.createSqsForDlq();
 
-    let eventBridgeTarget: PocketEventBridgeTargets = {
+    const eventBridgeTarget: PocketEventBridgeTargets = {
       targetId: `${config.prefix}-Datasync-Target-Lambda-Id`,
       arn: targetLambda.lambda.versionedLambda.arn,
       terraformResource: targetLambda.lambda.versionedLambda,
@@ -60,14 +60,14 @@ export class DatasyncLambda extends Resource {
       targets: [{ ...eventBridgeTarget }],
     };
 
-    let dataSyncEventRuleWithTargetObj =
+    const dataSyncEventRuleWithTargetObj =
       new PocketEventBridgeRuleWithMultipleTargets(
         this,
         `${config.prefix}-EventBridge-Rule`,
         dataSyncEventRuleConfig
       );
 
-    let dataSyncEventRule = dataSyncEventRuleWithTargetObj.getEventBridge();
+    const dataSyncEventRule = dataSyncEventRuleWithTargetObj.getEventBridge();
 
     new lambdafunction.LambdaPermission(
       this,
