@@ -34,7 +34,7 @@ export async function importApprovedCuratedCorpusItem(data: CorpusInput) {
     method: 'post',
     headers: {
       'Content-Type': 'application/json',
-      //Authorization: bearerToken,
+      Authorization: bearerToken,
     },
     body: JSON.stringify({ query: mutation, variables }),
   });
