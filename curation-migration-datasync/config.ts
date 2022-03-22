@@ -2,6 +2,7 @@ const environment = process.env.ENVIRONMENT || 'development';
 const isDev = environment === 'development';
 
 const config = {
+  isDev,
   app: {
     name: 'Curation-Migration-Datasync-Lambda',
     environment: environment,
