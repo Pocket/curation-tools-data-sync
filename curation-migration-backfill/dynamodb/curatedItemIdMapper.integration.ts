@@ -6,7 +6,7 @@ import {
   getByScheduledSurfaceGuid,
   insertCuratedItem,
 } from './curatedItemIdMapper';
-import { truncateDb } from './dynamoUtilities';
+import { truncateDynamoDb } from './dynamoUtilities';
 import { dbClient } from './dynamoDbClient';
 
 describe('dynamodb read and write test', () => {
@@ -45,7 +45,7 @@ describe('dynamodb read and write test', () => {
   ];
 
   beforeAll(async () => {
-    await truncateDb(dbClient);
+    await truncateDynamoDb(dbClient);
 
     const insertRecord = curatedItemRecords.map(async (item) => {
       await insertCuratedItem(dbClient, item);
@@ -54,7 +54,7 @@ describe('dynamodb read and write test', () => {
   });
 
   afterAll(async () => {
-    await truncateDb(dbClient);
+    await truncateDynamoDb(dbClient);
   });
 
   it('should add curatedItem and get by curatedRecId', async () => {
