@@ -12,7 +12,7 @@ import {
   PocketVersionedLambdaProps,
   PocketVPC,
 } from '@pocket-tools/terraform-modules';
-import { iam, lambdafunction, sqs } from '@cdktf/provider-aws';
+import { iam, lambdafunction, sqs, kms } from '@cdktf/provider-aws';
 import { getEnvVariableValues } from './utilities';
 import { config } from './config';
 import { LambdaPermissionConfig } from '@cdktf/provider-aws/lib/lambdafunction';
@@ -137,7 +137,7 @@ export class DatasyncLambda extends Resource {
           CURATION_MIGRATION_TABLE: this.curationMigrationTable.dynamodb.name,
           CURATION_MIGRATION_TABLE_HASH_KEY:
             this.curationMigrationTable.dynamodb.hashKey,
-          DATABASE_SECRET_ID: config.datasyncLambda.dbSecretId,
+          //DATABASE_SECRET_ID: config.datasyncLambda.dbSecretId,
           REGION: this.vpc.region,
           SENTRY_DSN: sentryDsn,
           GIT_SHA: gitSha,
