@@ -13,6 +13,8 @@
     "@aws-sdk/client-secrets-manager": "^3.42.0",
     "@aws-sdk/types": "^3.54.0",
     "@sentry/serverless": "^6.15.0",
-    "aws-lambda": "^1.0.7"
+    "aws-lambda": "^1.0.7",
+    "knex": "^1.0.4",
+    "mysql": "^2.18.1"
   }
 }

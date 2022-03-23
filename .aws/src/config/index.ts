@@ -11,8 +11,15 @@ export const config = {
   circleCIPrefix: `/${name}/CircleCI/${environment}`,
   shortName: 'CTSYNC',
   environment,
+  rds: {
+    minCapacity: 1,
+    maxCapacity: isDev ? 1 : undefined,
+  },
   tags: {
     service: name,
     environment,
+  },
+  datasyncLambda: {
+    dbSecretId: `${name}/${environment}/DatabaseCredentials`,
   },
 };
