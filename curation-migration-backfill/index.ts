@@ -1,44 +1,11 @@
 import * as Sentry from '@sentry/serverless';
 import config from './config';
 import { SQSEvent, SQSBatchResponse, SQSBatchItemFailure } from 'aws-lambda';
-import { backOff } from 'exponential-backoff';
 import { fetchProspectData } from './externalCaller/prospectApiCaller';
-import { importApprovedCuratedCorpusItem } from './externalCaller/curatedCorpusApiCaller';
-import { BackfillMessage, CorpusInput } from './types';
+import { BackfillMessage } from './types';
 import { hydrateCorpusInput, sleep } from './lib';
 import { CuratedItemRecord, ScheduledSurfaceGuid } from './dynamodb/types';
-
-/**
- * Function that establishes the number of back off attempts
- * and calls the importApprovedCuratedCorpusItem function. Catches and throws any errors
- * as well as errors thrown by the mutation call
- */
-export async function callImportMutation(data: CorpusInput) {
-  // we've set the default number of retries to 3
-  const backOffOptions = {
-    numOfAttempts: 3,
-  };
-
-  let res: any;
-
-  try {
-    // call our mutation function
-    res = await backOff(
-      () => importApprovedCuratedCorpusItem(data),
-      backOffOptions
-    );
-    if (res.errors != null) {
-      throw new Error(
-        `Failed to retrieve data from curated-corpus-api.\n GraphQL Errors: ${JSON.stringify(
-          res.errors
-        )}`
-      );
-    }
-  } catch (e) {
-    throw new Error(e);
-  }
-  return res;
-}
+import { callImportMutation } from './externalCaller/importMutationCaller';
 
 /**
  * Lambda handler function. Separated from the Sentry wrapper
@@ -56,31 +23,23 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
       // Wait a sec... don't barrage the api. We're just backfilling here.
       await sleep(1000);
 
-      // Call the import mutation
       const importMutationResponse = await callImportMutation(corpusInput);
-      console.log(`===========` + JSON.stringify(importMutationResponse));
-      console.log(
-        `****` +
-          JSON.stringify(
+      const curatedItemRecord: CuratedItemRecord = {
+        curatedRecId: parseInt(message.curated_rec_id),
+        scheduledItemExternalId:
+          importMutationResponse?.data?.importApprovedCuratedCorpusItem
+            .scheduledItem.externalId,
+        approvedItemExternalId:
+          importMutationResponse?.data?.importApprovedCuratedCorpusItem
+            .approvedItem.externalId,
+        scheduledSurfaceGuid:
+          ScheduledSurfaceGuid[
             importMutationResponse?.data?.importApprovedCuratedCorpusItem
-              .scheduledItem.externalId
-          )
-      );
-      // const curatedItemRecord: CuratedItemRecord = {
-      //   curatedRecId: parseInt(message.curated_rec_id),
-      //   scheduledItemExternalId:
-      //     importMutationResponse?.data?.importApprovedCuratedCorpusItem
-      //       .scheduledItem.externalId,
-      //   approvedItemExternalId:
-      //     importMutationResponse?.data?.importApprovedCuratedCorpusItem
-      //       .approvedItem.externalId,
-      //   scheduledSurfaceGuid:
-      //     ScheduledSurfaceGuid[
-      //       importMutationResponse.data?.approvedItem.scheduledSurfaceGuid
-      //     ],
-      //   lastUpdatedAt: 1234,
-      // };
-      // await console.log(`curatedItemRecord -> ${curatedItemRecord}`);
+              .scheduledItem.scheduledSurfaceGuid
+          ],
+        lastUpdatedAt: new Date().getTime(),
+      };
+      await console.log(`curatedItemRecord -> ${curatedItemRecord}`);
 
       //TODO: insert the importMutationResponse data into dynamo
       //dynamoInsert()

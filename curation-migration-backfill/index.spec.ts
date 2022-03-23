@@ -5,7 +5,7 @@ import sinon from 'sinon';
 import nock from 'nock';
 import config from './config';
 import { SQSEvent } from 'aws-lambda';
-import * as CuratedCorpusApi from './externalCaller/curatedCorpusApiCaller';
+import * as ImportMutationCaller from './externalCaller/importMutationCaller';
 import * as ProspectApi from './externalCaller/prospectApiCaller';
 
 describe('curation migration', () => {
@@ -26,6 +26,11 @@ describe('curation migration', () => {
     slug: 'en-intl',
   };
 
+  const record2 = {
+    curated_rec_id: '456',
+    resolved_url: 'http://failthiscall.com',
+  };
+
   beforeEach(() => {
     // mock the secrets manager call
     sinon
@@ -38,6 +43,7 @@ describe('curation migration', () => {
 
   afterEach(() => {
     sinon.restore();
+    jest.clearAllMocks();
   });
 
   describe('lambda handler', () => {
@@ -62,7 +68,7 @@ describe('curation migration', () => {
               },
               scheduledItem: {
                 externalId: 'random-scheduledItem-guid',
-                scheduledSurfaceGuid: 'new_tab_en_us',
+                scheduledSurfaceGuid: 'NEW_TAB_EN_US',
               },
             },
           },
@@ -183,23 +189,17 @@ describe('curation migration', () => {
       // mock the first request to prospect-api to be successful.
       // the second request (post) is made to curated-corpus-api
       // both requests are times 2 since we are testing for two sqs events
-      nock(config.AdminApi)
-        .post('/')
-        .times(2)
-        .reply(200, {
-          data: {
-            getUrlMetadata: {
-              isSyndicated: true,
-              isCollection: false,
-              publisher: 'Gums Weekly',
-            },
-          },
-        });
 
-      nock(config.AdminApi)
-        .post('/')
-        .times(2)
-        .reply(200, {
+      sinon.stub(ProspectApi, 'fetchProspectData').returns(
+        Promise.resolve({
+          isSyndicated: true,
+          isCollection: false,
+          publisher: 'Gums Weekly',
+        })
+      );
+
+      sinon.stub(ImportMutationCaller, 'callImportMutation').returns(
+        Promise.resolve({
           data: {
             importApprovedCuratedCorpusItem: {
               approvedItem: {
@@ -207,11 +207,12 @@ describe('curation migration', () => {
               },
               scheduledItem: {
                 externalId: 'random-scheduledItem-guid',
-                scheduledSurfaceGuid: 'new_tab_en_us',
+                scheduledSurfaceGuid: 'NEW_TAB_EN_US',
               },
             },
           },
-        });
+        })
+      );
 
       // create two fake sqs events
       const fakeEvent = {

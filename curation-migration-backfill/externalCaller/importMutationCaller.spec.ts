@@ -5,7 +5,7 @@ import { CorpusInput } from '../types';
 import nock from 'nock';
 import config from '../config';
 import * as CuratedCorpusApi from './curatedCorpusApiCaller';
-import { callImportMutation } from '../index';
+import { callImportMutation } from './importMutationCaller';
 
 describe('callImportMutation function', () => {
   beforeAll(() => {
