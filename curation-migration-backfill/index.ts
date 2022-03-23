@@ -6,6 +6,8 @@ import { BackfillMessage } from './types';
 import { hydrateCorpusInput, sleep } from './lib';
 import { CuratedItemRecord, ScheduledSurfaceGuid } from './dynamodb/types';
 import { callImportMutation } from './externalCaller/importMutationCaller';
+import { insertCuratedItem } from './dynamodb/curatedItemIdMapper';
+import { dbClient } from './dynamodb/dynamoDbClient';
 
 /**
  * Lambda handler function. Separated from the Sentry wrapper
@@ -39,12 +41,9 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
           ],
         lastUpdatedAt: new Date().getTime(),
       };
-      await console.log(`curatedItemRecord -> ${curatedItemRecord}`);
+      console.log(`curatedItemRecord -> ${JSON.stringify(curatedItemRecord)}`);
 
-      //TODO: insert the importMutationResponse data into dynamo
-      //dynamoInsert()
-
-      // await createCuratedItem(corpusInput) // method does not yet exist; should hydrate object and call insertCuratedItem internally
+      await insertCuratedItem(dbClient, curatedItemRecord);
     } catch (error) {
       batchFailures.push({ itemIdentifier: record.messageId });
       Sentry.captureException(error);

@@ -28,7 +28,6 @@ describe('lib', () => {
   describe('languageExtractor', () => {
     it('should return the language in uppercase if provided', () => {
       expect(languageExtractor('en', 'NEW_TAB_EN_US')).toEqual('EN');
-      // TODO: is the below what we expect? do we need to throw an error if the language provided isn't en/de?
       expect(languageExtractor('fr', 'NEW_TAB_EN_GB')).toEqual('FR');
     });
 
@@ -69,7 +68,7 @@ describe('lib', () => {
       resolved_id: 1,
       resolved_url: 'https://getpocket.com',
       lang: 'en',
-      topic_name: 'technology',
+      topic_name: 'Technology', //use values from TopicMapper.
       feed_id: 1,
       slug: 'get-pocket',
     };
@@ -88,7 +87,7 @@ describe('lib', () => {
         status: 'RECOMMENDATION',
         language: 'EN',
         imageUrl: 'https://via.placeholder.com/150',
-        topic: 'technology',
+        topic: 'TECHNOLOGY',
         source: 'BACKFILL',
         createdAt: 1647553314,
         updatedAt: 1647553314,

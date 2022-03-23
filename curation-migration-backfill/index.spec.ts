@@ -7,7 +7,11 @@ import config from './config';
 import { SQSEvent } from 'aws-lambda';
 import * as ImportMutationCaller from './externalCaller/importMutationCaller';
 import * as ProspectApi from './externalCaller/prospectApiCaller';
+import * as curatedItemIdMapper from './dynamodb/curatedItemIdMapper';
 
+async function stubInsertCuratedItem() {
+  return;
+}
 describe('curation migration', () => {
   const record = {
     curated_rec_id: '123',
@@ -34,6 +38,9 @@ describe('curation migration', () => {
 
     // mock the generate jwt function
     sinon.stub(Jwt, 'generateJwt').returns('test-jwt');
+    sinon
+      .stub(curatedItemIdMapper, 'insertCuratedItem')
+      .callsFake(stubInsertCuratedItem);
   });
 
   afterEach(() => {

@@ -1,4 +1,5 @@
 import { BackfillMessage, CorpusInput, ProspectInfo } from './types';
+import { getTopicForCuratedCorpusApi } from './topicsMapper';
 
 // ୧༼ ಠ益ಠ ༽୨  aws and their old node runtimes
 export const sleep = async (ms: number) =>
@@ -98,8 +99,7 @@ export function hydrateCorpusInput(
     status: 'RECOMMENDATION' as const,
     language,
     imageUrl: record.image_src,
-    // TODO: does topic need to be uppercased to match our constants?
-    topic: record.topic_name,
+    topic: getTopicForCuratedCorpusApi(record.topic_name),
     source: 'BACKFILL' as const,
     createdAt: record.time_added,
     updatedAt: record.time_updated,
