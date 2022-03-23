@@ -26,8 +26,8 @@
   "homepage": "https://github.com/Pocketcuration-tools-data-sync#readme",
   "dependencies": {
     "@pocket-tools/apollo-utils": "^2.2.0",
-    "@sentry/node": "^6.19.1",
-    "@sentry/tracing": "^6.19.1"
+    "@sentry/node": "^6.19.2",
+    "@sentry/tracing": "^6.19.2"
   },
   "devDependencies": {
     "@pocket-tools/eslint-config": "^1.1.0",
