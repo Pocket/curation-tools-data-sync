@@ -25,7 +25,7 @@ describe('curation migration', () => {
     resolved_id: '123',
     resolved_url: 'https://yougotgums.com',
     lang: 'en',
-    topic_name: 'entertainment',
+    topic_name: 'Entertainment',
     feed_id: 8,
     slug: 'en-intl',
   };
