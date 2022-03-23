@@ -113,9 +113,9 @@ export class DatasyncLambda extends Resource {
      * Create an RDS instance if we are working in the Dev account.
      * This is only to facilitate testing
      */
-    if (config.isDev) {
-      this.createRds();
-    }
+    // if (config.isDev) {
+    //   this.createRds();
+    // }
 
     const { sentryDsn, gitSha } = getEnvVariableValues(this);
 
