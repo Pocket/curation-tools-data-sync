@@ -12,7 +12,7 @@ import config from '../config';
  * note - this will only delete a max of 1MB of data, but we should never
  * hit that in our integration tests
  */
-export const truncateDb = async (
+export const truncateDynamoDb = async (
   dbClient: DynamoDBDocumentClient
 ): Promise<void> => {
   const rows = await scanAllRows(dbClient);

@@ -1,14 +1,12 @@
 import * as Sentry from '@sentry/serverless';
 import config from './config';
 import { SQSEvent, SQSBatchResponse, SQSBatchItemFailure } from 'aws-lambda';
-
 import { backOff } from 'exponential-backoff';
-
 import { fetchProspectData } from './externalCaller/prospectApiCaller';
 import { importApprovedCuratedCorpusItem } from './externalCaller/curatedCorpusApiCaller';
 import { BackfillMessage, CorpusInput } from './types';
-
 import { hydrateCorpusInput, sleep } from './lib';
+import { CuratedItemRecord, ScheduledSurfaceGuid } from './dynamodb/types';
 
 /**
  * Function that establishes the number of back off attempts
@@ -60,7 +58,23 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
 
       // Call the import mutation
       const importMutationResponse = await callImportMutation(corpusInput);
-      console.log(importMutationResponse);
+      console.log(`===========` + importMutationResponse);
+
+      const curatedItemRecord: CuratedItemRecord = {
+        curatedRecId: parseInt(message.curated_rec_id),
+        scheduledItemExternalId:
+          importMutationResponse?.data?.importApprovedCuratedCorpusItem
+            .scheduledItem.externalId,
+        approvedItemExternalId:
+          importMutationResponse?.data?.importApprovedCuratedCorpusItem
+            .approvedItem.externalId,
+        scheduledSurfaceGuid:
+          ScheduledSurfaceGuid[
+            importMutationResponse?.data?.approvedItem.scheduledSurfaceGuid
+          ],
+        lastUpdatedAt: 1234,
+      };
+      // await console.log(`curatedItemRecord -> ${curatedItemRecord}`);
 
       //TODO: insert the importMutationResponse data into dynamo
       //dynamoInsert()

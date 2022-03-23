@@ -5,6 +5,8 @@ import sinon from 'sinon';
 import nock from 'nock';
 import config from './config';
 import { SQSEvent } from 'aws-lambda';
+import * as CuratedCorpusApi from './externalCaller/curatedCorpusApiCaller';
+import * as ProspectApi from './externalCaller/prospectApiCaller';
 
 describe('curation migration', () => {
   const record = {
@@ -24,7 +26,7 @@ describe('curation migration', () => {
     slug: 'en-intl',
   };
 
-  beforeAll(() => {
+  beforeEach(() => {
     // mock the secrets manager call
     sinon
       .stub(SecretManager, 'getCurationToolsDataSyncPrivateKey')
@@ -34,7 +36,7 @@ describe('curation migration', () => {
     sinon.stub(Jwt, 'generateJwt').returns('test-jwt');
   });
 
-  afterAll(() => {
+  afterEach(() => {
     sinon.restore();
   });
 
@@ -50,15 +52,26 @@ describe('curation migration', () => {
               publisher: 'Gums Weekly',
             },
           },
+        })
+        .post('/') //curated-corpus-api call for first event
+        .reply(200, {
+          data: {
+            importApprovedCuratedCorpusItem: {
+              approvedItem: {
+                externalId: 'random-approvedItem-guid',
+              },
+              scheduledItem: {
+                externalId: 'random-scheduledItem-guid',
+                scheduledSurfaceGuid: 'new_tab_en_us',
+              },
+            },
+          },
         });
 
       const fakeEvent = {
         Records: [{ body: JSON.stringify(record) }],
       } as unknown as SQSEvent;
       await handlerFn(fakeEvent);
-      // TODO: Check the spy of the import mutation to see that it's called
-      // with args that match below
-      // expect(mutationStub.firstCall.args[0]).toEqual(
       //   {
       //     url: 'https://yougotgums.com',
       //     title: 'Equine dentist wins lottery',
@@ -95,9 +108,14 @@ describe('curation migration', () => {
         .post('/') //curated-corpus-api call for first event
         .reply(200, {
           data: {
-            importApprovedItem: {
-              approvedItem: {},
-              scheduledItem: {},
+            importApprovedCuratedCorpusItem: {
+              approvedItem: {
+                externalId: 'random-approvedItem-guid',
+              },
+              scheduledItem: {
+                externalId: 'random-scheduledItem-guid',
+                scheduledSurfaceGuid: 'new_tab_en_us',
+              },
             },
           },
         })
@@ -183,9 +201,14 @@ describe('curation migration', () => {
         .times(2)
         .reply(200, {
           data: {
-            importApprovedItem: {
-              approvedItem: {},
-              scheduledItem: {},
+            importApprovedCuratedCorpusItem: {
+              approvedItem: {
+                externalId: 'random-approvedItem-guid',
+              },
+              scheduledItem: {
+                externalId: 'random-scheduledItem-guid',
+                scheduledSurfaceGuid: 'new_tab_en_us',
+              },
             },
           },
         });
