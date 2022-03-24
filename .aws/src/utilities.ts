@@ -12,8 +12,12 @@ export function getEnvVariableValues(scope: Construct) {
   });
 
   const parserEndpoint = new ssm.DataAwsSsmParameter(scope, 'parser-endpoint', {
-    name: `/${config.name}/${config.environment}/PARSER_ENDPOINT`
+    name: `/${config.name}/${config.environment}/PARSER_ENDPOINT`,
   });
 
-  return { sentryDsn: sentryDsn.value, gitSha: serviceHash.value, parserEndpoint: parserEndpoint.value };
+  return {
+    sentryDsn: sentryDsn.value,
+    gitSha: serviceHash.value,
+    parserEndpoint: parserEndpoint.value,
+  };
 }
