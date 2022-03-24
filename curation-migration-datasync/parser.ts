@@ -1,13 +1,20 @@
 import fetch from 'node-fetch';
 import config from './config';
 
+type ParserMetadataResponse = {
+  resolvedId: string;
+  domainId: string;
+};
+
 /**
- * Fetch domainID from the parser by URL, to pull
- * top_domain from the DB for data sync process.
+ * Fetch domainID and resolvedID from the parser service,
+ * using the URL.
  * @param url the URL to fetch data for
- * @returns ParserMeadataResponse
+ * @returns ParserMetadataResponse
  */
-export async function getParsedDomainId(url: string): Promise<string> {
+export async function getParserMetadata(
+  url: string
+): Promise<ParserMetadataResponse> {
   const params = new URLSearchParams({
     output: 'regular',
     getItem: '1',
@@ -16,5 +23,8 @@ export async function getParsedDomainId(url: string): Promise<string> {
   });
   const res = await fetch(config.parserEndpoint + '/' + params.toString());
   const jsonRes = await res.json();
-  return jsonRes['item']['domain_id'];
+  return {
+    domainId: jsonRes['item']['domain_id'],
+    resolvedId: jsonRes['resolved_id'],
+  };
 }

@@ -10,7 +10,9 @@ describe('fetchTopDomain', () => {
     .stub(queries, 'topDomainByDomainId')
     .resolves(1234);
   const slugStub = sandbox.stub(queries, 'topDomainBySlug').resolves(5678);
-  const parserStub = sandbox.stub(parser, 'getParsedDomainId').resolves('999');
+  const parserStub = sandbox
+    .stub(parser, 'getParserMetadata')
+    .resolves({ domainId: '999', resolvedId: '111' });
   afterEach(() => sandbox.resetHistory());
   afterAll(() => sandbox.restore());
 

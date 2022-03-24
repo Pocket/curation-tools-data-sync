@@ -1,6 +1,6 @@
 import { Knex } from 'knex';
 import { queries } from './dbClient';
-import { getParsedDomainId } from './parser';
+import { getParserMetadata } from './parser';
 
 /**
  * Fetch the top domain ID for the given url and domain ID
@@ -15,7 +15,7 @@ export async function fetchTopDomain(conn: Knex, url: string) {
     const slug = urlObj.pathname.split('/').pop() as string;
     return await queries.topDomainBySlug(conn, slug);
   } else {
-    const domainId = await getParsedDomainId(url);
+    const { domainId } = await getParserMetadata(url);
     return await queries.topDomainByDomainId(conn, domainId);
   }
 }
