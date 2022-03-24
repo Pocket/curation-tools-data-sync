@@ -213,12 +213,13 @@ export class DatasyncLambda extends Resource {
    */
   private createRds() {
     return new ApplicationRDSCluster(this, 'dev-aurora', {
-      prefix: config.prefix,
+      prefix: `${config.prefix}-v1`,
       vpcId: this.vpc.vpc.id,
       subnetIds: this.vpc.privateSubnetIds,
       rdsConfig: {
         databaseName: config.name.toLowerCase(),
         masterUsername: 'pkt_curation_data_sync',
+        skipFinalSnapshot: true,
         engine: 'aurora-mysql',
         engineMode: 'serverless',
         scalingConfiguration: {
