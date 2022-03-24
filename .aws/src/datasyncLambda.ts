@@ -117,7 +117,7 @@ export class DatasyncLambda extends Resource {
       this.createRds();
     }
 
-    const { sentryDsn, gitSha } = getEnvVariableValues(this);
+    const { sentryDsn, gitSha, parserEndpoint } = getEnvVariableValues(this);
 
     const lambdaConfig: PocketVersionedLambdaProps = {
       name: `${config.prefix}-Datasync-Lambda`,
@@ -141,6 +141,7 @@ export class DatasyncLambda extends Resource {
           REGION: this.vpc.region,
           SENTRY_DSN: sentryDsn,
           GIT_SHA: gitSha,
+          PARSER_ENDPOINT: parserEndpoint,
           ENVIRONMENT:
             config.environment === 'Prod' ? 'production' : 'development',
         },

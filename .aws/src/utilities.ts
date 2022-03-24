@@ -11,5 +11,13 @@ export function getEnvVariableValues(scope: Construct) {
     name: `${config.circleCIPrefix}/SERVICE_HASH`,
   });
 
-  return { sentryDsn: sentryDsn.value, gitSha: serviceHash.value };
+  const parserEndpoint = new ssm.DataAwsSsmParameter(scope, 'parser-endpoint', {
+    name: `/${config.name}/${config.environment}/PARSER_ENDPOINT`,
+  });
+
+  return {
+    sentryDsn: sentryDsn.value,
+    gitSha: serviceHash.value,
+    parserEndpoint: parserEndpoint.value,
+  };
 }
