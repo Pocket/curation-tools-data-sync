@@ -53,6 +53,10 @@ describe('lib', () => {
       const date = 1671032431; // 2022-12-14 15:40:31 UTC
       expect(epochToDateString(date)).toEqual('2022-12-14');
     });
+    it('works for two-digit months', async () => {
+      const date = 1646254612; // Thu, 02 Mar 2022 20:56:52 GMT
+      expect(epochToDateString(date)).toEqual('2022-03-02');
+    });
   });
 
   describe('hydrateCorpusInput', () => {

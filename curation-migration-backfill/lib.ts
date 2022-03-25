@@ -75,7 +75,8 @@ export function epochToDateString(epoch: number): string {
   const date = new Date(epoch * 1000);
   const month = date.getUTCMonth() + 1; // zero-indexed
   const padMonthString = month.toString().padStart(2, '0');
-  return `${date.getUTCFullYear()}-${padMonthString}-${date.getUTCDate()}`;
+  const day = date.getUTCDate().toString().padStart(2, '0');
+  return `${date.getUTCFullYear()}-${padMonthString}-${day}`;
 }
 
 /**
