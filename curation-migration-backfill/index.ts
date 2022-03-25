@@ -20,12 +20,23 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
   for await (const record of event.Records) {
     try {
       const message: BackfillMessage = JSON.parse(record.body);
+      Sentry.addBreadcrumb({
+        message: `failed to process the message: ${message}`,
+      });
       const prospectData = await fetchProspectData(message.resolved_url);
+      Sentry.addBreadcrumb({
+        message: `fetched from prospect table:`,
+      });
       const corpusInput = hydrateCorpusInput(message, prospectData);
       // Wait a sec... don't barrage the api. We're just backfilling here.
       await sleep(1000);
-
+      Sentry.addBreadcrumb({
+        message: `hydrated the input`,
+      });
       const importMutationResponse = await callImportMutation(corpusInput);
+      Sentry.addBreadcrumb({
+        message: `successfully processed importMutation`,
+      });
       const curatedItemRecord: CuratedItemRecord = {
         curatedRecId: parseInt(message.curated_rec_id),
         scheduledItemExternalId:
