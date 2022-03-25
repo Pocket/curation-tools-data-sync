@@ -45,11 +45,19 @@ describe('lib', () => {
   });
 
   describe('epochToDateString: should convert to YYYY-MM-DD UTC', () => {
-    it('works for for zero-padded months', async () => {
+    it('works for for zero-padded months', () => {
       const date = 1647042571; // 2022-03-11 23:49:31 UTC
       expect(epochToDateString(date)).toEqual('2022-03-11');
     });
-    it('works for two-digit months', async () => {
+    it('works for two-digit months', () => {
+      const date = 1671032431; // 2022-12-14 15:40:31 UTC
+      expect(epochToDateString(date)).toEqual('2022-12-14');
+    });
+    it('works for zero-padded days', () => {
+      const date = 1646162014; // 2022-03-01 11:13:34 UTC
+      expect(epochToDateString(date)).toEqual('2022-03-01');
+    });
+    it('works for two-digit days', () => {
       const date = 1671032431; // 2022-12-14 15:40:31 UTC
       expect(epochToDateString(date)).toEqual('2022-12-14');
     });
