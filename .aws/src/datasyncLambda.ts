@@ -153,6 +153,25 @@ export class DatasyncLambda extends Resource {
               `arn:aws:secretsmanager:${this.vpc.region}:${this.vpc.accountId}:secret:CurationToolsDataSync/${config.environment}/*`,
             ],
           },
+          {
+            effect: 'Allow',
+            actions: [
+              'dynamodb:BatchWriteItem',
+              'dynamodb:BatchGetItem',
+              'dynamodb:PutItem',
+              'dynamodb:GetItem',
+              'dynamodb:DescribeTable',
+              'dynamodb:UpdateItem',
+              'dynamodb:Query',
+              'dynamodb:Scan',
+              'dynamodb:DeleteItem',
+              'dynamodb:ConditionCheckItem',
+            ],
+            resources: [
+              this.curationMigrationTable.dynamodb.arn,
+              `${this.curationMigrationTable.dynamodb.arn}/*`,
+            ],
+          },
         ],
       },
     };
