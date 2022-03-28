@@ -15,6 +15,13 @@ const config = {
   },
   aws: {
     region: process.env.REGION || 'us-east-1',
+    localEndpoint: process.env.AWS_ENDPOINT,
+    dynamoDB: {
+      curationMigrationTable:
+        process.env.CURATION_MIGRATION_TABLE || 'curation_migration_table',
+      curatedRecIdHashKey:
+        process.env.CURATION_MIGRATION_TABLE_HASH_KEY || 'curatedRecId',
+    },
   },
   db: {
     secretId: process.env.DATABASE_SECRET_ID || '',
