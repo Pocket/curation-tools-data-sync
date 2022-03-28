@@ -17,14 +17,17 @@ import { dbClient } from './dynamodb/dynamoDbClient';
 export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
   // Not using map since we want to block after each record
   const batchFailures: SQSBatchItemFailure[] = [];
+  let messageForError;
   for await (const record of event.Records) {
     try {
       const message: BackfillMessage = JSON.parse(record.body);
+      //assigning inside try instead of parsing in catch,
+      //so we don't throw error if json parsing fails.
+      messageForError = message;
       const prospectData = await fetchProspectData(message.resolved_url);
       const corpusInput = hydrateCorpusInput(message, prospectData);
       // Wait a sec... don't barrage the api. We're just backfilling here.
       await sleep(1000);
-
       const importMutationResponse = await callImportMutation(corpusInput);
       const curatedItemRecord: CuratedItemRecord = {
         curatedRecId: parseInt(message.curated_rec_id),
@@ -45,8 +48,13 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
 
       await insertCuratedItem(dbClient, curatedItemRecord);
     } catch (error) {
-      batchFailures.push({ itemIdentifier: record.messageId });
+      console.log(`unable to process message -> ${messageForError}`);
+      console.log(error);
       Sentry.captureException(error);
+      Sentry.addBreadcrumb({
+        message: `failed to process the message: ${messageForError}`,
+      });
+      batchFailures.push({ itemIdentifier: record.messageId });
     }
   }
   return { batchItemFailures: batchFailures };
