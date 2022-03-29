@@ -4,7 +4,7 @@ import config from './config';
 
 describe('getParsedDomainId', () => {
   it('fetches appropriate keys from response', async () => {
-    const data = { resolved_id: '1', item: { domain_id: '124' } };
+    const data = { resolved_id: 1, item: { domain_id: '124' } };
     const params = new URLSearchParams({
       output: 'regular',
       getItem: '1',
@@ -16,6 +16,6 @@ describe('getParsedDomainId', () => {
       .reply(200, data);
 
     const res = await getParserMetadata('myurl.com');
-    expect(res).toEqual({ domainId: '124', resolvedId: '1' });
+    expect(res).toEqual({ domainId: '124', resolvedId: 1 });
   });
 });

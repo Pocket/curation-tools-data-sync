@@ -1,11 +1,17 @@
 import config from './config';
 import * as Sentry from '@sentry/serverless';
 import { readClient, writeClient } from './dbClient';
+import { EventBridgeEvent } from 'aws-lambda';
+import { addScheduledItem } from './eventConsumption';
+import { EventDetailType } from './types';
 
-export async function handlerFn(event: any) {
+export async function handlerFn(event: EventBridgeEvent<any, any>) {
   Sentry.captureMessage(JSON.stringify(event));
   console.log(JSON.stringify(event));
 
+  if (event['detail-type'] == EventDetailType.ADD_SCHEDULED_ITEM) {
+    await addScheduledItem(event.detail);
+  }
   const readQuery = await (await readClient()).raw("SELECT 'Are we good?'");
   const writeQuery = await (
     await writeClient()

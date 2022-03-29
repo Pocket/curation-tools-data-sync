@@ -22,6 +22,9 @@ const config = {
       curatedRecIdHashKey:
         process.env.CURATION_MIGRATION_TABLE_HASH_KEY || 'curatedRecId',
     },
+    eventRule: {
+      source: 'curation-migration-datasync',
+    },
   },
   db: {
     secretId: process.env.DATABASE_SECRET_ID || '',

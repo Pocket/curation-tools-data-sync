@@ -2,7 +2,7 @@ import fetch from 'node-fetch';
 import config from './config';
 
 type ParserMetadataResponse = {
-  resolvedId: string;
+  resolvedId: number;
   domainId: string;
 };
 
