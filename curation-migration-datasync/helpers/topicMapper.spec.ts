@@ -16,7 +16,7 @@ describe('topics mapepr test', () => {
     );
   });
 
-  it('null topic should return null for readitla-tmp database', () => {
+  it('should throw an error if a null topic is passed', () => {
     expect(() => getTopicForReaditLaTmpDatabase('')).throw(
       'topic cannot be null or empty'
     );
