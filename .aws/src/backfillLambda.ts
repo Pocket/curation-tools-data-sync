@@ -8,6 +8,7 @@ import {
   PocketSQSWithLambdaTarget,
   PocketVPC,
 } from '@pocket-tools/terraform-modules';
+import { cloudwatch } from '@cdktf/provider-aws';
 import { getEnvVariableValues } from './utilities';
 
 export class BackfillLambda extends Resource {
@@ -16,7 +17,7 @@ export class BackfillLambda extends Resource {
     private name: string,
     private vpc: PocketVPC,
     private curationMigrationTable: ApplicationDynamoDBTable,
-    pagerDuty?: PocketPagerDuty
+    private pagerDuty?: PocketPagerDuty
   ) {
     super(scope, name);
 
@@ -106,6 +107,35 @@ export class BackfillLambda extends Resource {
         },
       },
       tags: config.tags,
+    });
+
+    this.createDLQAlarm();
+  }
+
+  /**
+   * Create an alarm for the Dead Letter Queue. This is the only place this is going
+   * to be used so far - if it's ever reused, it should be moved to Terraform Modules.
+   */
+  createDLQAlarm() {
+    return new cloudwatch.CloudwatchMetricAlarm(this, 'backfill-dlq-alarm', {
+      alarmName: config.prefix + '-Backfill-DLQ-Alarm',
+      alarmDescription:
+        'Alert on more than 5% of backfilled records ending up in the DLQ.',
+      namespace: 'AWS/SQS',
+      metricName: 'ApproximateNumberOfMessagesVisible',
+      dimensions: {
+        QueueName: config.prefix + '-Backfill-Lambda-Queue-Deadletter',
+      },
+      comparisonOperator: 'GreaterThanOrEqualToThreshold',
+      evaluationPeriods: 1,
+      // 5 minutes
+      period: 300,
+      // approx 5% of the records to be processed (86K)
+      threshold: 4000,
+      // rather than the average, we want to track how many messages in total end up in the DLQ
+      statistic: 'Sum',
+      alarmActions: [this.pagerDuty.snsNonCriticalAlarmTopic.arn],
+      okActions: [this.pagerDuty.snsNonCriticalAlarmTopic.arn],
     });
   }
 }
