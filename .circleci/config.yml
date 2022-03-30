@@ -260,6 +260,10 @@ jobs:
       - run:
           name: run tests
           command: npm run test-integration  -- --ci --watchAll=false
+      - run:
+          name: run setup.sh
+          command: |
+            export $(egrep -v '^#' .docker/local.env | xargs -0) && ./.circleci/scripts/setup.sh --hosts --db --aws
 
   test_specs:
     description: Run spec tests
