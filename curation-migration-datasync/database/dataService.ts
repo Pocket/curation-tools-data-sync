@@ -7,34 +7,6 @@ import {
 } from '../types';
 import config from '../config';
 
-/**
- * Exported only for test mocks
- */
-export const queries = {
-  topDomainByDomainId: async (
-    conn: Knex,
-    domainId: string
-  ): Promise<number> => {
-    const res = await conn(config.tables.domains)
-      .select('top_domain_id')
-      .where('domain_id', domainId)
-      .first();
-    return res.top_domain_id;
-  },
-  topDomainBySlug: async (conn: Knex, slug: string): Promise<number> => {
-    const res = await conn(config.tables.syndicated_articles)
-      .select('readitla_b.domains.top_domain_id')
-      .join(
-        'readitla_b.domains',
-        'syndicated_articles.domain_id',
-        'readitla_b.domains.domain_id'
-      )
-      .where('syndicated_articles.slug', slug)
-      .first();
-    return res.top_domain_id;
-  },
-};
-
 export class DataService {
   private db: Knex;
   constructor(db: Knex) {
@@ -148,9 +120,31 @@ export class DataService {
       urlObj.pathname.startsWith('/explore/item')
     ) {
       const slug = urlObj.pathname.split('/').pop() as string;
-      return await queries.topDomainBySlug(this.db, slug);
+      return await this.queries.topDomainBySlug(slug);
     } else {
-      return await queries.topDomainByDomainId(this.db, parserDomainId);
+      return await this.queries.topDomainByDomainId(parserDomainId);
     }
   }
+
+  queries = {
+    topDomainByDomainId: async (domainId: string): Promise<number> => {
+      const res = await this.db(config.tables.domains)
+        .select('top_domain_id')
+        .where('domain_id', domainId)
+        .first();
+      return res.top_domain_id;
+    },
+    topDomainBySlug: async (slug: string): Promise<number> => {
+      const res = await this.db(config.tables.syndicated_articles)
+        .select('readitla_b.domains.top_domain_id')
+        .join(
+          'readitla_b.domains',
+          'syndicated_articles.domain_id',
+          'readitla_b.domains.domain_id'
+        )
+        .where('syndicated_articles.slug', slug)
+        .first();
+      return res.top_domain_id;
+    },
+  };
 }

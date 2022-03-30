@@ -45,15 +45,14 @@ export async function addScheduledItem(
   db: Knex
 ) {
   let curatedRecId = -1;
-  const curatedItemService = new DataService(db);
+  const dbService = new DataService(db);
 
-  const topicId = await curatedItemService.getTopicIdByName(
+  const topicId = await dbService.getTopicIdByName(
     getTopicForReaditLaTmpDatabase(eventBody.topic)
   );
 
   const parserResponse = await getParserMetadata(eventBody.url);
-  const topDomainId = await DataService.fetchTopDomain(
-    db,
+  const topDomainId = await dbService.fetchTopDomain(
     eventBody.url,
     parserResponse.domainId
   );
@@ -66,12 +65,14 @@ export async function addScheduledItem(
 
   const trx = await db.transaction();
   try {
-    prospectItem.prospect_id =
-      await curatedItemService.insertCuratedFeedProspectItem(trx, prospectItem);
+    prospectItem.prospect_id = await dbService.insertCuratedFeedProspectItem(
+      trx,
+      prospectItem
+    );
 
     const queuedItem = hydrateCuratedFeedQueuedItem(prospectItem, topicId);
 
-    queuedItem.queued_id = await curatedItemService.insertCuratedFeedQueuedItem(
+    queuedItem.queued_id = await dbService.insertCuratedFeedQueuedItem(
       trx,
       queuedItem
     );
@@ -80,16 +81,13 @@ export async function addScheduledItem(
       queuedItem,
       eventBody.scheduledDate
     );
-    curatedRecId = await curatedItemService.insertCuratedFeedItem(
-      trx,
-      curatedItem
-    );
+    curatedRecId = await dbService.insertCuratedFeedItem(trx, curatedItem);
 
     const tileSource: TileSource = {
       source_id: curatedRecId,
     };
 
-    await curatedItemService.insertTileSource(trx, tileSource);
+    await dbService.insertTileSource(trx, tileSource);
 
     await trx.commit();
   } catch (e) {
