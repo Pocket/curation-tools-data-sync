@@ -1,7 +1,6 @@
 import sinon from 'sinon';
-import { queries } from './dbClient';
 import { Knex } from 'knex';
-import { DataService } from './dataService';
+import { DataService, queries } from './dataService';
 
 describe('fetchTopDomain', () => {
   const sandbox = sinon.createSandbox();

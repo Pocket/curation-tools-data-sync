@@ -4,7 +4,7 @@ import config from '../config';
 
 describe('getParsedDomainId', () => {
   it('fetches appropriate keys from response', async () => {
-    const data = { resolved_id: 1, item: { domain_id: '124' } };
+    const data = { resolved_id: '1', item: { domain_id: '124' } };
     const params = new URLSearchParams({
       output: 'regular',
       getItem: '1',

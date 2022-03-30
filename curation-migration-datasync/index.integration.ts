@@ -29,20 +29,6 @@ describe('event consumption integration test', function () {
       approvedItemExternalId: 'random_approved_guid_2',
       lastUpdatedAt: timestamp1,
     },
-    {
-      curatedRecId: 3,
-      scheduledSurfaceGuid: ScheduledSurfaceGuid.NEW_TAB_EN_US,
-      scheduledItemExternalId: 'random_scheduled_guid_3',
-      approvedItemExternalId: 'random_approved_guid_3',
-      lastUpdatedAt: timestamp1,
-    },
-    {
-      curatedRecId: 4,
-      scheduledSurfaceGuid: ScheduledSurfaceGuid.NEW_TAB_EN_GB,
-      scheduledItemExternalId: 'random_scheduled_guid_4',
-      approvedItemExternalId: 'random_approved_guid_4',
-      lastUpdatedAt: timestamp2,
-    },
   ];
 
   let db;
@@ -109,19 +95,11 @@ describe('event consumption integration test', function () {
     await Promise.all(insertRecord);
 
     await db(config.tables.curated_feed_topics).truncate();
-    const inputTopicData = [
-      { topic_id: 1, name: 'Business', status: 'live' },
-      { topic_id: 2, name: 'Entertainment', status: 'live' },
-      { topic_id: 3, name: 'Health & Fitness', status: 'live' },
-      { topic_id: 4, name: 'Self Improvement', status: 'live' },
-    ].map((row) => {
-      return {
-        topic_id: row.topic_id,
-        name: row.name,
-        status: row.status,
-      };
+    await db(config.tables.curated_feed_topics).insert({
+      topic_id: 1,
+      name: 'Self Improvement',
+      status: 'live',
     });
-    await db(config.tables.curated_feed_topics).insert(inputTopicData);
 
     await db(config.tables.domains).truncate();
     const inputDomainData = [
@@ -255,7 +233,7 @@ async function assertTables(
   expect(queuedItems.resolved_id).toEqual(12345);
   expect(queuedItems.curator).toEqual('sri');
   expect(queuedItems.relevance_length).toEqual('week');
-  expect(queuedItems.topic_id).toEqual(4);
+  expect(queuedItems.topic_id).toEqual(1);
   expect(queuedItems.time_added).toEqual(testEventBody.createdAt);
   expect(queuedItems.time_updated).toEqual(testEventBody.updatedAt);
   expect(queuedItems.prospect_id).toEqual(curatedItem.prospect_id);

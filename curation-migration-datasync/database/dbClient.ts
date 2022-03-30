@@ -73,31 +73,3 @@ export function createConnection(dbConfig: {
     },
   });
 }
-
-/**
- * Exported only for test mocks
- */
-export const queries = {
-  topDomainByDomainId: async (
-    conn: Knex,
-    domainId: string
-  ): Promise<number> => {
-    const res = await conn(config.tables.domains)
-      .select('top_domain_id')
-      .where('domain_id', domainId)
-      .first();
-    return res.top_domain_id;
-  },
-  topDomainBySlug: async (conn: Knex, slug: string): Promise<number> => {
-    const res = await conn(config.tables.syndicated_articles)
-      .select('readitla_b.domains.top_domain_id')
-      .join(
-        'readitla_b.domains',
-        'syndicated_articles.domain_id',
-        'readitla_b.domains.domain_id'
-      )
-      .where('syndicated_articles.slug', slug)
-      .first();
-    return res.top_domain_id;
-  },
-};

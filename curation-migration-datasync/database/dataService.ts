@@ -5,8 +5,35 @@ import {
   CuratedFeedQueuedItems,
   TileSource,
 } from '../types';
-import { queries } from './dbClient';
 import config from '../config';
+
+/**
+ * Exported only for test mocks
+ */
+export const queries = {
+  topDomainByDomainId: async (
+    conn: Knex,
+    domainId: string
+  ): Promise<number> => {
+    const res = await conn(config.tables.domains)
+      .select('top_domain_id')
+      .where('domain_id', domainId)
+      .first();
+    return res.top_domain_id;
+  },
+  topDomainBySlug: async (conn: Knex, slug: string): Promise<number> => {
+    const res = await conn(config.tables.syndicated_articles)
+      .select('readitla_b.domains.top_domain_id')
+      .join(
+        'readitla_b.domains',
+        'syndicated_articles.domain_id',
+        'readitla_b.domains.domain_id'
+      )
+      .where('syndicated_articles.slug', slug)
+      .first();
+    return res.top_domain_id;
+  },
+};
 
 export class DataService {
   private db: Knex;
@@ -19,11 +46,12 @@ export class DataService {
    * unique index on (feed_id and resolved_id)
    * @param trx
    * @param prospectItem
+   * @returns prospect_id : primary key of the table
    */
   public async insertCuratedFeedProspectItem(
     trx: Knex.Transaction,
     prospectItem: CuratedFeedProspectItem
-  ): Promise<any> {
+  ): Promise<number> {
     //unique on feedId and resolvedId
     const row = await trx(config.tables.curated_feed_prospects)
       .insert({
@@ -40,6 +68,7 @@ export class DataService {
    * unique index on (prospect_id) and (feed_id and resolved_id)
    * @param trx
    * @param queuedItem
+   * @returns queued_id : primary key of the table
    */
   public async insertCuratedFeedQueuedItem(
     trx: Knex.Transaction,
@@ -61,11 +90,12 @@ export class DataService {
    * unique index on (queued_id) and (feed_id and resolved_id)
    * @param trx
    * @param curatedFeedItem
+   * @return curated_rec_id : primary key of the table
    */
   public async insertCuratedFeedItem(
     trx: Knex.Transaction,
     curatedFeedItem: CuratedFeedItem
-  ) {
+  ): Promise<number> {
     const row = await trx(config.tables.curated_feed_items)
       .insert({
         ...curatedFeedItem,
@@ -80,7 +110,7 @@ export class DataService {
    * dependent on curated_feed_items tables
    * unique index on (type, source_id)
    * @param trx
-   * @param tileSource
+   * @param tileSource, curated_rec_id
    */
   public async insertTileSource(trx: Knex.Transaction, tileSource: TileSource) {
     const row = await trx(config.tables.tile_source)
@@ -89,12 +119,12 @@ export class DataService {
       })
       .onConflict()
       .merge();
-    return row[0];
   }
 
   /**
    * Fetch the topic Id for the given topic name
    * @param topic
+   * @returns topic_id matching with the topic
    */
   public async getTopicIdByName(topic: string): Promise<number> {
     const response = await this.db(config.tables.curated_feed_topics)

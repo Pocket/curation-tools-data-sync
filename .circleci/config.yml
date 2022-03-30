@@ -223,6 +223,21 @@ jobs:
           username: $DOCKERHUB_USERNAME
           password: $DOCKERHUB_PASSWORD
         environment:
+          - NODE_ENV=test
+          - AWS_XRAY_LOG_LEVEL=silent
+          - AWS_XRAY_CONTEXT_MISSING=LOG_ERROR
+      - image: mysql:5.6
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
+        environment:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          TZ: 'UTC'
+      - image: circleci/node:16
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
+        environment:
           NODE_ENV: test
           AWS_XRAY_LOG_LEVEL: silent
           AWS_XRAY_CONTEXT_MISSING: LOG_ERROR

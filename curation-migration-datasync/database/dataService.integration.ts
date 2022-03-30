@@ -6,6 +6,7 @@ import { writeClient } from './dbClient';
 import { Knex } from 'knex';
 import { DataService } from './dataService';
 import { CuratedFeedProspectItem } from '../types';
+import config from '../config';
 
 describe('database integration test', function () {
   //aim of this test is to validate knex integration and assumptions.
@@ -23,20 +24,12 @@ describe('database integration test', function () {
       port: '3310',
     });
     db = await writeClient();
-    await db('curated_feed_topics').truncate();
-    const inputTopicData = [
-      { topic_id: 1, name: 'Business', status: 'live' },
-      { topic_id: 2, name: 'Entertainment', status: 'live' },
-      { topic_id: 3, name: 'Health & Fitness', status: 'live' },
-      { topic_id: 4, name: 'Self Improvement', status: 'live' },
-    ].map((row) => {
-      return {
-        topic_id: row.topic_id,
-        name: row.name,
-        status: row.status,
-      };
+    await db(config.tables.curated_feed_topics).truncate();
+    await db(config.tables.curated_feed_topics).insert({
+      topic_id: 1,
+      name: 'Health & Fitness',
+      status: 'live',
     });
-    await db('curated_feed_topics').insert(inputTopicData);
   });
 
   afterAll(async () => {
@@ -50,7 +43,7 @@ describe('database integration test', function () {
     const topicID = await new DataService(db).getTopicIdByName(
       'Health & Fitness'
     );
-    expect(topicID).toEqual(3);
+    expect(topicID).toEqual(1);
   });
 
   it('retrives prospectId after successfully inserting prospectItem', async () => {
