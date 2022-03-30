@@ -144,6 +144,7 @@ export class DatasyncLambda extends Resource {
           PARSER_ENDPOINT: parserEndpoint,
           ENVIRONMENT:
             config.environment === 'Prod' ? 'production' : 'development',
+          ALLOW_FEEDS: config.datasyncLambda.allowFeeds,
         },
         executionPolicyStatements: [
           {
