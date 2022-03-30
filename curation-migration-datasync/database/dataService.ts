@@ -14,6 +14,12 @@ export class DataService {
     this.db = db;
   }
 
+  /**
+   * inserts into curated_feed_prospects table.
+   * unique index on (feed_id and resolved_id)
+   * @param trx
+   * @param prospectItem
+   */
   public async insertCuratedFeedProspectItem(
     trx: Knex.Transaction,
     prospectItem: CuratedFeedProspectItem
@@ -28,6 +34,13 @@ export class DataService {
     return row[0];
   }
 
+  /**
+   * inserts to curated_feed_queued_items table
+   * dependent on curated_feed_prospects table
+   * unique index on (prospect_id) and (feed_id and resolved_id)
+   * @param trx
+   * @param queuedItem
+   */
   public async insertCuratedFeedQueuedItem(
     trx: Knex.Transaction,
     queuedItem: CuratedFeedQueuedItems
@@ -42,6 +55,13 @@ export class DataService {
     return row[0];
   }
 
+  /**
+   * inserts to curated_feed_items table.
+   * dependent on curated_feed_prospect and curated_feed_queued_items table
+   * unique index on (queued_id) and (feed_id and resolved_id)
+   * @param trx
+   * @param curatedFeedItem
+   */
   public async insertCuratedFeedItem(
     trx: Knex.Transaction,
     curatedFeedItem: CuratedFeedItem
@@ -55,6 +75,13 @@ export class DataService {
     return row[0];
   }
 
+  /**
+   * inserts to the tile_source table.
+   * dependent on curated_feed_items tables
+   * unique index on (type, source_id)
+   * @param trx
+   * @param tileSource
+   */
   public async insertTileSource(trx: Knex.Transaction, tileSource: TileSource) {
     const row = await trx(config.tables.tile_source)
       .insert({
@@ -65,6 +92,10 @@ export class DataService {
     return row[0];
   }
 
+  /**
+   * Fetch the topic Id for the given topic name
+   * @param topic
+   */
   public async getTopicIdByName(topic: string): Promise<number> {
     const response = await this.db(config.tables.curated_feed_topics)
       .select('topic_id')

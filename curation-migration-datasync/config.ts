@@ -41,7 +41,7 @@ const config = {
     syndicated_articles: 'syndicated_articles',
     domains: 'readitla_b.domains',
   },
-  parserEndpoint: process.env.PARSER_ENDPOINT || 'http://parser.getpocket.com',
+  parserEndpoint: process.env.PARSER_ENDPOINT || 'http://parser.getpocket.dev',
 };
 
 export default config;
