@@ -1,8 +1,6 @@
-import { CuratedItemService } from './database/curatedItemService';
-import { writeClient } from './dynamodb/dbClient';
+import { DataService } from './database/dataService';
 import { getTopicForReaditLaTmpDatabase } from './helpers/topicMapper';
 import { getParserMetadata } from './externalCaller/parser';
-import { fetchTopDomain } from './database/dataservice';
 import { AddScheduledItemPayload, TileSource } from './types';
 import {
   hydrateCuratedFeedItem,
@@ -46,21 +44,21 @@ export async function addScheduledItem(
   eventBody: AddScheduledItemPayload,
   db: Knex
 ) {
-  let curatedRecId: number = -1;
-  const curatedItemService = new CuratedItemService(db);
+  let curatedRecId = -1;
+  const curatedItemService = new DataService(db);
 
   const topicId = await curatedItemService.getTopicIdByName(
     getTopicForReaditLaTmpDatabase(eventBody.topic)
   );
 
   const parserResponse = await getParserMetadata(eventBody.url);
-  const topDomainId = await fetchTopDomain(
+  const topDomainId = await DataService.fetchTopDomain(
     db,
     eventBody.url,
     parserResponse.domainId
   );
 
-  let prospectItem = hydrateCuratedFeedProspectItem(
+  const prospectItem = hydrateCuratedFeedProspectItem(
     eventBody,
     parserResponse,
     topDomainId
@@ -71,14 +69,14 @@ export async function addScheduledItem(
     prospectItem.prospect_id =
       await curatedItemService.insertCuratedFeedProspectItem(trx, prospectItem);
 
-    let queuedItem = hydrateCuratedFeedQueuedItem(prospectItem, topicId);
+    const queuedItem = hydrateCuratedFeedQueuedItem(prospectItem, topicId);
 
     queuedItem.queued_id = await curatedItemService.insertCuratedFeedQueuedItem(
       trx,
       queuedItem
     );
 
-    let curatedItem = hydrateCuratedFeedItem(
+    const curatedItem = hydrateCuratedFeedItem(
       queuedItem,
       eventBody.scheduledDate
     );
@@ -87,7 +85,7 @@ export async function addScheduledItem(
       curatedItem
     );
 
-    let tileSource: TileSource = {
+    const tileSource: TileSource = {
       source_id: curatedRecId,
     };
 
@@ -113,7 +111,7 @@ export async function insertAddedScheduledItem(
   curatedRecId: number,
   eventBody: AddScheduledItemPayload
 ) {
-  let curatedItemRecord: CuratedItemRecord = {
+  const curatedItemRecord: CuratedItemRecord = {
     curatedRecId: curatedRecId,
     scheduledItemExternalId: eventBody.scheduledItemExternalId,
     approvedItemExternalId: eventBody.approvedItemExternalId,

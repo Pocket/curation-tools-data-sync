@@ -32,6 +32,15 @@ const config = {
     dbName: process.env.DATABASE || 'readitla_ril-tmp',
     tz: process.env.DATABASE_TZ || 'US/Central',
   },
+  tables: {
+    curated_feed_prospects: 'curated_feed_prospects',
+    curated_feed_queued_items: 'curated_feed_queued_items',
+    curated_feed_items: 'curated_feed_items',
+    curated_feed_topics: 'curated_feed_topics',
+    tile_source: 'tile_source',
+    syndicated_articles: 'syndicated_articles',
+    domains: 'readitla_b.domains',
+  },
   parserEndpoint: process.env.PARSER_ENDPOINT || 'http://parser.getpocket.com',
 };
 

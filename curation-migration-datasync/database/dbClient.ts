@@ -82,14 +82,14 @@ export const queries = {
     conn: Knex,
     domainId: string
   ): Promise<number> => {
-    const res = await conn('readitla_b.domains')
+    const res = await conn(config.tables.domains)
       .select('top_domain_id')
       .where('domain_id', domainId)
       .first();
     return res.top_domain_id;
   },
   topDomainBySlug: async (conn: Knex, slug: string): Promise<number> => {
-    const res = await conn('syndicated_articles')
+    const res = await conn(config.tables.syndicated_articles)
       .select('readitla_b.domains.top_domain_id')
       .join(
         'readitla_b.domains',

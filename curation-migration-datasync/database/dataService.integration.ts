@@ -2,9 +2,9 @@ import { truncateDynamoDb } from '../dynamodb/dynamoUtilities';
 import { dbClient } from '../dynamodb/dynamoDbClient';
 import sinon from 'sinon';
 import * as SecretManager from '../secretManager';
-import { writeClient } from '../dynamodb/dbClient';
+import { writeClient } from './dbClient';
 import { Knex } from 'knex';
-import { CuratedItemService } from './curatedItemService';
+import { DataService } from './dataService';
 import { CuratedFeedProspectItem } from '../types';
 
 describe('database integration test', function () {
@@ -47,14 +47,14 @@ describe('database integration test', function () {
   });
 
   it('gets topicId for a name', async () => {
-    const topicID = await new CuratedItemService(db).getTopicIdByName(
+    const topicID = await new DataService(db).getTopicIdByName(
       'Health & Fitness'
     );
     expect(topicID).toEqual(3);
   });
 
   it('retrives prospectId after successfully inserting prospectItem', async () => {
-    let prospectItem: CuratedFeedProspectItem = {
+    const prospectItem: CuratedFeedProspectItem = {
       feed_id: 3,
       resolved_id: 12345,
       type: null,
@@ -69,10 +69,10 @@ describe('database integration test', function () {
       prospect_id: 0,
     };
 
-    let generatedProspectId: number = -1;
+    let generatedProspectId = -1;
 
     await db.transaction(async (trx) => {
-      generatedProspectId = await new CuratedItemService(
+      generatedProspectId = await new DataService(
         db
       ).insertCuratedFeedProspectItem(trx, prospectItem);
     });
@@ -81,7 +81,7 @@ describe('database integration test', function () {
   });
 
   it('duplicate records need to merge and not throw error', async () => {
-    let prospectItem: CuratedFeedProspectItem = {
+    const prospectItem: CuratedFeedProspectItem = {
       feed_id: 6,
       resolved_id: 4567,
       type: null,
@@ -98,7 +98,7 @@ describe('database integration test', function () {
     let generatedProspectId;
 
     await db.transaction(async (trx) => {
-      await new CuratedItemService(db).insertCuratedFeedProspectItem(
+      await new DataService(db).insertCuratedFeedProspectItem(
         trx,
         prospectItem
       );
@@ -107,7 +107,7 @@ describe('database integration test', function () {
     prospectItem.title = 'changed title';
 
     await db.transaction(async (trx) => {
-      generatedProspectId = await new CuratedItemService(
+      generatedProspectId = await new DataService(
         db
       ).insertCuratedFeedProspectItem(trx, prospectItem);
     });

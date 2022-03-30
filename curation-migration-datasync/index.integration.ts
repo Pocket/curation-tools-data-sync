@@ -4,8 +4,7 @@ import { dbClient } from './dynamodb/dynamoDbClient';
 import * as SecretManager from '../curation-migration-datasync/secretManager';
 import * as EventConsumer from '../curation-migration-datasync/eventConsumer';
 import sinon from 'sinon';
-import { getDbCredentials } from '../curation-migration-datasync/secretManager';
-import { writeClient } from './dynamodb/dbClient';
+import { writeClient } from './database/dbClient';
 import { AddScheduledItemPayload, EventDetailType } from './types';
 import { handlerFn } from './index';
 import nock from 'nock';
@@ -16,7 +15,7 @@ import {
   getByScheduledItemExternalId,
   insertCuratedItem,
 } from './dynamodb/curatedItemIdMapper';
-import { CuratedItemService } from './database/curatedItemService';
+import { DataService } from './database/dataService';
 
 describe('event consumption integration test', function () {
   const timestamp1 = Math.round(new Date('2020-10-10').getTime() / 1000);
@@ -64,9 +63,9 @@ describe('event consumption integration test', function () {
     db = await writeClient();
 
     await truncateDynamoDb(dbClient);
-    await db('curated_feed_prospects').truncate();
-    await db('curated_feed_items').truncate();
-    await db('curated_feed_queued_items').truncate();
+    await db(config.tables.curated_feed_prospects).truncate();
+    await db(config.tables.curated_feed_items).truncate();
+    await db(config.tables.curated_feed_queued_items).truncate();
 
     testEventBody = {
       eventType: EventDetailType.ADD_SCHEDULED_ITEM,
@@ -109,7 +108,7 @@ describe('event consumption integration test', function () {
     });
     await Promise.all(insertRecord);
 
-    await db('curated_feed_topics').truncate();
+    await db(config.tables.curated_feed_topics).truncate();
     const inputTopicData = [
       { topic_id: 1, name: 'Business', status: 'live' },
       { topic_id: 2, name: 'Entertainment', status: 'live' },
@@ -122,9 +121,9 @@ describe('event consumption integration test', function () {
         status: row.status,
       };
     });
-    await db('curated_feed_topics').insert(inputTopicData);
+    await db(config.tables.curated_feed_topics).insert(inputTopicData);
 
-    await db('readitla_b.domains').truncate();
+    await db(config.tables.domains).truncate();
     const inputDomainData = [
       {
         domain_id: 123,
@@ -143,10 +142,10 @@ describe('event consumption integration test', function () {
         top_domain_id: row.top_domain_id,
       };
     });
-    await db('readitla_b.domains').insert(inputDomainData);
+    await db(config.tables.domains).insert(inputDomainData);
 
-    await db('syndicated_articles').truncate();
-    await db('syndicated_articles').insert({
+    await db(config.tables.syndicated_articles).truncate();
+    await db(config.tables.syndicated_articles).insert({
       resolved_id: 0,
       original_resolveD_id: 0,
       author_user_id: 1,
@@ -186,8 +185,8 @@ describe('event consumption integration test', function () {
   });
 
   it('should not call dynamo db write when the sql transaction fails', async () => {
-    let curatedItemService = new CuratedItemService(db);
-    sinon.stub(curatedItemService, 'insertTileSource').throws('sql error');
+    const dataService = new DataService(db);
+    sinon.stub(dataService, 'insertTileSource').throws('sql error');
     const dymamoDbSpy = sinon.spy(EventConsumer, 'insertAddedScheduledItem');
 
     await handlerFn(testEvent);
@@ -195,13 +194,17 @@ describe('event consumption integration test', function () {
   });
 
   it('should rollback transaction if one of the database inserts fails', async () => {
-    let curatedItemService = new CuratedItemService(db);
-    sinon.stub(curatedItemService, 'insertTileSource').throws('sql error');
+    const dataService = new DataService(db);
+    sinon.stub(dataService, 'insertTileSource').throws('sql error');
 
     await handlerFn(testEvent);
-    const curatedItem = await db('curated_feed_items').select();
-    const prospectItem = await db('curated_feed_prospects').select();
-    const queuedItem = await db('curated_feed_queued_items').select();
+    const curatedItem = await db(config.tables.curated_feed_items).select();
+    const prospectItem = await db(
+      config.tables.curated_feed_prospects
+    ).select();
+    const queuedItem = await db(
+      config.tables.curated_feed_queued_items
+    ).select();
 
     expect(curatedItem.length).toEqual(0);
     expect(prospectItem.length).toEqual(0);
@@ -214,7 +217,7 @@ async function assertTables(
   db: Knex,
   topDomainId: number
 ) {
-  let curatedItemRecord = await getByScheduledItemExternalId(
+  const curatedItemRecord = await getByScheduledItemExternalId(
     dbClient,
     'random_scheduled_guid_1'
   );
@@ -225,7 +228,7 @@ async function assertTables(
     testEventBody.scheduledSurfaceGuid
   );
 
-  const curatedItem = await db('curated_feed_items')
+  const curatedItem = await db(config.tables.curated_feed_items)
     .select()
     .where({
       curated_rec_id: curatedItemRecord[0].curatedRecId,
@@ -241,7 +244,7 @@ async function assertTables(
   expect(curatedItem.time_added).toEqual(testEventBody.createdAt);
   expect(curatedItem.time_updated).toEqual(testEventBody.updatedAt);
 
-  const queuedItems = await db('curated_feed_queued_items')
+  const queuedItems = await db(config.tables.curated_feed_queued_items)
     .select()
     .where({
       queued_id: curatedItem.queued_id,
@@ -257,7 +260,7 @@ async function assertTables(
   expect(queuedItems.time_updated).toEqual(testEventBody.updatedAt);
   expect(queuedItems.prospect_id).toEqual(curatedItem.prospect_id);
 
-  const prospectItem = await db('curated_feed_prospects')
+  const prospectItem = await db(config.tables.curated_feed_prospects)
     .select()
     .where({
       prospect_id: curatedItem.prospect_id,
@@ -277,7 +280,7 @@ async function assertTables(
   expect(prospectItem.excerpt).toEqual(testEventBody.excerpt);
   expect(prospectItem.image_src).toEqual(testEventBody.imageUrl);
 
-  const tileSource = await db('tile_source')
+  const tileSource = await db(config.tables.tile_source)
     .select()
     .where({
       source_id: curatedItemRecord[0].curatedRecId,
@@ -296,10 +299,6 @@ function nockParser(testEventBody) {
     url: testEventBody.url,
   });
 
-  //todo: refactor code to call parser only once.
-  nock(config.parserEndpoint)
-    .get('/' + params.toString())
-    .reply(200, parserData);
   nock(config.parserEndpoint)
     .get('/' + params.toString())
     .reply(200, parserData);

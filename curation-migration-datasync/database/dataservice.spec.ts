@@ -1,7 +1,7 @@
 import sinon from 'sinon';
-import { queries } from '../dynamodb/dbClient';
+import { queries } from './dbClient';
 import { Knex } from 'knex';
-import { fetchTopDomain } from './dataservice';
+import { DataService } from './dataService';
 
 describe('fetchTopDomain', () => {
   const sandbox = sinon.createSandbox();
@@ -14,7 +14,7 @@ describe('fetchTopDomain', () => {
 
   it('fetches by slug if is a syndicated article', async () => {
     const conn = {} as Knex;
-    const res = await fetchTopDomain(
+    const res = await DataService.fetchTopDomain(
       conn,
       'https://getpocket.com/explore/item/are-birds-actually-real',
       '111'
@@ -28,7 +28,7 @@ describe('fetchTopDomain', () => {
   });
   it('fetches by domainId if is not a syndicated article', async () => {
     const conn = {} as Knex;
-    const res = await fetchTopDomain(
+    const res = await DataService.fetchTopDomain(
       conn,
       'https://conspiracies.com/are-birds-actually-real',
       '111'

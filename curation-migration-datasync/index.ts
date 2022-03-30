@@ -1,6 +1,6 @@
 import config from './config';
 import * as Sentry from '@sentry/serverless';
-import { readClient, writeClient } from './dynamodb/dbClient';
+import { readClient, writeClient } from './database/dbClient';
 import { EventBridgeEvent } from 'aws-lambda';
 import { addScheduledItem } from './eventConsumer';
 import { EventDetailType } from './types';

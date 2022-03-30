@@ -16,7 +16,7 @@ describe('sso to curator name test', () => {
 
 describe('scheduledDate to timestamp', () => {
   it('returns curator name from sso string', () => {
-    let expected = 1648512000;
+    const expected = 1648512000;
     //convertDateToTimestamp epoc timestamp shows 2022-03-29 08:05 pm gmt
     expect(convertDateToTimestamp('2022-03-29')).toEqual(expected);
   });
