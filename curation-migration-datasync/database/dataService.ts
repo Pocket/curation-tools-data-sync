@@ -140,11 +140,7 @@ export class DataService {
   /**
    * Fetch the top domain ID for the given url and domain ID
    */
-  public static async fetchTopDomain(
-    conn: Knex,
-    url: string,
-    parserDomainId: string
-  ) {
+  public async fetchTopDomain(url: string, parserDomainId: string) {
     const urlObj = new URL(url);
     // Syndicated articles are always getpocket.com/explore/item/some-slug
     if (
@@ -152,9 +148,9 @@ export class DataService {
       urlObj.pathname.startsWith('/explore/item')
     ) {
       const slug = urlObj.pathname.split('/').pop() as string;
-      return await queries.topDomainBySlug(conn, slug);
+      return await queries.topDomainBySlug(this.db, slug);
     } else {
-      return await queries.topDomainByDomainId(conn, parserDomainId);
+      return await queries.topDomainByDomainId(this.db, parserDomainId);
     }
   }
 }

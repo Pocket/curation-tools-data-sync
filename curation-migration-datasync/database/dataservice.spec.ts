@@ -4,6 +4,8 @@ import { DataService, queries } from './dataService';
 
 describe('fetchTopDomain', () => {
   const sandbox = sinon.createSandbox();
+  const conn = {} as Knex;
+  const dbService = new DataService(conn);
   const domainStub = sandbox
     .stub(queries, 'topDomainByDomainId')
     .resolves(1234);
@@ -13,8 +15,7 @@ describe('fetchTopDomain', () => {
 
   it('fetches by slug if is a syndicated article', async () => {
     const conn = {} as Knex;
-    const res = await DataService.fetchTopDomain(
-      conn,
+    const res = await dbService.fetchTopDomain(
       'https://getpocket.com/explore/item/are-birds-actually-real',
       '111'
     );
@@ -27,8 +28,7 @@ describe('fetchTopDomain', () => {
   });
   it('fetches by domainId if is not a syndicated article', async () => {
     const conn = {} as Knex;
-    const res = await DataService.fetchTopDomain(
-      conn,
+    const res = await dbService.fetchTopDomain(
       'https://conspiracies.com/are-birds-actually-real',
       '111'
     );
