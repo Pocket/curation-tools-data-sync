@@ -9,7 +9,7 @@ describe('topics mapper test', () => {
     );
   });
 
-  it('should convert a unknown topic to null', () => {
+  it('should throw an error if the topic is not in the mapping', () => {
     const curatedCorpusTopic = 'unknown topic';
     expect(() => getTopicForReaditLaTmpDatabase(curatedCorpusTopic)).throw(
       'invalid topic mapping'
