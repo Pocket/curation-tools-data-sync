@@ -17,6 +17,6 @@ describe('getParsedDomainId', () => {
       .reply(200, data);
 
     const res = await getParserMetadata('myurl.com');
-    expect(res).toEqual({ domainId: '124', resolvedId: 1 });
+    expect(res).toEqual({ domainId: '124', resolvedId: '1' });
   });
 });
