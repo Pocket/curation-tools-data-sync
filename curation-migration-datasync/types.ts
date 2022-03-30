@@ -34,7 +34,7 @@ export enum ScheduledSurfaceToFeedIdMap {
 }
 
 export type CuratedFeedProspectItem = {
-  prospect_id: number;
+  prospect_id?: number;
   feed_id: number;
   resolved_id: number;
   type: string | null;
@@ -56,14 +56,14 @@ export type CuratedFeedQueuedItems = {
   curator: string;
   time_added: number;
   time_updated: number;
-  queued_id: number;
+  queued_id?: number;
   relevance_length: 'week';
   topic_id: number;
   weight: 1;
 };
 
 export type CuratedFeedItem = {
-  curated_rec_id: number;
+  curated_rec_id?: number;
   prospect_id: number;
   feed_id: number;
   resolved_id: number;

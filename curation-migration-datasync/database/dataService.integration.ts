@@ -24,8 +24,8 @@ describe('database integration test', function () {
       port: '3310',
     });
     db = await writeClient();
-    await db(config.tables.curated_feed_topics).truncate();
-    await db(config.tables.curated_feed_topics).insert({
+    await db(config.tables.curatedFeedTopics).truncate();
+    await db(config.tables.curatedFeedTopics).insert({
       topic_id: 1,
       name: 'Health & Fitness',
       status: 'live',

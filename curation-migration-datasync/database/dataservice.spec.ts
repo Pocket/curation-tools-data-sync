@@ -16,7 +16,6 @@ describe('fetchTopDomain', () => {
   afterAll(() => sandbox.restore());
 
   it('fetches by slug if is a syndicated article', async () => {
-    const conn = {} as Knex;
     const res = await dbService.fetchTopDomain(
       'https://getpocket.com/explore/item/are-birds-actually-real',
       '111'
@@ -25,7 +24,6 @@ describe('fetchTopDomain', () => {
     expect(res).toEqual(5678);
   });
   it('fetches by domainId if is not a syndicated article', async () => {
-    const conn = {} as Knex;
     const res = await dbService.fetchTopDomain(
       'https://conspiracies.com/are-birds-actually-real',
       '111'

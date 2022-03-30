@@ -19,8 +19,6 @@ import { DataService } from './database/dataService';
 
 describe('event consumption integration test', function () {
   const timestamp1 = Math.round(new Date('2020-10-10').getTime() / 1000);
-  const timestamp2 = Math.round(new Date('2021-10-10').getTime() / 1000);
-
   const curatedItemRecords: CuratedItemRecord[] = [
     {
       curatedRecId: 2,
@@ -49,9 +47,9 @@ describe('event consumption integration test', function () {
     db = await writeClient();
 
     await truncateDynamoDb(dbClient);
-    await db(config.tables.curated_feed_prospects).truncate();
-    await db(config.tables.curated_feed_items).truncate();
-    await db(config.tables.curated_feed_queued_items).truncate();
+    await db(config.tables.curatedFeedProspects).truncate();
+    await db(config.tables.curatedFeedItems).truncate();
+    await db(config.tables.curatedFeedQueuedItems).truncate();
 
     testEventBody = {
       eventType: EventDetailType.ADD_SCHEDULED_ITEM,
@@ -94,8 +92,8 @@ describe('event consumption integration test', function () {
     });
     await Promise.all(insertRecord);
 
-    await db(config.tables.curated_feed_topics).truncate();
-    await db(config.tables.curated_feed_topics).insert({
+    await db(config.tables.curatedFeedTopics).truncate();
+    await db(config.tables.curatedFeedTopics).insert({
       topic_id: 1,
       name: 'Self Improvement',
       status: 'live',
@@ -122,8 +120,8 @@ describe('event consumption integration test', function () {
     });
     await db(config.tables.domains).insert(inputDomainData);
 
-    await db(config.tables.syndicated_articles).truncate();
-    await db(config.tables.syndicated_articles).insert({
+    await db(config.tables.syndicatedArticles).truncate();
+    await db(config.tables.syndicatedArticles).insert({
       resolved_id: 0,
       original_resolveD_id: 0,
       author_user_id: 1,
@@ -176,13 +174,9 @@ describe('event consumption integration test', function () {
     sinon.stub(dataService, 'insertTileSource').throws('sql error');
 
     await handlerFn(testEvent);
-    const curatedItem = await db(config.tables.curated_feed_items).select();
-    const prospectItem = await db(
-      config.tables.curated_feed_prospects
-    ).select();
-    const queuedItem = await db(
-      config.tables.curated_feed_queued_items
-    ).select();
+    const curatedItem = await db(config.tables.curatedFeedItems).select();
+    const prospectItem = await db(config.tables.curatedFeedProspects).select();
+    const queuedItem = await db(config.tables.curatedFeedQueuedItems).select();
 
     expect(curatedItem.length).toEqual(0);
     expect(prospectItem.length).toEqual(0);
@@ -206,7 +200,7 @@ async function assertTables(
     testEventBody.scheduledSurfaceGuid
   );
 
-  const curatedItem = await db(config.tables.curated_feed_items)
+  const curatedItem = await db(config.tables.curatedFeedItems)
     .select()
     .where({
       curated_rec_id: curatedItemRecord[0].curatedRecId,
@@ -222,7 +216,7 @@ async function assertTables(
   expect(curatedItem.time_added).toEqual(testEventBody.createdAt);
   expect(curatedItem.time_updated).toEqual(testEventBody.updatedAt);
 
-  const queuedItems = await db(config.tables.curated_feed_queued_items)
+  const queuedItems = await db(config.tables.curatedFeedQueuedItems)
     .select()
     .where({
       queued_id: curatedItem.queued_id,
@@ -238,7 +232,7 @@ async function assertTables(
   expect(queuedItems.time_updated).toEqual(testEventBody.updatedAt);
   expect(queuedItems.prospect_id).toEqual(curatedItem.prospect_id);
 
-  const prospectItem = await db(config.tables.curated_feed_prospects)
+  const prospectItem = await db(config.tables.curatedFeedProspects)
     .select()
     .where({
       prospect_id: curatedItem.prospect_id,
@@ -258,7 +252,7 @@ async function assertTables(
   expect(prospectItem.excerpt).toEqual(testEventBody.excerpt);
   expect(prospectItem.image_src).toEqual(testEventBody.imageUrl);
 
-  const tileSource = await db(config.tables.tile_source)
+  const tileSource = await db(config.tables.tileSource)
     .select()
     .where({
       source_id: curatedItemRecord[0].curatedRecId,

@@ -25,7 +25,7 @@ export class DataService {
     prospectItem: CuratedFeedProspectItem
   ): Promise<number> {
     //unique on feedId and resolvedId
-    const row = await trx(config.tables.curated_feed_prospects)
+    const row = await trx(config.tables.curatedFeedProspects)
       .insert({
         ...prospectItem,
       })
@@ -47,7 +47,7 @@ export class DataService {
     queuedItem: CuratedFeedQueuedItems
   ): Promise<number> {
     //unique on prospect_id
-    const row = await trx(config.tables.curated_feed_queued_items)
+    const row = await trx(config.tables.curatedFeedQueuedItems)
       .insert({
         ...queuedItem,
       })
@@ -68,7 +68,7 @@ export class DataService {
     trx: Knex.Transaction,
     curatedFeedItem: CuratedFeedItem
   ): Promise<number> {
-    const row = await trx(config.tables.curated_feed_items)
+    const row = await trx(config.tables.curatedFeedItems)
       .insert({
         ...curatedFeedItem,
       })
@@ -85,7 +85,7 @@ export class DataService {
    * @param tileSource, curated_rec_id
    */
   public async insertTileSource(trx: Knex.Transaction, tileSource: TileSource) {
-    const row = await trx(config.tables.tile_source)
+    await trx(config.tables.tileSource)
       .insert({
         ...tileSource,
       })
@@ -99,7 +99,7 @@ export class DataService {
    * @returns topic_id matching with the topic
    */
   public async getTopicIdByName(topic: string): Promise<number> {
-    const response = await this.db(config.tables.curated_feed_topics)
+    const response = await this.db(config.tables.curatedFeedTopics)
       .select('topic_id')
       .where({
         name: topic,
@@ -135,7 +135,7 @@ export class DataService {
       return res.top_domain_id;
     },
     topDomainBySlug: async (slug: string): Promise<number> => {
-      const res = await this.db(config.tables.syndicated_articles)
+      const res = await this.db(config.tables.syndicatedArticles)
         .select('readitla_b.domains.top_domain_id')
         .join(
           'readitla_b.domains',

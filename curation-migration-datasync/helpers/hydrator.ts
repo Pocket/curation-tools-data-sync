@@ -14,6 +14,10 @@ export function hydrateCuratedFeedItem(
   queuedItem: CuratedFeedQueuedItems,
   scheduledDate: string
 ): CuratedFeedItem {
+  if (queuedItem.queued_id == undefined) {
+    throw new Error(`queued_id cannot be undefined in ${queuedItem}`);
+  }
+
   return {
     queued_id: queuedItem.queued_id,
     feed_id: queuedItem.feed_id,
@@ -23,8 +27,6 @@ export function hydrateCuratedFeedItem(
     time_added: queuedItem.time_added,
     time_updated: queuedItem.time_updated,
     time_live: convertDateToTimestamp(scheduledDate),
-    //will be populated from the database
-    curated_rec_id: 0,
   };
 }
 
@@ -45,8 +47,6 @@ export function hydrateCuratedFeedProspectItem(
     title: eventBody.title,
     excerpt: eventBody.excerpt,
     image_src: eventBody.imageUrl,
-    //will be populated from the database
-    prospect_id: 0,
   };
 }
 
@@ -54,6 +54,9 @@ export function hydrateCuratedFeedQueuedItem(
   prospectItem: CuratedFeedProspectItem,
   topicId: number
 ): CuratedFeedQueuedItems {
+  if (prospectItem.prospect_id == undefined) {
+    throw new Error(`prospect_id cannot be undefined in  ${prospectItem}`);
+  }
   return {
     prospect_id: prospectItem.prospect_id,
     feed_id: prospectItem.feed_id,
@@ -65,7 +68,5 @@ export function hydrateCuratedFeedQueuedItem(
     topic_id: topicId,
     relevance_length: 'week',
     weight: 1,
-    //will be populated from the database
-    queued_id: 0,
   };
 }
