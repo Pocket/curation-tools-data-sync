@@ -1,6 +1,6 @@
 import nock from 'nock';
 import { getParserMetadata } from './parser';
-import config from './config';
+import config from '../config';
 
 describe('getParsedDomainId', () => {
   it('fetches appropriate keys from response', async () => {

@@ -4,8 +4,11 @@ import {
   CuratedFeedProspectItem,
   CuratedFeedQueuedItems,
   ScheduledSurfaceToFeedIdMap,
-} from './types';
-import { convertDateToTimestamp, getCuratorNameFromSso } from './eventConsumer';
+} from '../types';
+import {
+  convertDateToTimestamp,
+  getCuratorNameFromSso,
+} from '../eventConsumer';
 
 export function hydrateCuratedFeedItem(
   queuedItem: CuratedFeedQueuedItems,

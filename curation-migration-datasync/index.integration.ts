@@ -1,20 +1,22 @@
 import { CuratedItemRecord, ScheduledSurfaceGuid } from './dynamodb/types';
 import { truncateDynamoDb } from './dynamodb/dynamoUtilities';
 import { dbClient } from './dynamodb/dynamoDbClient';
-import {
-  getByScheduledItemExternalId,
-  insertCuratedItem,
-} from './dynamodb/curatedItemIdMapper';
 import * as SecretManager from '../curation-migration-datasync/secretManager';
+import * as EventConsumer from '../curation-migration-datasync/eventConsumer';
 import sinon from 'sinon';
 import { getDbCredentials } from '../curation-migration-datasync/secretManager';
-import { writeClient } from './dbClient';
+import { writeClient } from './dynamodb/dbClient';
 import { AddScheduledItemPayload, EventDetailType } from './types';
 import { handlerFn } from './index';
 import nock from 'nock';
 import config from './config';
 import { Knex } from 'knex';
 import { convertDateToTimestamp } from './eventConsumer';
+import {
+  getByScheduledItemExternalId,
+  insertCuratedItem,
+} from './dynamodb/curatedItemIdMapper';
+import { CuratedItemService } from './database/curatedItemService';
 
 describe('event consumption integration test', function () {
   const timestamp1 = Math.round(new Date('2020-10-10').getTime() / 1000);
@@ -45,9 +47,10 @@ describe('event consumption integration test', function () {
   ];
 
   let db;
+  let testEventBody: AddScheduledItemPayload;
+  let testEvent;
 
   beforeEach(async () => {
-    await truncateDynamoDb(dbClient);
     sinon.stub(SecretManager, 'getDbCredentials').resolves({
       readHost: 'localhost',
       readUsername: 'root',
@@ -57,8 +60,50 @@ describe('event consumption integration test', function () {
       writePassword: '',
       port: '3310',
     });
+
     db = await writeClient();
 
+    await truncateDynamoDb(dbClient);
+    await db('curated_feed_prospects').truncate();
+    await db('curated_feed_items').truncate();
+    await db('curated_feed_queued_items').truncate();
+
+    testEventBody = {
+      eventType: EventDetailType.ADD_SCHEDULED_ITEM,
+      scheduledItemExternalId: 'random_scheduled_guid_1',
+      approvedItemExternalId: 'random_approved_guid_1',
+      url: 'https://stackoverflow.blog/',
+      title: 'Sync the new tool with legacy database',
+      excerpt: 'will be deprecated soon',
+      language: 'EN',
+      publisher: 'Pocket blog',
+      imageUrl: 'https://some-s3-url.com',
+      topic: 'SELF_IMPROVEMENT',
+      isSyndicated: false,
+      createdAt: 1648593897,
+      createdBy: 'ad|Mozilla-LDAP|sri',
+      updatedAt: 1648593897,
+      scheduledSurfaceGuid: 'NEW_TAB_EN_US',
+      scheduledDate: '2022-03-25',
+    };
+
+    testEvent = {
+      version: '0',
+      id: '8afc769f-bf1e-c87a-a0b6-1aa4c526831f',
+      'detail-type': 'add-scheduled-item',
+      source: 'curation-tools-datasync',
+      account: '124567',
+      time: '2022-03-29T22:55:16Z',
+      region: 'us-east-1',
+      resources: [],
+      detail: {
+        ...testEventBody,
+      },
+    };
+
+    nockParser(testEventBody);
+
+    //populating the database
     const insertRecord = curatedItemRecords.map(async (item) => {
       await insertCuratedItem(dbClient, item);
     });
@@ -84,7 +129,12 @@ describe('event consumption integration test', function () {
       {
         domain_id: 123,
         domain: 'https://stackoverflow.blog',
-        top_domain_id: 123,
+        top_domain_id: 100,
+      },
+      {
+        domain_id: 456,
+        domain: 'nytimes.com',
+        top_domain_id: 200,
       },
     ].map((row) => {
       return {
@@ -94,80 +144,87 @@ describe('event consumption integration test', function () {
       };
     });
     await db('readitla_b.domains').insert(inputDomainData);
+
+    await db('syndicated_articles').truncate();
+    await db('syndicated_articles').insert({
+      resolved_id: 0,
+      original_resolveD_id: 0,
+      author_user_id: 1,
+      status: 1,
+      hide_images: 0,
+      publisher_url: 'nytimes.com',
+      domain_id: 456,
+      publisher_id: 1,
+      slug: 'the-most-important-scientific-problems-have-yet-to-be-solved',
+    });
   });
 
   afterEach(async () => {
     await truncateDynamoDb(dbClient);
-    await db.destroy();
     sinon.restore();
     jest.clearAllMocks();
   });
 
-  let testEventBody: AddScheduledItemPayload = {
-    eventType: EventDetailType.ADD_SCHEDULED_ITEM,
-    scheduledItemExternalId: 'random_scheduled_guid_1',
-    approvedItemExternalId: 'random_approved_guid_1',
-    url: 'https://stackoverflow.blog/',
-    title: 'Sync the new tool with legacy database',
-    excerpt: 'will be deprecated soon',
-    language: 'EN',
-    publisher: 'Pocket blog',
-    imageUrl: 'https://some-s3-url.com',
-    topic: 'SELF_IMPROVEMENT',
-    isSyndicated: false,
-    createdAt: 1648593897,
-    createdBy: 'ad|Mozilla-LDAP|sri',
-    updatedAt: 1648593897,
-    scheduledSurfaceGuid: 'NEW_TAB_EN_US',
-    scheduledDate: '2022-03-25',
-  };
-
-  let testEvent = {
-    version: '0',
-    id: '8afc769f-bf1e-c87a-a0b6-1aa4c526831f',
-    'detail-type': 'add-scheduled-item',
-    source: 'curation-tools-datasync',
-    account: '124567',
-    time: '2022-03-29T22:55:16Z',
-    region: 'us-east-1',
-    resources: [],
-    detail: {
-      ...testEventBody,
-    },
-  };
-
-  it('adds non-syndicated articles', async () => {
-    const parserData = { resolved_id: '23434', item: { domain_id: '123' } };
-    const params = new URLSearchParams({
-      output: 'regular',
-      getItem: '1',
-      images: '0',
-      url: testEventBody.url,
-    });
-
-    //todo: refactor code to call parser only once.
-    nock(config.parserEndpoint)
-      .get('/' + params.toString())
-      .reply(200, parserData);
-    nock(config.parserEndpoint)
-      .get('/' + params.toString())
-      .reply(200, parserData);
-
-    await handlerFn(testEvent);
-    await assertTables(testEventBody, db);
+  afterAll(async () => {
+    await db.destroy();
   });
 
-  it('adds syndicated articles', () => {});
+  it('adds non-syndicated articles', async () => {
+    await handlerFn(testEvent);
+    await assertTables(testEventBody, db, 100);
+  });
 
-  it('throws error when scheduledItem externalId is not present', () => {});
+  it('adds syndicated articles with domainId from syndicated_articles table', async () => {
+    testEventBody.isSyndicated = true;
+    testEventBody.url =
+      'https://getpocket.com/explore/item/the-most-important-scientific-problems-have-yet-to-be-solved?utm_source=pocket-newtab';
+    testEvent.detail = testEventBody;
+    nockParser(testEventBody);
+
+    await handlerFn(testEvent);
+    await assertTables(testEventBody, db, 200);
+  });
+
+  it('should not call dynamo db write when the sql transaction fails', async () => {
+    let curatedItemService = new CuratedItemService(db);
+    sinon.stub(curatedItemService, 'insertTileSource').throws('sql error');
+    const dymamoDbSpy = sinon.spy(EventConsumer, 'insertAddedScheduledItem');
+
+    await handlerFn(testEvent);
+    expect(dymamoDbSpy.callCount).toEqual(0);
+  });
+
+  it('should rollback transaction if one of the database inserts fails', async () => {
+    let curatedItemService = new CuratedItemService(db);
+    sinon.stub(curatedItemService, 'insertTileSource').throws('sql error');
+
+    await handlerFn(testEvent);
+    const curatedItem = await db('curated_feed_items').select();
+    const prospectItem = await db('curated_feed_prospects').select();
+    const queuedItem = await db('curated_feed_queued_items').select();
+
+    expect(curatedItem.length).toEqual(0);
+    expect(prospectItem.length).toEqual(0);
+    expect(queuedItem.length).toEqual(0);
+  });
 });
 
-async function assertTables(testEventBody: AddScheduledItemPayload, db: Knex) {
+async function assertTables(
+  testEventBody: AddScheduledItemPayload,
+  db: Knex,
+  topDomainId: number
+) {
   let curatedItemRecord = await getByScheduledItemExternalId(
     dbClient,
     'random_scheduled_guid_1'
   );
-  console.log(curatedItemRecord);
+  expect(curatedItemRecord[0].approvedItemExternalId).toEqual(
+    testEventBody.approvedItemExternalId
+  );
+  expect(curatedItemRecord[0].scheduledSurfaceGuid).toEqual(
+    testEventBody.scheduledSurfaceGuid
+  );
+
   const curatedItem = await db('curated_feed_items')
     .select()
     .where({
@@ -179,7 +236,10 @@ async function assertTables(testEventBody: AddScheduledItemPayload, db: Knex) {
     convertDateToTimestamp(testEventBody.scheduledDate)
   );
   expect(curatedItem.feed_id).toEqual(1);
-  expect(curatedItem.resolved_id).toEqual(23434);
+  expect(curatedItem.resolved_id).toEqual(12345);
+  expect(curatedItem.status).toEqual('live');
+  expect(curatedItem.time_added).toEqual(testEventBody.createdAt);
+  expect(curatedItem.time_updated).toEqual(testEventBody.updatedAt);
 
   const queuedItems = await db('curated_feed_queued_items')
     .select()
@@ -189,7 +249,7 @@ async function assertTables(testEventBody: AddScheduledItemPayload, db: Knex) {
     .first();
 
   expect(queuedItems.feed_id).toEqual(1);
-  expect(queuedItems.resolved_id).toEqual(23434);
+  expect(queuedItems.resolved_id).toEqual(12345);
   expect(queuedItems.curator).toEqual('sri');
   expect(queuedItems.relevance_length).toEqual('week');
   expect(queuedItems.topic_id).toEqual(4);
@@ -205,11 +265,11 @@ async function assertTables(testEventBody: AddScheduledItemPayload, db: Knex) {
     .first();
 
   expect(prospectItem.feed_id).toEqual(1);
-  expect(prospectItem.resolved_id).toEqual(23434);
+  expect(prospectItem.resolved_id).toEqual(12345);
   expect(prospectItem.type).toBeNull();
   expect(prospectItem.curator).toEqual('sri');
   expect(prospectItem.status).toEqual('ready');
-  expect(prospectItem.top_domain_id).toEqual(123);
+  expect(prospectItem.top_domain_id).toEqual(topDomainId);
   expect(prospectItem.time_added).toEqual(testEventBody.createdAt);
   expect(prospectItem.time_updated).toEqual(testEventBody.updatedAt);
   expect(prospectItem.prospect_id).toEqual(curatedItem.prospect_id);
@@ -225,4 +285,22 @@ async function assertTables(testEventBody: AddScheduledItemPayload, db: Knex) {
     .first();
 
   expect(tileSource.tile_id).toBeGreaterThan(0);
+}
+
+function nockParser(testEventBody) {
+  const parserData = { resolved_id: '12345', item: { domain_id: '123' } };
+  const params = new URLSearchParams({
+    output: 'regular',
+    getItem: '1',
+    images: '0',
+    url: testEventBody.url,
+  });
+
+  //todo: refactor code to call parser only once.
+  nock(config.parserEndpoint)
+    .get('/' + params.toString())
+    .reply(200, parserData);
+  nock(config.parserEndpoint)
+    .get('/' + params.toString())
+    .reply(200, parserData);
 }

@@ -1,6 +1,6 @@
 import knex, { Knex } from 'knex';
-import config from './config';
-import { getDbCredentials } from './secretManager';
+import config from '../config';
+import { getDbCredentials } from '../secretManager';
 
 let readDb: Knex;
 let writeDb: Knex;
@@ -90,11 +90,11 @@ export const queries = {
   },
   topDomainBySlug: async (conn: Knex, slug: string): Promise<number> => {
     const res = await conn('syndicated_articles')
-      .select('d.top_domain_id')
+      .select('readitla_b.domains.top_domain_id')
       .join(
-        'readitla_b.domains d',
+        'readitla_b.domains',
         'syndicated_articles.domain_id',
-        'd.domain_id'
+        'readitla_b.domains.domain_id'
       )
       .where('syndicated_articles.slug', slug)
       .first();

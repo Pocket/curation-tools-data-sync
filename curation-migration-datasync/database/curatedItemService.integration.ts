@@ -1,11 +1,11 @@
-import { truncateDynamoDb } from './dynamodb/dynamoUtilities';
-import { dbClient } from './dynamodb/dynamoDbClient';
+import { truncateDynamoDb } from '../dynamodb/dynamoUtilities';
+import { dbClient } from '../dynamodb/dynamoDbClient';
 import sinon from 'sinon';
-import * as SecretManager from './secretManager';
-import { writeClient } from './dbClient';
+import * as SecretManager from '../secretManager';
+import { writeClient } from '../dynamodb/dbClient';
 import { Knex } from 'knex';
 import { CuratedItemService } from './curatedItemService';
-import { CuratedFeedProspectItem } from './types';
+import { CuratedFeedProspectItem } from '../types';
 
 describe('database integration test', function () {
   //aim of this test is to validate knex integration and assumptions.

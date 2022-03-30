@@ -1,8 +1,8 @@
 import fetch from 'node-fetch';
-import config from './config';
+import config from '../config';
 
 type ParserMetadataResponse = {
-  resolvedId: number;
+  resolvedId: string;
   domainId: string;
 };
 

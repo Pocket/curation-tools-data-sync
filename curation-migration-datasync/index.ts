@@ -1,6 +1,6 @@
 import config from './config';
 import * as Sentry from '@sentry/serverless';
-import { readClient, writeClient } from './dbClient';
+import { readClient, writeClient } from './dynamodb/dbClient';
 import { EventBridgeEvent } from 'aws-lambda';
 import { addScheduledItem } from './eventConsumer';
 import { EventDetailType } from './types';
@@ -8,9 +8,10 @@ import { EventDetailType } from './types';
 export async function handlerFn(event: EventBridgeEvent<any, any>) {
   Sentry.captureMessage(JSON.stringify(event));
   console.log(JSON.stringify(event));
+  const db = await writeClient();
 
   if (event['detail-type'] == EventDetailType.ADD_SCHEDULED_ITEM) {
-    await addScheduledItem(event.detail);
+    await addScheduledItem(event.detail, db);
   }
   const readQuery = await (await readClient()).raw("SELECT 'Are we good?'");
   const writeQuery = await (

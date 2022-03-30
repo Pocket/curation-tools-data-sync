@@ -22,6 +22,9 @@ export function getTopicForReaditLaTmpDatabase(input: string) {
   if (!input) {
     throw new Error('topic cannot be null or empty');
   }
+  if (TopicMappedToReaditlaTmpDb[input] == undefined) {
+    throw new Error('invalid topic mapping');
+  }
 
   return TopicMappedToReaditlaTmpDb[input];
 }

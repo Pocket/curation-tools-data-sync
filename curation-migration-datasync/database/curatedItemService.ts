@@ -4,7 +4,7 @@ import {
   CuratedFeedProspectItem,
   CuratedFeedQueuedItems,
   TileSource,
-} from './types';
+} from '../types';
 
 export class CuratedItemService {
   private db: Knex;

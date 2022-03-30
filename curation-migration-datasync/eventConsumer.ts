@@ -1,17 +1,18 @@
-import { CuratedItemService } from './curatedItemService';
-import { writeClient } from './dbClient';
-import { getTopicForReaditLaTmpDatabase } from './topicMapper';
-import { getParserMetadata } from './parser';
-import { fetchTopDomain } from './dataservice';
+import { CuratedItemService } from './database/curatedItemService';
+import { writeClient } from './dynamodb/dbClient';
+import { getTopicForReaditLaTmpDatabase } from './helpers/topicMapper';
+import { getParserMetadata } from './externalCaller/parser';
+import { fetchTopDomain } from './database/dataservice';
 import { AddScheduledItemPayload, TileSource } from './types';
 import {
   hydrateCuratedFeedItem,
   hydrateCuratedFeedProspectItem,
   hydrateCuratedFeedQueuedItem,
-} from './hydrator';
+} from './helpers/hydrator';
 import { CuratedItemRecord, ScheduledSurfaceGuid } from './dynamodb/types';
 import { insertCuratedItem } from './dynamodb/curatedItemIdMapper';
 import { dbClient } from './dynamodb/dynamoDbClient';
+import { Knex } from 'knex';
 
 /**
  * function to generate epoc timestamp
@@ -41,19 +42,23 @@ export function getCuratorNameFromSso(ssoName: string) {
  * adds the curatedRecId and externalIds from the event to the dynamoDb
  * @param eventBody
  */
-export async function addScheduledItem(eventBody: AddScheduledItemPayload) {
+export async function addScheduledItem(
+  eventBody: AddScheduledItemPayload,
+  db: Knex
+) {
   let curatedRecId: number = -1;
-  const db = await writeClient();
   const curatedItemService = new CuratedItemService(db);
 
   const topicId = await curatedItemService.getTopicIdByName(
     getTopicForReaditLaTmpDatabase(eventBody.topic)
   );
 
-  //todo: refactor getParser amd fetchDomain such that
-  //parser gets called only once in the workflow.
   const parserResponse = await getParserMetadata(eventBody.url);
-  const topDomainId = await fetchTopDomain(db, eventBody.url);
+  const topDomainId = await fetchTopDomain(
+    db,
+    eventBody.url,
+    parserResponse.domainId
+  );
 
   let prospectItem = hydrateCuratedFeedProspectItem(
     eventBody,
@@ -61,7 +66,8 @@ export async function addScheduledItem(eventBody: AddScheduledItemPayload) {
     topDomainId
   );
 
-  await db.transaction(async (trx) => {
+  const trx = await db.transaction();
+  try {
     prospectItem.prospect_id =
       await curatedItemService.insertCuratedFeedProspectItem(trx, prospectItem);
 
@@ -86,11 +92,12 @@ export async function addScheduledItem(eventBody: AddScheduledItemPayload) {
     };
 
     await curatedItemService.insertTileSource(trx, tileSource);
-  });
 
-  if (curatedRecId === -1) {
+    await trx.commit();
+  } catch (e) {
+    await trx.rollback();
     throw new Error(
-      `curatedRecId is not generated for the eventBody ${eventBody}`
+      `failed to transact for the event body ${eventBody}. \n ${e}`
     );
   }
 
