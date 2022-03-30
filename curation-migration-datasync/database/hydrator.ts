@@ -32,12 +32,12 @@ export function hydrateCuratedFeedItem(
 
 export function hydrateCuratedFeedProspectItem(
   eventBody: AddScheduledItemPayload,
-  parserResponse,
-  topDomainId
+  resolvedId: number,
+  topDomainId: number
 ): CuratedFeedProspectItem {
   return {
     feed_id: ScheduledSurfaceToFeedIdMap[eventBody.scheduledSurfaceGuid],
-    resolved_id: parserResponse.resolvedId,
+    resolved_id: resolvedId,
     type: null,
     status: 'ready',
     curator: getCuratorNameFromSso(eventBody.createdBy),
