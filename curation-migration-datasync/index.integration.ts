@@ -156,6 +156,8 @@ describe('event consumption integration test', function () {
     };
 
     await handlerFn(testEvent);
+
+    //todo: assert if record is present in rds and in dynamo
   });
 
   it('adds syndicated articles', () => {});

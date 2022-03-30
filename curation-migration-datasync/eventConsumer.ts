@@ -61,7 +61,7 @@ export async function addScheduledItem(eventBody: AddScheduledItemPayload) {
     topDomainId
   );
 
-  await this.db.transaction(async (trx) => {
+  await db.transaction(async (trx) => {
     prospectItem.prospect_id =
       await curatedItemService.insertCuratedFeedProspectItem(trx, prospectItem);
 

@@ -54,7 +54,7 @@ export class CuratedItemService {
   }
 
   public async insertTileSource(trx: Knex.Transaction, tileSource: TileSource) {
-    const row = await trx('curated_feed_items')
+    const row = await trx('tile_source')
       .insert({
         ...tileSource,
       })
