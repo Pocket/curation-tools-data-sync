@@ -12,35 +12,65 @@ export class CuratedItemService {
     this.db = db;
   }
 
-  public insertCuratedFeedProspectItem(
+  public async insertCuratedFeedProspectItem(
+    trx: Knex.Transaction,
     prospectItem: CuratedFeedProspectItem
-  ): number {
-    return 0;
+  ): Promise<any> {
+    //unique on feedId and resolvedId
+    const row = await trx('curated_feed_prospects')
+      .insert({
+        ...prospectItem,
+      })
+      .onConflict()
+      .merge();
+    return row[0];
   }
 
-  public insertCuratedFeedQueuedItem(
+  public async insertCuratedFeedQueuedItem(
+    trx: Knex.Transaction,
     queuedItem: CuratedFeedQueuedItems
-  ): number {
-    return 0;
+  ): Promise<number> {
+    //unique on prospect_id
+    const row = await trx('curated_feed_queued_items')
+      .insert({
+        ...queuedItem,
+      })
+      .onConflict()
+      .merge();
+    return row[0];
   }
 
-  public async insertCuratedFeedItem(curatedFeedItem: CuratedFeedItem) {
-    return 0;
+  public async insertCuratedFeedItem(
+    trx: Knex.Transaction,
+    curatedFeedItem: CuratedFeedItem
+  ) {
+    const row = await trx('curated_feed_items')
+      .insert({
+        ...curatedFeedItem,
+      })
+      .onConflict()
+      .merge();
+    return row[0];
   }
 
-  public async writeToTileSource(tileSource: TileSource) {
-    return 0;
+  public async insertTileSource(trx: Knex.Transaction, tileSource: TileSource) {
+    const row = await trx('curated_feed_items')
+      .insert({
+        ...tileSource,
+      })
+      .onConflict()
+      .merge();
+    return row[0];
   }
 
   public async getTopicIdByName(topic: string): Promise<number> {
-    const response = await this.db('curated-feed-topics')
+    const response = await this.db('curated_feed_topics')
       .select('topic_id')
       .where({
         name: topic,
-      });
+      })
+      .first();
 
     return response['topic_id'];
   }
-
-  public async addScheduledCuratedFeedItem(eventBody: cur);
 }

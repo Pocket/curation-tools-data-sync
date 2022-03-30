@@ -11,6 +11,7 @@ describe('getParsedDomainId', () => {
       images: '0',
       url: 'myurl.com',
     });
+
     nock(config.parserEndpoint)
       .get('/' + params.toString())
       .reply(200, data);

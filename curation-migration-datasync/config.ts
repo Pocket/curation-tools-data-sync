@@ -32,7 +32,7 @@ const config = {
     dbName: process.env.DATABASE || 'readitla_ril-tmp',
     tz: process.env.DATABASE_TZ || 'US/Central',
   },
-  parserEndpoint: process.env.PARSER_ENDPOINT || 'http://parser.getpocket.dev',
+  parserEndpoint: process.env.PARSER_ENDPOINT || 'http://parser.getpocket.com',
 };
 
 export default config;

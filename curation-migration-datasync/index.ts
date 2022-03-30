@@ -2,7 +2,7 @@ import config from './config';
 import * as Sentry from '@sentry/serverless';
 import { readClient, writeClient } from './dbClient';
 import { EventBridgeEvent } from 'aws-lambda';
-import { addScheduledItem } from './eventConsumption';
+import { addScheduledItem } from './eventConsumer';
 import { EventDetailType } from './types';
 
 export async function handlerFn(event: EventBridgeEvent<any, any>) {
