@@ -1,16 +1,85 @@
 import { Knex } from 'knex';
 import {
+  AddScheduledItemPayload,
   CuratedFeedItem,
   CuratedFeedProspectItem,
   CuratedFeedQueuedItems,
   TileSource,
 } from '../types';
 import config from '../config';
+import {
+  hydrateCuratedFeedItem,
+  hydrateCuratedFeedProspectItem,
+  hydrateCuratedFeedQueuedItem,
+  hydrateTileSource,
+} from './hydrator';
+import { getTopicForReaditLaTmpDatabase } from '../helpers/topicMapper';
 
 export class DataService {
   private db: Knex;
   constructor(db: Knex) {
     this.db = db;
+  }
+
+  /**
+   * hydrates all necessary fields for the database insertion and insert to
+   * curated_feed_prospects, curated_feed_queued_items and curated_feed_items
+   * and tile source under one transaction. returns curated_rec_id on success.
+   * @param eventBody add-scheduled-item eventBody we receive from event bus
+   * @param resolvedId resolvedId of the url in the event body. fetched from parser
+   * @param domainId domainId returned by the parser
+   */
+  public async addScheduledItemTransaction(
+    eventBody: AddScheduledItemPayload,
+    resolvedId: number,
+    domainId: string
+  ): Promise<number> {
+    const topicId = await this.getTopicIdByName(
+      getTopicForReaditLaTmpDatabase(eventBody.topic)
+    );
+
+    const topDomainId = await this.fetchTopDomain(eventBody.url, domainId);
+
+    const prospectItem = hydrateCuratedFeedProspectItem(
+      eventBody,
+      resolvedId,
+      topDomainId
+    );
+
+    const trx = await this.db.transaction();
+    try {
+      prospectItem.prospect_id = await this.insertCuratedFeedProspectItem(
+        trx,
+        prospectItem
+      );
+
+      const queuedItem = hydrateCuratedFeedQueuedItem(prospectItem, topicId);
+
+      queuedItem.queued_id = await this.insertCuratedFeedQueuedItem(
+        trx,
+        queuedItem
+      );
+
+      const curatedItem = hydrateCuratedFeedItem(
+        queuedItem,
+        eventBody.scheduledDate
+      );
+      curatedItem.curated_rec_id = await this.insertCuratedFeedItem(
+        trx,
+        curatedItem
+      );
+
+      await this.insertTileSource(trx, hydrateTileSource(curatedItem));
+
+      await trx.commit();
+
+      return curatedItem.curated_rec_id;
+    } catch (e) {
+      await trx.rollback();
+      throw new Error(
+        `failed to transact for the event body ${eventBody}, resolvedId: ${resolvedId}. \n ${e}`
+      );
+    }
   }
 
   /**

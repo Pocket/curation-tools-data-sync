@@ -4,6 +4,7 @@ import {
   CuratedFeedProspectItem,
   CuratedFeedQueuedItems,
   ScheduledSurfaceToFeedIdMap,
+  TileSource,
 } from '../types';
 import {
   convertDateToTimestamp,
@@ -68,5 +69,15 @@ export function hydrateCuratedFeedQueuedItem(
     topic_id: topicId,
     relevance_length: 'week',
     weight: 1,
+  };
+}
+
+export function hydrateTileSource(curatedItem: CuratedFeedItem): TileSource {
+  if (curatedItem.curated_rec_id == undefined) {
+    throw new Error(`curated_rec_id cannot be undefined in ${curatedItem}`);
+  }
+
+  return {
+    source_id: curatedItem.curated_rec_id,
   };
 }

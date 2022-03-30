@@ -1,12 +1,6 @@
 import { DataService } from './database/dataService';
-import { getTopicForReaditLaTmpDatabase } from './helpers/topicMapper';
 import { getParserMetadata } from './externalCaller/parser';
-import { AddScheduledItemPayload, TileSource } from './types';
-import {
-  hydrateCuratedFeedItem,
-  hydrateCuratedFeedProspectItem,
-  hydrateCuratedFeedQueuedItem,
-} from './helpers/hydrator';
+import { AddScheduledItemPayload } from './types';
 import { CuratedItemRecord, ScheduledSurfaceGuid } from './dynamodb/types';
 import { insertCuratedItem } from './dynamodb/curatedItemIdMapper';
 import { dbClient } from './dynamodb/dynamoDbClient';
@@ -35,8 +29,8 @@ export function getCuratorNameFromSso(ssoName: string) {
 }
 
 /**
- * converts the event body of `add-scheduled-item` event to database models,
- * and inserts them to the database within one transaction. If successful,
+ * fetches necessary field for database insertion and provide them to dataService.
+ * If database insertion is successful,
  * adds the curatedRecId and externalIds from the event to the dynamoDb
  * @param eventBody
  */
@@ -44,58 +38,14 @@ export async function addScheduledItem(
   eventBody: AddScheduledItemPayload,
   db: Knex
 ) {
-  let curatedRecId = -1;
   const dbService = new DataService(db);
-
-  const topicId = await dbService.getTopicIdByName(
-    getTopicForReaditLaTmpDatabase(eventBody.topic)
-  );
-
   const parserResponse = await getParserMetadata(eventBody.url);
-  const topDomainId = await dbService.fetchTopDomain(
-    eventBody.url,
+
+  const curatedRecId = await dbService.addScheduledItemTransaction(
+    eventBody,
+    parseInt(parserResponse.resolvedId),
     parserResponse.domainId
   );
-
-  const prospectItem = hydrateCuratedFeedProspectItem(
-    eventBody,
-    parserResponse,
-    topDomainId
-  );
-
-  const trx = await db.transaction();
-  try {
-    prospectItem.prospect_id = await dbService.insertCuratedFeedProspectItem(
-      trx,
-      prospectItem
-    );
-
-    const queuedItem = hydrateCuratedFeedQueuedItem(prospectItem, topicId);
-
-    queuedItem.queued_id = await dbService.insertCuratedFeedQueuedItem(
-      trx,
-      queuedItem
-    );
-
-    const curatedItem = hydrateCuratedFeedItem(
-      queuedItem,
-      eventBody.scheduledDate
-    );
-    curatedRecId = await dbService.insertCuratedFeedItem(trx, curatedItem);
-
-    const tileSource: TileSource = {
-      source_id: curatedRecId,
-    };
-
-    await dbService.insertTileSource(trx, tileSource);
-
-    await trx.commit();
-  } catch (e) {
-    await trx.rollback();
-    throw new Error(
-      `failed to transact for the event body ${eventBody}. \n ${e}`
-    );
-  }
 
   await insertAddedScheduledItem(curatedRecId, eventBody);
 }
