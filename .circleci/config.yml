@@ -223,9 +223,9 @@ jobs:
           username: $DOCKERHUB_USERNAME
           password: $DOCKERHUB_PASSWORD
         environment:
-          - NODE_ENV=test
-          - AWS_XRAY_LOG_LEVEL=silent
-          - AWS_XRAY_CONTEXT_MISSING=LOG_ERROR
+          NODE_ENV: test
+          AWS_XRAY_LOG_LEVEL: silent
+          AWS_XRAY_CONTEXT_MISSING: LOG_ERROR
       - image: mysql:5.6
         auth:
           username: $DOCKERHUB_USERNAME
@@ -256,14 +256,11 @@ jobs:
       - install_dependencies
       - run:
           name: Setup test dependencies
-          command: ./.circleci/scripts/setup.sh --aws
+          command: |
+            export $(egrep -v '^#' .docker/local.env | xargs -0) && ./.circleci/scripts/setup.sh --hosts --db --aws
       - run:
           name: run tests
           command: npm run test-integration  -- --ci --watchAll=false
-      - run:
-          name: run setup.sh
-          command: |
-            export $(egrep -v '^#' .docker/local.env | xargs -0) && ./.circleci/scripts/setup.sh --hosts --db --aws
 
   test_specs:
     description: Run spec tests

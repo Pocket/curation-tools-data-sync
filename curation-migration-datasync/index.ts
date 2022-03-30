@@ -6,6 +6,7 @@ import { addScheduledItem } from './eventConsumer';
 import { EventDetailType } from './types';
 
 export async function handlerFn(event: EventBridgeEvent<any, any>) {
+  console.log(event);
   const db = await writeClient();
   if (event['detail-type'] == EventDetailType.ADD_SCHEDULED_ITEM) {
     await addScheduledItem(event.detail, db);

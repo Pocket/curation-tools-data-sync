@@ -36,7 +36,6 @@ describe('database integration test', function () {
     await truncateDynamoDb(dbClient);
     await db.destroy();
     sinon.restore();
-    jest.clearAllMocks();
   });
 
   it('gets topicId for a name', async () => {

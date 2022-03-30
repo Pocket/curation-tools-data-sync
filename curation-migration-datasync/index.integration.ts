@@ -41,7 +41,7 @@ describe('event consumption integration test', function () {
       writeHost: 'localhost',
       writeUsername: 'root',
       writePassword: '',
-      port: '3310',
+      port: config.db.port,
     });
 
     db = await writeClient();
@@ -137,7 +137,6 @@ describe('event consumption integration test', function () {
   afterEach(async () => {
     await truncateDynamoDb(dbClient);
     sinon.restore();
-    jest.clearAllMocks();
   });
 
   afterAll(async () => {
