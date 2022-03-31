@@ -21,5 +21,6 @@ export const config = {
   },
   datasyncLambda: {
     dbSecretId: `${name}/${environment}/DatabaseCredentials`,
+    allowFeeds: 'SANDBOX', // comma-separated list of scheduledSurfaceGUID to sync
   },
 };
