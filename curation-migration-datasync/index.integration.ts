@@ -2,7 +2,6 @@ import { CuratedItemRecord, ScheduledSurfaceGuid } from './dynamodb/types';
 import { truncateDynamoDb } from './dynamodb/dynamoUtilities';
 import { dbClient } from './dynamodb/dynamoDbClient';
 import * as SecretManager from '../curation-migration-datasync/secretManager';
-import * as EventConsumer from '../curation-migration-datasync/eventConsumer';
 import sinon from 'sinon';
 import { writeClient } from './database/dbClient';
 import { AddScheduledItemPayload, EventDetailType } from './types';
@@ -10,12 +9,11 @@ import { handlerFn } from './index';
 import nock from 'nock';
 import config from './config';
 import { Knex } from 'knex';
-import { convertDateToTimestamp } from './eventConsumer';
-import {
-  getByScheduledItemExternalId,
-  insertCuratedItem,
-} from './dynamodb/curatedItemIdMapper';
+import { CuratedItemRecordModel } from './dynamodb/curatedItemIdMapper';
 import { DataService } from './database/dataService';
+import { convertDateToTimestamp } from './helpers/eventTransformers';
+
+const curatedRecordModel = new CuratedItemRecordModel();
 
 describe('event consumption integration test', function () {
   const timestamp1 = Math.round(new Date('2020-10-10').getTime() / 1000);
@@ -88,7 +86,7 @@ describe('event consumption integration test', function () {
 
     //populating the database
     const insertRecord = curatedItemRecords.map(async (item) => {
-      await insertCuratedItem(dbClient, item);
+      await curatedRecordModel.insert(item);
     });
     await Promise.all(insertRecord);
 
@@ -162,7 +160,10 @@ describe('event consumption integration test', function () {
   it('should not call dynamo db write when the sql transaction fails', async () => {
     const dataService = new DataService(db);
     sinon.stub(dataService, 'insertTileSource').throws('sql error');
-    const dymamoDbSpy = sinon.spy(EventConsumer, 'insertAddedScheduledItem');
+    const dymamoDbSpy = sinon.spy(
+      CuratedItemRecordModel.prototype,
+      'insertFromEvent'
+    );
 
     await handlerFn(testEvent);
     expect(dymamoDbSpy.callCount).toEqual(0);
@@ -174,10 +175,10 @@ async function assertTables(
   db: Knex,
   topDomainId: number
 ) {
-  const curatedItemRecord = await getByScheduledItemExternalId(
-    dbClient,
-    'random_scheduled_guid_1'
-  );
+  const curatedItemRecord =
+    await curatedRecordModel.getByScheduledItemExternalId(
+      'random_scheduled_guid_1'
+    );
   expect(curatedItemRecord[0].approvedItemExternalId).toEqual(
     testEventBody.approvedItemExternalId
   );
