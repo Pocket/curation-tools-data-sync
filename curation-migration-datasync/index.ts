@@ -5,12 +5,30 @@ import { EventBridgeEvent } from 'aws-lambda';
 import { addScheduledItem } from './eventConsumer';
 import { EventDetailType } from './types';
 
-export async function handlerFn(event: EventBridgeEvent<any, any>) {
-  console.log(event);
+export async function handlerFn(event: EventBridgeEvent<any, any>)  {
+  console.log(JSON.stringify(event));
+
   const db = await writeClient();
   if (event['detail-type'] == EventDetailType.ADD_SCHEDULED_ITEM) {
     await addScheduledItem(event.detail, db);
   }
+
+  // Check if the feed is included in the allowlist
+  if (
+    event.detail.scheduledSurfaceGuid &&
+    !config.app.allowedScheduledSurfaceGuids.includes(
+      event.detail.scheduledSurfaceGuid
+    )
+  ) {
+    console.log(
+      `Unhandled scheduledSurfaceGuid: ${event.detail.scheduledSurfaceGuid}. Skipping sync.`
+    );
+    return;
+  }
+  // TODO: INFRA-401
+  // update-approved-item events will not have scheduledSurfaceGuid; this
+  // validation must be performed when checking to see if the underlying
+  // approved item in the event is scheduled
 }
 
 Sentry.AWSLambda.init({

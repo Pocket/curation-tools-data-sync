@@ -12,6 +12,11 @@ const config = {
       dsn: process.env.SENTRY_DSN || '',
       release: process.env.GIT_SHA || '',
     },
+    // Use this to add feeds to allowlist, e.g. 'NEW_TAB_EN_US'
+    // only events for this scheduled surface will be processed
+    allowedScheduledSurfaceGuids: process.env.ALLOW_FEEDS
+      ? process.env.ALLOW_FEEDS.split(',')
+      : ['SANDBOX'], // Default to the test feed
   },
   aws: {
     region: process.env.REGION || 'us-east-1',

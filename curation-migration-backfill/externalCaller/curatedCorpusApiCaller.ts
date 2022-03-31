@@ -5,14 +5,14 @@ import { generateJwt } from '../jwt';
 import { getCurationToolsDataSyncPrivateKey } from '../secretManager';
 
 /**
- * Call the importApprovedCuratedCorpusItem mutation
+ * Call the importApprovedCorpusItem mutation
  * @param data input variables for the mutation. Of the type CorpusInput
- * @returns json response of type ImportApprovedCuratedCorpusItemMutationResponse
+ * @returns json response of type ImportApprovedCorpusItemPayload
  */
-export async function importApprovedCuratedCorpusItem(data: CorpusInput) {
+export async function importApprovedCorpusItem(data: CorpusInput) {
   const mutation = `
-  mutation importApprovedItem($data: ImportApprovedCuratedCorpusItemInput!) {
-    importApprovedCuratedCorpusItem(data: $data) {
+  mutation importApprovedItem($data: ImportApprovedCorpusItemInput!) {
+    importApprovedCorpusItem(data: $data) {
       approvedItem {
         externalId
       }
