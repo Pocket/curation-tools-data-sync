@@ -1,5 +1,4 @@
 import { backOff } from 'exponential-backoff';
-
 import config from '../config';
 import fetch from 'node-fetch';
 
@@ -37,10 +36,15 @@ export const parser = {
  * https://www.npmjs.com/package/exponential-backoff#ibackoffoptions
  * @param url
  */
-export async function getParserMetadata(url: string): Promise<any> {
+export async function getParserMetadata(
+  url: string
+): Promise<ParserMetadataResponse> {
   const backOffOptions = {
     numOfAttempts: 3, //default is 10
   };
-  //backoff doesn't allow us to type the response, but its enforced in parserCaller()
-  return await backOff(() => parser.parserCaller(url), backOffOptions);
+
+  return (await backOff(
+    () => parser.parserCaller(url),
+    backOffOptions
+  )) as ParserMetadataResponse;
 }
