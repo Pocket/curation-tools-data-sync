@@ -1,6 +1,6 @@
 import nock from 'nock';
 import { getParserMetadata } from './parser';
-import config from './config';
+import config from '../config';
 
 describe('getParsedDomainId', () => {
   it('fetches appropriate keys from response', async () => {
@@ -11,6 +11,7 @@ describe('getParsedDomainId', () => {
       images: '0',
       url: 'myurl.com',
     });
+
     nock(config.parserEndpoint)
       .get('/' + params.toString())
       .reply(200, data);
