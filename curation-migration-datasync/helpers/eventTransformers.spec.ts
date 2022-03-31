@@ -1,4 +1,7 @@
-import { convertDateToTimestamp, getCuratorNameFromSso } from './eventConsumer';
+import {
+  convertDateToTimestamp,
+  getCuratorNameFromSso,
+} from './eventTransformers';
 
 describe('sso to curator name test', () => {
   it('returns curator name from sso string', () => {
