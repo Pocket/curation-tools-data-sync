@@ -77,7 +77,8 @@ export class DataService {
     } catch (e) {
       await trx.rollback();
       throw new Error(
-        `failed to transact for the event body ${eventBody}, resolvedId: ${resolvedId}. \n ${e}`
+        `failed to transact for the event body
+        ${JSON.stringify(eventBody)}, resolvedId: ${resolvedId} \n error: ${e}`
       );
     }
   }

@@ -1,17 +1,41 @@
 import { truncateDynamoDb } from '../dynamodb/dynamoUtilities';
 import { dbClient } from '../dynamodb/dynamoDbClient';
 import sinon from 'sinon';
+import { expect } from 'chai';
 import * as SecretManager from '../secretManager';
 import { writeClient } from './dbClient';
 import { Knex } from 'knex';
 import { DataService } from './dataService';
-import { CuratedFeedProspectItem } from '../types';
+import {
+  AddScheduledItemPayload,
+  CuratedFeedProspectItem,
+  EventDetailType,
+} from '../types';
 import config from '../config';
 
 describe('database integration test', function () {
   //aim of this test is to validate knex integration and assumptions.
   //use cases will be tested in index.integration.ts
   let db: Knex;
+  const testEventBody: AddScheduledItemPayload = {
+    eventType: EventDetailType.ADD_SCHEDULED_ITEM,
+    scheduledItemExternalId: 'random_scheduled_guid_1',
+    approvedItemExternalId: 'random_approved_guid_1',
+    url: 'https://stackoverflow.blog/',
+    title: 'Sync the new tool with legacy database',
+    excerpt: 'will be deprecated soon',
+    language: 'EN',
+    publisher: 'Pocket blog',
+    imageUrl: 'https://some-s3-url.com',
+    topic: 'HEALTH_FITNESS',
+    isSyndicated: false,
+    createdAt: 1648593897,
+    createdBy: 'ad|Mozilla-LDAP|sri',
+    updatedAt: 1648593897,
+    scheduledSurfaceGuid: 'NEW_TAB_EN_US',
+    scheduledDate: '2022-03-25',
+  };
+
   beforeAll(async () => {
     await truncateDynamoDb(dbClient);
     sinon.stub(SecretManager, 'getDbCredentials').resolves({
@@ -30,6 +54,12 @@ describe('database integration test', function () {
       name: 'Health & Fitness',
       status: 'live',
     });
+    await db(config.tables.domains).truncate();
+    await db(config.tables.domains).insert({
+      domain_id: 1,
+      domain: 'nytimes.com',
+      top_domain_id: 4,
+    });
   });
 
   afterAll(async () => {
@@ -42,7 +72,7 @@ describe('database integration test', function () {
     const topicID = await new DataService(db).getTopicIdByName(
       'Health & Fitness'
     );
-    expect(topicID).toEqual(1);
+    expect(topicID).equals(1);
   });
 
   it('retrives prospectId after successfully inserting prospectItem', async () => {
@@ -69,7 +99,7 @@ describe('database integration test', function () {
       ).insertCuratedFeedProspectItem(trx, prospectItem);
     });
 
-    expect(generatedProspectId).toBeGreaterThan(0);
+    expect(generatedProspectId).to.be.greaterThan(0);
   });
 
   it('duplicate records need to merge and not throw error', async () => {
@@ -104,7 +134,7 @@ describe('database integration test', function () {
       ).insertCuratedFeedProspectItem(trx, prospectItem);
     });
 
-    expect(generatedProspectId).toBeGreaterThan(0);
+    expect(generatedProspectId).to.be.greaterThan(0);
     const response = await db('curated_feed_prospects')
       .select('title')
       .where({
@@ -112,6 +142,36 @@ describe('database integration test', function () {
       })
       .first();
 
-    expect(response['title']).toEqual('changed title');
+    expect(response['title']).equals('changed title');
+  });
+
+  it('should rollback transaction if one of the database inserts fails', async () => {
+    const dataService = new DataService(db);
+    sinon.stub(dataService, 'insertTileSource').callsFake(fakeTileSource);
+    const priorCuratedItem = await db(config.tables.curatedFeedItems).select();
+    const priorProspectItem = await db(
+      config.tables.curatedFeedProspects
+    ).select();
+    const priorQueuedItem = await db(
+      config.tables.curatedFeedQueuedItems
+    ).select();
+
+    try {
+      await dataService.addScheduledItemTransaction(testEventBody, 1, '1');
+    } catch (e) {
+      //do nothing
+    }
+
+    const curatedItem = await db(config.tables.curatedFeedItems).select();
+    const prospectItem = await db(config.tables.curatedFeedProspects).select();
+    const queuedItem = await db(config.tables.curatedFeedQueuedItems).select();
+
+    expect(curatedItem).to.deep.equals(priorCuratedItem);
+    expect(prospectItem).to.deep.equals(priorProspectItem);
+    expect(queuedItem).to.deep.equals(priorQueuedItem);
   });
 });
+
+async function fakeTileSource() {
+  throw new Error('sql error');
+}

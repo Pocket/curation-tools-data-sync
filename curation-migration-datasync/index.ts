@@ -5,7 +5,7 @@ import { EventBridgeEvent } from 'aws-lambda';
 import { addScheduledItem } from './eventConsumer';
 import { EventDetailType } from './types';
 
-export async function handlerFn(event: EventBridgeEvent<any, any>)  {
+export async function handlerFn(event: EventBridgeEvent<any, any>) {
   console.log(JSON.stringify(event));
 
   const db = await writeClient();

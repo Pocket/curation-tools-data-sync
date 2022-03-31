@@ -167,20 +167,6 @@ describe('event consumption integration test', function () {
     await handlerFn(testEvent);
     expect(dymamoDbSpy.callCount).toEqual(0);
   });
-
-  it('should rollback transaction if one of the database inserts fails', async () => {
-    const dataService = new DataService(db);
-    sinon.stub(dataService, 'insertTileSource').throws('sql error');
-
-    await handlerFn(testEvent);
-    const curatedItem = await db(config.tables.curatedFeedItems).select();
-    const prospectItem = await db(config.tables.curatedFeedProspects).select();
-    const queuedItem = await db(config.tables.curatedFeedQueuedItems).select();
-
-    expect(curatedItem.length).toEqual(0);
-    expect(prospectItem.length).toEqual(0);
-    expect(queuedItem.length).toEqual(0);
-  });
 });
 
 async function assertTables(
