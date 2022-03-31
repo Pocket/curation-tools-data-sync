@@ -34,7 +34,7 @@ describe('getParsedDomainId', () => {
       .replyWithError(testError);
 
     await expect(getParserMetadata('myurl.com')).rejects.toThrowError(
-      `FetchError: request to ${
+      `request to ${
         config.parserEndpoint
       }/${params.toString()} failed, reason: ${testError}`
     );
