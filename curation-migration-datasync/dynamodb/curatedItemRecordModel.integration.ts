@@ -1,5 +1,5 @@
 import { CuratedItemRecord, ScheduledSurfaceGuid } from './types';
-import { CuratedItemRecordModel } from './curatedItemIdMapper';
+import { CuratedItemRecordModel } from './curatedItemRecordModel';
 import { truncateDynamoDb } from './dynamoUtilities';
 import { dbClient } from './dynamoDbClient';
 

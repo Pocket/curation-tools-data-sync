@@ -1,7 +1,7 @@
 import { DataService } from './database/dataService';
 import { getParserMetadata } from './externalCaller/parser';
 import { AddScheduledItemPayload } from './types';
-import { CuratedItemRecordModel } from './dynamodb/curatedItemIdMapper';
+import { CuratedItemRecordModel } from './dynamodb/curatedItemRecordModel';
 import { Knex } from 'knex';
 
 /**

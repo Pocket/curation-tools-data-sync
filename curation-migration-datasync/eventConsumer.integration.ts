@@ -8,7 +8,7 @@ import { AddScheduledItemPayload, EventDetailType } from './types';
 import nock from 'nock';
 import config from './config';
 import { Knex } from 'knex';
-import { CuratedItemRecordModel } from './dynamodb/curatedItemIdMapper';
+import { CuratedItemRecordModel } from './dynamodb/curatedItemRecordModel';
 import { DataService } from './database/dataService';
 import { convertDateToTimestamp } from './helpers/dataTransformers';
 import { addScheduledItem } from './eventConsumer';
