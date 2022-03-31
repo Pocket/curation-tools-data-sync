@@ -45,7 +45,7 @@ describe('database integration test', function () {
       writeHost: 'localhost',
       writeUsername: 'root',
       writePassword: '',
-      port: '3310',
+      port: config.db.port,
     });
     db = await writeClient();
     await db(config.tables.curatedFeedTopics).truncate();

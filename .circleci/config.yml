@@ -73,7 +73,9 @@ commands:
           command: echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" > ~/.npmrc
       - run:
           name: << parameters.description >>
-          command: cd << parameters.dir >> && npm ci
+          command: |
+            ROOT_DIR=$(pwd)
+            cd << parameters.dir >> && npm ci && cd $ROOT_DIR
       # Save the cache to avoid extraneous downloads
       - save_cache:
           key: node-v1-<< parameters.dir >>-{{ checksum "package-lock.json" }}
@@ -232,7 +234,7 @@ jobs:
           password: $DOCKERHUB_PASSWORD
         environment:
           MYSQL_ALLOW_EMPTY_PASSWORD: yes
-          TZ: 'UTC'
+          TZ: 'US/Central'
       - image: circleci/node:16
         auth:
           username: $DOCKERHUB_USERNAME
@@ -260,7 +262,9 @@ jobs:
             export $(egrep -v '^#' .docker/local.env | xargs -0) && ./.circleci/scripts/setup.sh --hosts --db --aws
       - run:
           name: run tests
-          command: npm run test-integration  -- --ci --watchAll=false
+          command: |
+            export $(egrep -v '^#' .docker/local.env | xargs -0)
+            npm run test-integration  -- --ci --watchAll=false
 
   test_specs:
     description: Run spec tests
