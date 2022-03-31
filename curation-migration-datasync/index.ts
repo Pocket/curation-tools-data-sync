@@ -1,9 +1,18 @@
 import config from './config';
 import * as Sentry from '@sentry/serverless';
-import { readClient, writeClient } from './dbClient';
+import { writeClient } from './database/dbClient';
+import { EventBridgeEvent } from 'aws-lambda';
+import { addScheduledItem } from './eventConsumer';
+import { EventDetailType } from './types';
 
-export async function handlerFn(event: any) {
+export async function handlerFn(event: EventBridgeEvent<any, any>) {
   console.log(JSON.stringify(event));
+
+  const db = await writeClient();
+  if (event['detail-type'] == EventDetailType.ADD_SCHEDULED_ITEM) {
+    await addScheduledItem(event.detail, db);
+  }
+
   // Check if the feed is included in the allowlist
   if (
     event.detail.scheduledSurfaceGuid &&
@@ -20,12 +29,6 @@ export async function handlerFn(event: any) {
   // update-approved-item events will not have scheduledSurfaceGuid; this
   // validation must be performed when checking to see if the underlying
   // approved item in the event is scheduled
-
-  const readQuery = await (await readClient()).raw("SELECT 'Are we good?'");
-  const writeQuery = await (
-    await writeClient()
-  ).raw("SELECT 'And we are lit!'");
-  console.log('read for me:', readQuery[0], 'pretend to write:', writeQuery[0]);
 }
 
 Sentry.AWSLambda.init({

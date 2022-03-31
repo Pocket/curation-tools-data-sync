@@ -54,7 +54,8 @@ export class DatasyncLambda extends Resource {
           'detail-type': [
             'add-scheduled-item',
             'update-scheduled-item',
-            'delete-scheduled-item',
+            'update-approved-item',
+            'remove-scheduled-item',
           ],
         },
         //todo: this has to be created as seperate app construct in tf module
