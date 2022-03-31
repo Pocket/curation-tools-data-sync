@@ -7,7 +7,7 @@ import { writeClient } from './dbClient';
 import { Knex } from 'knex';
 import { DataService } from './dataService';
 import {
-  AddScheduledItemPayload,
+  ScheduledItemPayload,
   CuratedFeedProspectItem,
   EventDetailType,
 } from '../types';
@@ -17,7 +17,7 @@ describe('database integration test', function () {
   //aim of this test is to validate knex integration and assumptions.
   //use cases will be tested in index.integration.ts
   let db: Knex;
-  const testEventBody: AddScheduledItemPayload = {
+  const testEventBody: ScheduledItemPayload = {
     eventType: EventDetailType.ADD_SCHEDULED_ITEM,
     scheduledItemExternalId: 'random_scheduled_guid_1',
     approvedItemExternalId: 'random_approved_guid_1',

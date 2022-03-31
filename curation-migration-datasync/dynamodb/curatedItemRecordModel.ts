@@ -12,7 +12,7 @@ import {
 import config from '../config';
 import * as Sentry from '@sentry/serverless';
 import { dbClient } from './dynamoDbClient';
-import { AddScheduledItemPayload } from '../types';
+import { ScheduledItemPayload } from '../types';
 
 export class CuratedItemRecordModel {
   private client: DynamoDBDocumentClient;
@@ -163,7 +163,7 @@ export class CuratedItemRecordModel {
    * @returns Omit<CuratedItemRecord, 'curatedRecId'>
    */
   recordFromEvent(
-    eventBody: AddScheduledItemPayload
+    eventBody: ScheduledItemPayload
   ): Omit<CuratedItemRecord, 'curatedRecId'> {
     return {
       scheduledItemExternalId: eventBody.scheduledItemExternalId,
@@ -184,7 +184,7 @@ export class CuratedItemRecordModel {
    */
   public async insertFromEvent(
     curatedRecId: number,
-    eventBody: AddScheduledItemPayload
+    eventBody: ScheduledItemPayload
   ): Promise<void> {
     const inputItem: CuratedItemRecord = {
       curatedRecId,

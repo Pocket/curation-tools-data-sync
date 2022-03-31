@@ -45,6 +45,7 @@ const config = {
     tileSource: 'tile_source',
     syndicatedArticles: 'syndicated_articles',
     domains: 'readitla_b.domains',
+    curatedFeedItemsDeleted: 'curated_feed_items_deleted',
   },
   parserEndpoint: process.env.PARSER_ENDPOINT || 'http://parser.getpocket.dev',
 };

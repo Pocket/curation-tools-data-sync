@@ -4,14 +4,14 @@ import { dbClient } from './dynamodb/dynamoDbClient';
 import * as SecretManager from '../curation-migration-datasync/secretManager';
 import sinon from 'sinon';
 import { writeClient } from './database/dbClient';
-import { AddScheduledItemPayload, EventDetailType } from './types';
+import { ScheduledItemPayload, EventDetailType } from './types';
 import nock from 'nock';
 import config from './config';
 import { Knex } from 'knex';
 import { CuratedItemRecordModel } from './dynamodb/curatedItemRecordModel';
 import { DataService } from './database/dataService';
 import { convertDateToTimestamp } from './helpers/dataTransformers';
-import { addScheduledItem } from './eventConsumer';
+import { addScheduledItem, removeScheduledItem } from './eventConsumer';
 
 const curatedRecordModel = new CuratedItemRecordModel();
 
@@ -85,7 +85,7 @@ describe('event consumption integration test', function () {
     await db(config.tables.syndicatedArticles).truncate();
     await db(config.tables.syndicatedArticles).insert({
       resolved_id: 0,
-      original_resolveD_id: 0,
+      original_resolved_id: 0,
       author_user_id: 1,
       status: 1,
       hide_images: 0,
@@ -103,6 +103,28 @@ describe('event consumption integration test', function () {
 
   afterAll(async () => {
     await db.destroy();
+  });
+  describe('remove-scheduled-item', () => {
+    it('throws error if curatedRecId is not found in database', async () => {
+      const testEventBody = {
+        eventType: EventDetailType.DELETE_SCHEDULED_ITEM,
+        scheduledItemExternalId: 'random_scheduled_guid_2',
+        // other fields we don't need
+      } as ScheduledItemPayload;
+      await expect(removeScheduledItem(testEventBody, db)).rejects.toThrow(
+        'No record found for curatedRecId'
+      );
+    });
+    it('throws error if the scheduledItemExternalId is not present in dynamo map', async () => {
+      const testEventBody = {
+        eventType: EventDetailType.DELETE_SCHEDULED_ITEM,
+        scheduledItemExternalId: 'not_a_real_guid_1',
+        // other fields we don't need
+      } as ScheduledItemPayload;
+      await expect(removeScheduledItem(testEventBody, db)).rejects.toThrow(
+        'No mapping found for scheduledItemExternalId'
+      );
+    });
   });
 
   describe('add-scheduled-item', () => {
@@ -126,7 +148,7 @@ describe('event consumption integration test', function () {
     };
 
     async function assertTables(
-      testEventBody: AddScheduledItemPayload,
+      testEventBody: ScheduledItemPayload,
       db: Knex,
       topDomainId: number
     ) {
