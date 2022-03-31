@@ -9,7 +9,7 @@ import {
 import {
   convertDateToTimestamp,
   getCuratorNameFromSso,
-} from '../eventConsumer';
+} from '../helpers/dataTransformers';
 
 export function hydrateCuratedFeedItem(
   queuedItem: CuratedFeedQueuedItems,
