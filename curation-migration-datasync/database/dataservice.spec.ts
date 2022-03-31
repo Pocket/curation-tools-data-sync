@@ -7,11 +7,9 @@ describe('fetchTopDomain', () => {
   const conn = {} as Knex;
   const dbService = new DataService(conn);
   const domainStub = sandbox
-    .stub(dbService.queries, 'topDomainByDomainId')
+    .stub(dbService, 'topDomainByDomainId')
     .resolves(1234);
-  const slugStub = sandbox
-    .stub(dbService.queries, 'topDomainBySlug')
-    .resolves(5678);
+  const slugStub = sandbox.stub(dbService, 'topDomainBySlug').resolves(5678);
   afterEach(() => sandbox.resetHistory());
   afterAll(() => sandbox.restore());
 

@@ -29,7 +29,7 @@ export class DataService {
    * @param resolvedId resolvedId of the url in the event body. fetched from parser
    * @param domainId domainId returned by the parser
    */
-  public async addScheduledItemTransaction(
+  public async addScheduledItem(
     eventBody: AddScheduledItemPayload,
     resolvedId: number,
     domainId: string
@@ -83,6 +83,10 @@ export class DataService {
     }
   }
 
+  public async deleteScheduledItem() {
+    return;
+  }
+
   /**
    * inserts into curated_feed_prospects table.
    * unique index on (feed_id and resolved_id)
@@ -90,7 +94,7 @@ export class DataService {
    * @param prospectItem
    * @returns prospect_id : primary key of the table
    */
-  public async insertCuratedFeedProspectItem(
+  async insertCuratedFeedProspectItem(
     trx: Knex.Transaction,
     prospectItem: CuratedFeedProspectItem
   ): Promise<number> {
@@ -112,7 +116,7 @@ export class DataService {
    * @param queuedItem
    * @returns queued_id : primary key of the table
    */
-  public async insertCuratedFeedQueuedItem(
+  async insertCuratedFeedQueuedItem(
     trx: Knex.Transaction,
     queuedItem: CuratedFeedQueuedItems
   ): Promise<number> {
@@ -134,7 +138,7 @@ export class DataService {
    * @param curatedFeedItem
    * @return curated_rec_id : primary key of the table
    */
-  public async insertCuratedFeedItem(
+  async insertCuratedFeedItem(
     trx: Knex.Transaction,
     curatedFeedItem: CuratedFeedItem
   ): Promise<number> {
@@ -154,7 +158,7 @@ export class DataService {
    * @param trx
    * @param tileSource, curated_rec_id
    */
-  public async insertTileSource(trx: Knex.Transaction, tileSource: TileSource) {
+  async insertTileSource(trx: Knex.Transaction, tileSource: TileSource) {
     await trx(config.tables.tileSource)
       .insert({
         ...tileSource,
@@ -190,31 +194,38 @@ export class DataService {
       urlObj.pathname.startsWith('/explore/item')
     ) {
       const slug = urlObj.pathname.split('/').pop() as string;
-      return await this.queries.topDomainBySlug(slug);
+      return await this.topDomainBySlug(slug);
     } else {
-      return await this.queries.topDomainByDomainId(parserDomainId);
+      return await this.topDomainByDomainId(parserDomainId);
     }
   }
 
-  queries = {
-    topDomainByDomainId: async (domainId: string): Promise<number> => {
-      const res = await this.db(config.tables.domains)
-        .select('top_domain_id')
-        .where('domain_id', domainId)
-        .first();
-      return res.top_domain_id;
-    },
-    topDomainBySlug: async (slug: string): Promise<number> => {
-      const res = await this.db(config.tables.syndicatedArticles)
-        .select('readitla_b.domains.top_domain_id')
-        .join(
-          'readitla_b.domains',
-          'syndicated_articles.domain_id',
-          'readitla_b.domains.domain_id'
-        )
-        .where('syndicated_articles.slug', slug)
-        .first();
-      return res.top_domain_id;
-    },
-  };
+  /**
+   * Fetch the top domain ID for the given domain ID. Used for non-syndicated
+   * articles (syndicated articles will return Pocket domain, and should use
+   * topDomainBySlug)
+   */
+  async topDomainByDomainId(domainId: string): Promise<number> {
+    const res = await this.db(config.tables.domains)
+      .select('top_domain_id')
+      .where('domain_id', domainId)
+      .first();
+    return res.top_domain_id;
+  }
+  /**
+   * Fetch the top domain ID for the given slug. Used for retrieving
+   * the original domain ID of syndicated articles (re-hosted by Pocket)
+   */
+  async topDomainBySlug(slug: string): Promise<number> {
+    const res = await this.db(config.tables.syndicatedArticles)
+      .select('readitla_b.domains.top_domain_id')
+      .join(
+        'readitla_b.domains',
+        'syndicated_articles.domain_id',
+        'readitla_b.domains.domain_id'
+      )
+      .where('syndicated_articles.slug', slug)
+      .first();
+    return res.top_domain_id;
+  }
 }

@@ -41,7 +41,7 @@ export async function addScheduledItem(
   const dbService = new DataService(db);
   const parserResponse = await getParserMetadata(eventBody.url);
 
-  const curatedRecId = await dbService.addScheduledItemTransaction(
+  const curatedRecId = await dbService.addScheduledItem(
     eventBody,
     parseInt(parserResponse.resolvedId),
     parserResponse.domainId
