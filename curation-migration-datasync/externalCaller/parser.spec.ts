@@ -1,7 +1,6 @@
 import nock from 'nock';
-import { getParserMetadata } from './parser';
+import { getParserMetadata, parser } from './parser';
 import config from '../config';
-import * as Parser from './parserCaller';
 
 describe('getParsedDomainId', () => {
   const testError = 'Something went wrong';
@@ -28,7 +27,7 @@ describe('getParsedDomainId', () => {
   });
 
   it('should throw error after retrying three times', async () => {
-    const parserCallerSpy = jest.spyOn(Parser, 'parserCaller');
+    const parserCallerSpy = jest.spyOn(parser, 'parserCaller');
     nock(config.parserEndpoint)
       .get('/' + params.toString())
       .times(3)
@@ -43,7 +42,7 @@ describe('getParsedDomainId', () => {
   });
 
   it('should succeed if the third attempt succeed', async () => {
-    const parserCallerSpy = jest.spyOn(Parser, 'parserCaller');
+    const parserCallerSpy = jest.spyOn(parser, 'parserCaller');
     nock(config.parserEndpoint)
       .get('/' + params.toString())
       .times(2)
