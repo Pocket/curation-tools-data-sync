@@ -157,7 +157,7 @@ describe('database integration test', function () {
     ).select();
 
     try {
-      await dataService.addScheduledItemTransaction(testEventBody, 1, '1');
+      await dataService.addScheduledItem(testEventBody, 1, '1');
     } catch (e) {
       //do nothing
     }

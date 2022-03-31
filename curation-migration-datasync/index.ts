@@ -8,11 +8,6 @@ import { EventDetailType } from './types';
 export async function handlerFn(event: EventBridgeEvent<any, any>) {
   console.log(JSON.stringify(event));
 
-  const db = await writeClient();
-  if (event['detail-type'] == EventDetailType.ADD_SCHEDULED_ITEM) {
-    await addScheduledItem(event.detail, db);
-  }
-
   // Check if the feed is included in the allowlist
   if (
     event.detail.scheduledSurfaceGuid &&
@@ -29,6 +24,11 @@ export async function handlerFn(event: EventBridgeEvent<any, any>) {
   // update-approved-item events will not have scheduledSurfaceGuid; this
   // validation must be performed when checking to see if the underlying
   // approved item in the event is scheduled
+
+  const db = await writeClient();
+  if (event['detail-type'] == EventDetailType.ADD_SCHEDULED_ITEM) {
+    await addScheduledItem(event.detail, db);
+  }
 }
 
 Sentry.AWSLambda.init({

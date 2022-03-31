@@ -1,17 +1,12 @@
 import { CuratedItemRecord, ScheduledSurfaceGuid } from './types';
-import {
-  deleteItemByCuratedRecId,
-  getByCuratedRecId,
-  getByScheduledItemExternalId,
-  getByScheduledSurfaceGuid,
-  insertCuratedItem,
-} from './curatedItemIdMapper';
+import { CuratedItemRecordModel } from './curatedItemRecordModel';
 import { truncateDynamoDb } from './dynamoUtilities';
 import { dbClient } from './dynamoDbClient';
 
 describe('dynamodb read and write test', () => {
   const timestamp1 = Math.round(new Date('2020-10-10').getTime() / 1000);
   const timestamp2 = Math.round(new Date('2021-10-10').getTime() / 1000);
+  const curatedItemModel = new CuratedItemRecordModel();
 
   const curatedItemRecords: CuratedItemRecord[] = [
     {
@@ -48,7 +43,7 @@ describe('dynamodb read and write test', () => {
     await truncateDynamoDb(dbClient);
 
     const insertRecord = curatedItemRecords.map(async (item) => {
-      await insertCuratedItem(dbClient, item);
+      await curatedItemModel.insert(item);
     });
     await Promise.all(insertRecord);
   });
@@ -65,9 +60,8 @@ describe('dynamodb read and write test', () => {
       approvedItemExternalId: 'random-approved-guid-5',
       lastUpdatedAt: timestamp2,
     };
-    await insertCuratedItem(dbClient, itemToBeAdded);
-    const res: CuratedItemRecord = await getByCuratedRecId(
-      dbClient,
+    await curatedItemModel.insert(itemToBeAdded);
+    const res: CuratedItemRecord = await curatedItemModel.getByCuratedRecId(
       itemToBeAdded.curatedRecId
     );
 
@@ -82,10 +76,10 @@ describe('dynamodb read and write test', () => {
   });
 
   it('should get curatedItems by scheduledSurfaceGuid', async () => {
-    const res: CuratedItemRecord[] = await getByScheduledSurfaceGuid(
-      dbClient,
-      ScheduledSurfaceGuid.NEW_TAB_EN_US
-    );
+    const res: CuratedItemRecord[] =
+      await curatedItemModel.getByScheduledSurfaceGuid(
+        ScheduledSurfaceGuid.NEW_TAB_EN_US
+      );
 
     expect(res).not.toBeUndefined();
     expect(res.length).toEqual(2);
@@ -106,10 +100,10 @@ describe('dynamodb read and write test', () => {
   });
 
   it('should get curatedItem by scheduledItems external Id', async () => {
-    const res: CuratedItemRecord[] = await getByScheduledItemExternalId(
-      dbClient,
-      'random-scheduled-guid-4'
-    );
+    const res: CuratedItemRecord[] =
+      await curatedItemModel.getByScheduledItemExternalId(
+        'random-scheduled-guid-4'
+      );
     expect(res).not.toBeUndefined();
     expect(res.length).toEqual(1);
     expect(res?.[0].curatedRecId).toEqual(4);
@@ -122,13 +116,11 @@ describe('dynamodb read and write test', () => {
   });
 
   it('should delete a single record from the dynamo db', async () => {
-    await deleteItemByCuratedRecId(
-      dbClient,
+    await curatedItemModel.deleteByCuratedRecId(
       curatedItemRecords[3].curatedRecId
     );
 
-    const res: CuratedItemRecord = await getByCuratedRecId(
-      dbClient,
+    const res: CuratedItemRecord = await curatedItemModel.getByCuratedRecId(
       curatedItemRecords[3].curatedRecId
     );
     expect(res.curatedRecId).toBeUndefined();
