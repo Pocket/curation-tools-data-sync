@@ -5,7 +5,6 @@ import sinon from 'sinon';
 import nock from 'nock';
 import config from './config';
 import { SQSEvent } from 'aws-lambda';
-import * as ImportMutationCaller from './externalCaller/importMutationCaller';
 import * as ProspectApi from './externalCaller/prospectApiCaller';
 import * as curatedItemIdMapper from './dynamodb/curatedItemIdMapper';
 
@@ -64,7 +63,7 @@ describe('curation migration', () => {
         .post('/') //curated-corpus-api call for first event
         .reply(200, {
           data: {
-            importApprovedCuratedCorpusItem: {
+            importApprovedCorpusItem: {
               approvedItem: {
                 externalId: 'random-approvedItem-guid',
               },
@@ -146,21 +145,36 @@ describe('curation migration', () => {
         })
       );
 
-      sinon.stub(ImportMutationCaller, 'callImportMutation').returns(
-        Promise.resolve({
+      //nock the curatedCorpusApi call
+      nock(config.AdminApi)
+        .post('/') //curated-corpus-api call for first event
+        .reply(200, {
           data: {
-            importApprovedCuratedCorpusItem: {
+            importApprovedCorpusItem: {
               approvedItem: {
                 externalId: 'random-approvedItem-guid',
               },
               scheduledItem: {
                 externalId: 'random-scheduledItem-guid',
-                scheduledSurfaceGuid: 'NEW_TAB_EN_US',
+                scheduledSurfaceGuid: 'new_tab_en_us',
               },
             },
           },
         })
-      );
+        .post('/') //curated-corpus-api call for first event
+        .reply(200, {
+          data: {
+            importApprovedCorpusItem: {
+              approvedItem: {
+                externalId: 'random-approvedItem-guid',
+              },
+              scheduledItem: {
+                externalId: 'random-scheduledItem-guid',
+                scheduledSurfaceGuid: 'new_tab_en_us',
+              },
+            },
+          },
+        });
 
       // create two fake sqs events
       const fakeEvent = {
