@@ -37,6 +37,13 @@ describe('dynamodb read and write test', () => {
       approvedItemExternalId: 'random-approved-guid-4',
       lastUpdatedAt: timestamp2,
     },
+    {
+      curatedRecId: 5,
+      scheduledSurfaceGuid: ScheduledSurfaceGuid.NEW_TAB_DE_DE,
+      scheduledItemExternalId: 'random-scheduled-guid-5',
+      approvedItemExternalId: 'random-approved-guid-4',
+      lastUpdatedAt: timestamp1,
+    },
   ];
 
   beforeAll(async () => {
@@ -113,6 +120,29 @@ describe('dynamodb read and write test', () => {
       ScheduledSurfaceGuid.NEW_TAB_EN_GB
     );
     expect(res?.[0].lastUpdatedAt).toEqual(timestamp2);
+  });
+
+  it('should get all curatedItemRecords matching with approvedItemexternalId', async () => {
+    const res: CuratedItemRecord[] =
+      await curatedItemModel.getByApprovedItemExternalId(
+        'random-approved-guid-4'
+      );
+    expect(res).not.toBeUndefined();
+    expect(res.length).toEqual(2);
+    expect(res?.[0].curatedRecId).toEqual(5);
+    expect(res?.[0].scheduledItemExternalId).toEqual('random-scheduled-guid-5');
+    expect(res?.[0].approvedItemExternalId).toEqual('random-approved-guid-4');
+    expect(res?.[0].scheduledSurfaceGuid).toEqual(
+      ScheduledSurfaceGuid.NEW_TAB_DE_DE
+    );
+    expect(res?.[0].lastUpdatedAt).toEqual(timestamp1);
+    expect(res?.[1].curatedRecId).toEqual(4);
+    expect(res?.[1].scheduledItemExternalId).toEqual('random-scheduled-guid-4');
+    expect(res?.[1].approvedItemExternalId).toEqual('random-approved-guid-4');
+    expect(res?.[1].scheduledSurfaceGuid).toEqual(
+      ScheduledSurfaceGuid.NEW_TAB_EN_GB
+    );
+    expect(res?.[1].lastUpdatedAt).toEqual(timestamp2);
   });
 
   it('should delete a single record from the dynamo db', async () => {
