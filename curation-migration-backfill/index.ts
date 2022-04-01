@@ -32,15 +32,15 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
       const curatedItemRecord: CuratedItemRecord = {
         curatedRecId: parseInt(message.curated_rec_id),
         scheduledItemExternalId:
-          importMutationResponse?.data?.importApprovedCuratedCorpusItem
-            .scheduledItem.externalId,
+          importMutationResponse?.data?.importApprovedCorpusItem.scheduledItem
+            .externalId,
         approvedItemExternalId:
-          importMutationResponse?.data?.importApprovedCuratedCorpusItem
-            .approvedItem.externalId,
+          importMutationResponse?.data?.importApprovedCorpusItem.approvedItem
+            .externalId,
         scheduledSurfaceGuid:
           ScheduledSurfaceGuid[
-            importMutationResponse?.data?.importApprovedCuratedCorpusItem
-              .scheduledItem.scheduledSurfaceGuid
+            importMutationResponse?.data?.importApprovedCorpusItem.scheduledItem
+              .scheduledSurfaceGuid
           ],
         lastUpdatedAt: new Date().getTime(),
       };

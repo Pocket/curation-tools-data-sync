@@ -80,13 +80,13 @@ export type ScheduledItem = {
   scheduledDate: Date;
 };
 
-export type ImportApprovedCuratedCorpusItemPayload = {
+export type ImportApprovedCorpusItemPayload = {
   approvedItem: ApprovedItem;
   scheduledItem: ScheduledItem;
 };
 
-export interface ImportApprovedCuratedCorpusItemMutationResponse {
+export interface ImportApprovedCorpusItemMutationResponse {
   data: {
-    importApprovedCuratedCorpusItem: ImportApprovedCuratedCorpusItemPayload;
+    importApprovedCorpusItem: ImportApprovedCorpusItemPayload;
   };
 }
