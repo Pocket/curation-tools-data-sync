@@ -114,7 +114,7 @@ export class DataService {
         time_live: item.time_live,
         time_added: item.time_added,
         time_updated: item.time_updated,
-        deleted_user_id: 21,
+        deleted_user_id: 21, // 21 is the default admin user ID we are using for data sync
       });
       await trx(config.tables.curatedFeedProspects)
         .where('prospect_id', item.prospect_id)
