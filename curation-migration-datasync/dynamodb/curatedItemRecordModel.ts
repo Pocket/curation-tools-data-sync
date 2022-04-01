@@ -96,20 +96,7 @@ export class CuratedItemRecordModel {
       );
     }
 
-    if (res.Items?.length) {
-      return res.Items.map((item): CuratedItemRecord => {
-        // force type safety
-        return {
-          curatedRecId: item.curatedRecId,
-          scheduledSurfaceGuid: item.scheduledSurfaceGuid,
-          scheduledItemExternalId: item.scheduledItemExternalId,
-          approvedItemExternalId: item.approvedItemExternalId,
-          lastUpdatedAt: item.lastUpdatedAt,
-        };
-      });
-    } else {
-      return [];
-    }
+    return res.Items as CuratedItemRecord[];
   }
 
   /**
@@ -144,20 +131,7 @@ export class CuratedItemRecordModel {
       );
     }
 
-    if (res.Items?.length) {
-      return res.Items.map((item): CuratedItemRecord => {
-        // force type safety
-        return {
-          curatedRecId: item.curatedRecId,
-          scheduledSurfaceGuid: item.scheduledSurfaceGuid,
-          scheduledItemExternalId: item.scheduledItemExternalId,
-          approvedItemExternalId: item.approvedItemExternalId,
-          lastUpdatedAt: item.lastUpdatedAt,
-        };
-      });
-    } else {
-      return [];
-    }
+    return res.Items as CuratedItemRecord[];
   }
 
   /**
@@ -176,7 +150,6 @@ export class CuratedItemRecordModel {
     };
 
     const res = await this.client.send(new GetCommand(input));
-
     return {
       curatedRecId: res.Item?.curatedRecId,
       scheduledSurfaceGuid: res.Item?.scheduledSurfaceGuid,
