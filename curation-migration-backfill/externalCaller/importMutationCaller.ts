@@ -1,4 +1,7 @@
-import { CorpusInput } from '../types';
+import {
+  CorpusInput,
+  ImportApprovedCorpusItemMutationResponse,
+} from '../types';
 import { backOff } from 'exponential-backoff';
 import { importApprovedCorpusItem } from './curatedCorpusApiCaller';
 
@@ -7,7 +10,9 @@ import { importApprovedCorpusItem } from './curatedCorpusApiCaller';
  * and calls the importApprovedCorpusItem function. Catches and throws any errors
  * as well as errors thrown by the mutation call
  */
-export async function callImportMutation(data: CorpusInput) {
+export async function callImportMutation(
+  data: CorpusInput
+): Promise<ImportApprovedCorpusItemMutationResponse> {
   // we've set the default number of retries to 3
   const backOffOptions = {
     numOfAttempts: 3,
