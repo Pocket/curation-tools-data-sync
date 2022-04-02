@@ -16,6 +16,10 @@
       "AttributeType": "S"
     },
     {
+      "AttributeName": "approvedItemExternalId",
+      "AttributeType": "S"
+    },
+    {
       "AttributeName": "scheduledSurfaceGuid",
       "AttributeType": "S"
     },
@@ -30,6 +34,22 @@
       "KeySchema": [
         {
           "AttributeName": "scheduledItemExternalId",
+          "KeyType": "HASH"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "ALL"
+      },
+      "ProvisionedThroughput": {
+        "ReadCapacityUnits": 5,
+        "WriteCapacityUnits": 5
+      }
+    },
+    {
+      "IndexName": "approvedItemExternalId-GSI",
+      "KeySchema": [
+        {
+          "AttributeName": "approvedItemExternalId",
           "KeyType": "HASH"
         }
       ],
