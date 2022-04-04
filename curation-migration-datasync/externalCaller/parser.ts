@@ -21,7 +21,7 @@ export const parser = {
       images: '0',
       url: url,
     });
-    const res = await fetch(config.parserEndpoint + '/' + params.toString());
+    const res = await fetch(config.parserEndpoint + '?' + params.toString());
     const jsonRes = (await res.json()) as any;
     return {
       domainId: jsonRes['item']['domain_id'],
