@@ -57,6 +57,39 @@ export class CuratedItemRecordModel {
   }
 
   /**
+   * retrieves list of curatedItem by approvedItemExternalId
+   * Note: we have 1:N mapping of approvedItem externalId and curated_rec_id
+   * @param approvedItemExternalId approvedItem's externalId
+   */
+  public async getByApprovedItemExternalId(
+    approvedItemExternalId: string
+  ): Promise<CuratedItemRecord[]> {
+    const input: QueryCommandInput = {
+      TableName: config.aws.dynamoDB.curationMigrationTable,
+      IndexName: 'approvedItemExternalId-GSI',
+      KeyConditionExpression:
+        'approvedItemExternalId = :approvedItemExternalId',
+      ExpressionAttributeValues: {
+        ':approvedItemExternalId': approvedItemExternalId,
+      },
+    };
+    const res: QueryCommandOutput = await this.client.send(
+      new QueryCommand(input)
+    );
+
+    //this must always be false coz we are expecting only one item per record.
+    //if this gets thrown, we need to investigate the bug
+    if (res.LastEvaluatedKey) {
+      Sentry.captureMessage(
+        `method 'getByApprovedItemExternalId' called with '${approvedItemExternalId}'
+       has multiple pages of results that we are not handling!`
+      );
+    }
+
+    return res.Items as CuratedItemRecord[];
+  }
+
+  /**
    * retrieves items by scheduledSurfaceGuid
    * @param scheduledSurfaceGuid
    * @returns CuratedItemRecord matching curated items
@@ -88,20 +121,7 @@ export class CuratedItemRecordModel {
       );
     }
 
-    if (res.Items?.length) {
-      return res.Items.map((item): CuratedItemRecord => {
-        // force type safety
-        return {
-          curatedRecId: item.curatedRecId,
-          scheduledSurfaceGuid: item.scheduledSurfaceGuid,
-          scheduledItemExternalId: item.scheduledItemExternalId,
-          approvedItemExternalId: item.approvedItemExternalId,
-          lastUpdatedAt: item.lastUpdatedAt,
-        };
-      });
-    } else {
-      return [];
-    }
+    return res.Items as CuratedItemRecord[];
   }
 
   /**
