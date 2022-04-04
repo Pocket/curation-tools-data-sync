@@ -131,6 +131,70 @@ export class DataService {
   }
 
   /**
+   * Update curated feed item and the associated curated_feed_* tables
+   * @param eventBody
+   * @param curatedRecId
+   * @param resolvedId
+   * @param domainId
+   */
+  public async updateScheduledItem(
+    eventBody: ScheduledItemPayload,
+    curatedRecId: number,
+    resolvedId: number,
+    domainId: string
+  ) {
+    const topicId = await this.getTopicIdByName(
+      getTopicForReaditLaTmpDatabase(eventBody.topic)
+    );
+
+    const trx = await this.db.transaction();
+    try {
+      const curatedFeedItem: CuratedFeedItem & { prospect_id: number } =
+        await this.db(config.tables.curatedFeedItems)
+          .where({ curated_rec_id: curatedRecId })
+          .first();
+
+      const topDomainId = await this.fetchTopDomain(eventBody.url, domainId);
+      const prospectItem = {
+        ...hydrateCuratedFeedProspectItem(eventBody, resolvedId, topDomainId),
+        prospect_id: curatedFeedItem.prospect_id,
+      };
+      await trx(config.tables.curatedFeedProspects)
+        .update(prospectItem)
+        .where({ prospect_id: curatedFeedItem.prospect_id });
+
+      const queuedItem = {
+        ...hydrateCuratedFeedQueuedItem(prospectItem, topicId),
+        queued_id: curatedFeedItem.queued_id,
+      };
+      await trx(config.tables.curatedFeedQueuedItems)
+        .update(queuedItem)
+        .where({ queued_id: curatedFeedItem.queued_id });
+
+      const curatedItem = hydrateCuratedFeedItem(
+        queuedItem,
+        eventBody.scheduledDate
+      );
+      await trx(config.tables.curatedFeedItems)
+        .update(curatedItem)
+        .where({ curated_rec_id: curatedRecId });
+
+      await trx.commit();
+
+      return curatedRecId;
+    } catch (e) {
+      await trx.rollback();
+      throw new Error(
+        `Failed to update scheduled item.\n Event data: ${JSON.stringify({
+          eventBody,
+          curatedRecId,
+          resolvedId,
+        })}\n error: ${e}`
+      );
+    }
+  }
+
+  /**
    * inserts into curated_feed_prospects table.
    * unique index on (feed_id and resolved_id)
    * @param trx
