@@ -22,7 +22,7 @@ export const parser = {
       url: url,
     });
     const res = await fetch(config.parserEndpoint + '/' + params.toString());
-    const jsonRes = await res.json();
+    const jsonRes = (await res.json()) as any;
     return {
       domainId: jsonRes['item']['domain_id'],
       resolvedId: jsonRes['resolved_id'],
