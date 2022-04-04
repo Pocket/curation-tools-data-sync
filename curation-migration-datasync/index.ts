@@ -1,11 +1,11 @@
 import config from './config';
 import * as Sentry from '@sentry/serverless';
 import { writeClient } from './database/dbClient';
-import { EventBridgeEvent } from 'aws-lambda';
+import { SQSEvent } from 'aws-lambda';
 import { addScheduledItem } from './eventConsumer';
 import { EventDetailType } from './types';
 
-export async function handlerFn(event: EventBridgeEvent<any, any>) {
+export async function handlerFn(event: SQSEvent) {
   console.log(JSON.stringify(event));
 
   // Check if the feed is included in the allowlist

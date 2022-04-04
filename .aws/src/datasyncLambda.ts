@@ -87,8 +87,15 @@ export class DatasyncLambda extends Resource {
       } as LambdaPermissionConfig
     );
 
-    this.createPolicyForEventBridgeRuleToDlq(
+    // Permissions for EventBridge publishing to SQS Target and DLQ (if fail to send)
+    this.createPolicyForEventBridgeRuleToSQS(
+      'DLQ',
       eventBridgeDLQ,
+      dataSyncEventRuleWithTargetObj.getEventBridge().rule.arn
+    );
+    this.createPolicyForEventBridgeRuleToSQS(
+      'Datasync-SQS',
+      target.sqsQueueResource,
       dataSyncEventRuleWithTargetObj.getEventBridge().rule.arn
     );
   }
@@ -191,13 +198,14 @@ export class DatasyncLambda extends Resource {
    * @param eventBridgeRuleArn
    * @private
    */
-  private createPolicyForEventBridgeRuleToDlq(
+  private createPolicyForEventBridgeRuleToSQS(
+    name: string,
     sqsQueue: sqs.SqsQueue | sqs.DataAwsSqsQueue,
     eventBridgeRuleArn: string
   ) {
-    const eventBridgeRuleDlqPolicy = new iam.DataAwsIamPolicyDocument(
+    const eventBridgeRuleSQSPolicy = new iam.DataAwsIamPolicyDocument(
       this,
-      `${config.prefix}-EventBridge-DLQ-Policy`,
+      `${config.prefix}-EventBridge-${name}-Policy`,
       {
         statement: [
           {
@@ -222,9 +230,9 @@ export class DatasyncLambda extends Resource {
       }
     ).json;
 
-    return new sqs.SqsQueuePolicy(this, 'dlq-policy', {
+    return new sqs.SqsQueuePolicy(this, `${name.toLowerCase()}-policy`, {
       queueUrl: sqsQueue.url,
-      policy: eventBridgeRuleDlqPolicy,
+      policy: eventBridgeRuleSQSPolicy,
     });
   }
 
