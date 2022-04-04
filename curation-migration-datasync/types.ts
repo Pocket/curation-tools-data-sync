@@ -1,4 +1,4 @@
-export type AddScheduledItemPayload = {
+export type ScheduledItemPayload = {
   eventType: string;
   scheduledItemExternalId: string;
   approvedItemExternalId: string;
@@ -77,4 +77,16 @@ export type CuratedFeedItem = {
 export type TileSource = {
   tile_id?: number;
   source_id: number;
+};
+
+export type CuratedFeedItemModel = {
+  curated_rec_id: number;
+  feed_id: number;
+  resolved_id: number;
+  prospect_id: number;
+  queued_id: number;
+  status: 'live' | 'removed' | 'spoc';
+  time_live: number;
+  time_added: number;
+  time_updated: number;
 };

@@ -4,14 +4,14 @@ import { dbClient } from './dynamodb/dynamoDbClient';
 import * as SecretManager from '../curation-migration-datasync/secretManager';
 import sinon from 'sinon';
 import { writeClient } from './database/dbClient';
-import { AddScheduledItemPayload, EventDetailType } from './types';
+import { ScheduledItemPayload, EventDetailType } from './types';
 import nock from 'nock';
 import config from './config';
 import { Knex } from 'knex';
 import { CuratedItemRecordModel } from './dynamodb/curatedItemRecordModel';
 import { DataService } from './database/dataService';
 import { convertDateToTimestamp } from './helpers/dataTransformers';
-import { addScheduledItem } from './eventConsumer';
+import { addScheduledItem, removeScheduledItem } from './eventConsumer';
 
 const curatedRecordModel = new CuratedItemRecordModel();
 
@@ -49,10 +49,11 @@ describe('event consumption integration test', function () {
     await db(config.tables.curatedFeedQueuedItems).truncate();
 
     //populating the database
-    const insertRecord = curatedItemRecords.map(async (item) => {
-      await curatedRecordModel.insert(item);
-    });
-    await Promise.all(insertRecord);
+    await Promise.all(
+      curatedItemRecords.map((item) => {
+        curatedRecordModel.insert(item);
+      })
+    );
 
     await db(config.tables.curatedFeedTopics).truncate();
     await db(config.tables.curatedFeedTopics).insert({
@@ -85,7 +86,7 @@ describe('event consumption integration test', function () {
     await db(config.tables.syndicatedArticles).truncate();
     await db(config.tables.syndicatedArticles).insert({
       resolved_id: 0,
-      original_resolveD_id: 0,
+      original_resolved_id: 0,
       author_user_id: 1,
       status: 1,
       hide_images: 0,
@@ -103,6 +104,96 @@ describe('event consumption integration test', function () {
 
   afterAll(async () => {
     await db.destroy();
+  });
+  describe('remove-scheduled-item', () => {
+    describe('error handling', () => {
+      it('throws error if curatedRecId is not found in database', async () => {
+        const testEventBody = {
+          eventType: EventDetailType.DELETE_SCHEDULED_ITEM,
+          scheduledItemExternalId: 'random_scheduled_guid_2',
+          // other fields we don't need
+        } as ScheduledItemPayload;
+        await expect(removeScheduledItem(testEventBody, db)).rejects.toThrow(
+          'No record found for curatedRecId'
+        );
+      });
+      it('throws error if the scheduledItemExternalId is not present in dynamo map', async () => {
+        const testEventBody = {
+          eventType: EventDetailType.DELETE_SCHEDULED_ITEM,
+          scheduledItemExternalId: 'not_a_real_guid_1',
+          // other fields we don't need
+        } as ScheduledItemPayload;
+        await expect(removeScheduledItem(testEventBody, db)).rejects.toThrow(
+          'No mapping found for scheduledItemExternalId'
+        );
+      });
+    });
+    describe('happy path', () => {
+      const count = async (
+        table: string,
+        where: Record<string, any>
+      ): Promise<number> => {
+        return db(table)
+          .where(where)
+          .count('* as count')
+          .then((rows) => rows[0].count);
+      };
+      const curatedRecord = {
+        curated_rec_id: 2,
+        prospect_id: 10,
+        feed_id: 9,
+        queued_id: 12,
+        resolved_id: 99,
+        status: 'live',
+        time_added: 1649094016,
+        time_updated: 1649094017,
+        time_live: 1649094018,
+      };
+
+      beforeEach(async () => {
+        await db(config.tables.curatedFeedItems).insert(curatedRecord);
+      });
+      afterEach(async () => {
+        await Promise.all(
+          [
+            config.tables.curatedFeedProspects,
+            config.tables.curatedFeedQueuedItems,
+            config.tables.curatedFeedItems,
+            config.tables.curatedFeedItemsDeleted,
+          ].map((table) => db(table).truncate())
+        );
+      });
+      it('deletes records and updates audit table', async () => {
+        const testEventBody = {
+          eventType: EventDetailType.DELETE_SCHEDULED_ITEM,
+          scheduledItemExternalId: 'random_scheduled_guid_2',
+          // other fields we don't need
+        } as ScheduledItemPayload;
+        await removeScheduledItem(testEventBody, db);
+        const auditRecord = await db(config.tables.curatedFeedItemsDeleted)
+          .where({ curated_rec_id: 2 })
+          .first();
+        expect(auditRecord).toMatchObject(curatedRecord);
+        expect(auditRecord.deleted_user_id).toEqual(config.db.deleteUserId);
+        [
+          {
+            table: config.tables.curatedFeedProspects,
+            where: { prospect_id: 10 },
+          },
+          {
+            table: config.tables.curatedFeedQueuedItems,
+            where: { queued_id: 12 },
+          },
+          {
+            table: config.tables.curatedFeedItems,
+            where: { curated_rec_id: 2 },
+          },
+        ].forEach(async ({ table, where }) => {
+          expect(await count(table, where)).toEqual(0);
+        });
+        expect(await curatedRecordModel.getByCuratedRecId(2)).toBeNull();
+      });
+    });
   });
 
   describe('add-scheduled-item', () => {
@@ -126,7 +217,7 @@ describe('event consumption integration test', function () {
     };
 
     async function assertTables(
-      testEventBody: AddScheduledItemPayload,
+      testEventBody: ScheduledItemPayload,
       db: Knex,
       topDomainId: number
     ) {
@@ -134,17 +225,17 @@ describe('event consumption integration test', function () {
         await curatedRecordModel.getByScheduledItemExternalId(
           'random_scheduled_guid_1'
         );
-      expect(curatedItemRecord[0].approvedItemExternalId).toEqual(
+      expect(curatedItemRecord?.approvedItemExternalId).toEqual(
         testEventBody.approvedItemExternalId
       );
-      expect(curatedItemRecord[0].scheduledSurfaceGuid).toEqual(
+      expect(curatedItemRecord?.scheduledSurfaceGuid).toEqual(
         testEventBody.scheduledSurfaceGuid
       );
 
       const curatedItem = await db(config.tables.curatedFeedItems)
         .select()
         .where({
-          curated_rec_id: curatedItemRecord[0].curatedRecId,
+          curated_rec_id: curatedItemRecord?.curatedRecId,
         })
         .first();
 
@@ -196,7 +287,7 @@ describe('event consumption integration test', function () {
       const tileSource = await db(config.tables.tileSource)
         .select()
         .where({
-          source_id: curatedItemRecord[0].curatedRecId,
+          source_id: curatedItemRecord?.curatedRecId,
         })
         .first();
 

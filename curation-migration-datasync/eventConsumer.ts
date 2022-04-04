@@ -1,6 +1,6 @@
 import { DataService } from './database/dataService';
 import { getParserMetadata } from './externalCaller/parser';
-import { AddScheduledItemPayload } from './types';
+import { ScheduledItemPayload } from './types';
 import { CuratedItemRecordModel } from './dynamodb/curatedItemRecordModel';
 import { Knex } from 'knex';
 
@@ -11,7 +11,7 @@ import { Knex } from 'knex';
  * @param eventBody
  */
 export async function addScheduledItem(
-  eventBody: AddScheduledItemPayload,
+  eventBody: ScheduledItemPayload,
   db: Knex
 ) {
   const dbService = new DataService(db);
@@ -27,4 +27,31 @@ export async function addScheduledItem(
   // Create mapping record in DynamoDB
   const curatedItemModel = new CuratedItemRecordModel();
   await curatedItemModel.insertFromEvent(curatedRecId, eventBody);
+}
+
+/**
+ * Remove scheduled item from dynamoDB mapping and legacy database
+ * @param eventBody event payload; only need scheduledItemExternalId
+ * @param db db connection
+ */
+export async function removeScheduledItem(
+  eventBody: ScheduledItemPayload,
+  db: Knex
+) {
+  const dbService = new DataService(db);
+  const curatedItemModel = new CuratedItemRecordModel();
+  const curatedRecord = await curatedItemModel.getByScheduledItemExternalId(
+    eventBody.scheduledItemExternalId
+  );
+  if (curatedRecord == null) {
+    throw new Error(
+      `No mapping found for scheduledItemExternalId=${eventBody.scheduledItemExternalId}`
+    );
+  }
+
+  // Delete records in legacy database
+  await dbService.deleteScheduledItem(curatedRecord.curatedRecId);
+
+  // Remove association from DynamoDB
+  await curatedItemModel.deleteByCuratedRecId(curatedRecord.curatedRecId);
 }
