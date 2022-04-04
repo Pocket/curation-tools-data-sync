@@ -128,7 +128,7 @@ export class DatasyncLambda extends Resource {
       name: `${config.prefix}-Datasync-Lambda`,
       sqsQueue: {
         visibilityTimeoutSeconds: 150,
-        maxReceiveCount: 1,
+        maxReceiveCount: 3,
       },
       lambda: {
         runtime: LAMBDA_RUNTIMES.NODEJS14,
