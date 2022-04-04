@@ -14,6 +14,7 @@ import {
   hydrateTileSource,
 } from './hydrator';
 import { getTopicForReaditLaTmpDatabase } from '../helpers/topicMapper';
+import { getCuratorNameFromSso } from '../helpers/dataTransformers';
 
 export class DataService {
   private db: Knex;
@@ -87,6 +88,75 @@ export class DataService {
     return;
   }
 
+  /**
+   * updates the curated_feed_prospects table and curated_feed_queued_items
+   * that are set in the event body.
+   * updates only non-nullable fields in the event body.
+   * @param eventBody event body
+   * @param curatedRecId curatedRecId corresponding to the approvedItem's externalId
+   * @param domainId domain id from parser, optional field set only when
+   *        topic is not null in the event body.
+   */
+  public async updateApprovedItem(
+    eventBody: AddScheduledItemPayload,
+    curatedRecId: number,
+    domainId?: string
+  ): Promise<void> {
+    //update records.
+    const item = await this.db(config.tables.curatedFeedItems)
+      .select()
+      .join(config.tables.curatedFeedProspects, 'prospect_id', 'prospect_id')
+      .join(config.tables.curatedFeedQueuedItems, 'queued_id', 'queued_id')
+      .where('curated_rec_id', curatedRecId)
+      .first();
+
+    const topDomainId = domainId
+      ? await this.fetchTopDomain(eventBody.url, domainId)
+      : item['domain_id'];
+
+    //todo: check are we populating updatedBy in the update-approved-item event.
+    const curator = eventBody.createdBy
+      ? getCuratorNameFromSso(eventBody.createdBy)
+      : null;
+
+    const topicId = eventBody.topic
+      ? await this.getTopicIdByName(
+          getTopicForReaditLaTmpDatabase(eventBody.topic)
+        )
+      : item['topic_id'];
+
+    //populate fields if corresponding eventBody field is set,
+    //otherwise set them to what's existing in the databse
+    await this.db.transaction(async (trx) => {
+      await trx(config.tables.curatedFeedProspects)
+        .update({
+          title: eventBody.title ?? item['title'],
+          excerpt: eventBody.excerpt ?? item['excerpt'],
+          time_updated: eventBody.updatedAt,
+          curator: curator ?? item['curator'],
+          domain_id: topDomainId ?? item['domain_id'],
+          image_src: eventBody.imageUrl ?? item['image_src'],
+        })
+        .where({
+          prospect_id: item['prospect_id'],
+        });
+
+      if (eventBody.topic || eventBody.createdBy) {
+        await trx(config.tables.curatedFeedQueuedItems)
+          .update({
+            curator: curator,
+            topic_id: topicId,
+            time_updated: eventBody.updatedAt,
+          })
+          .where({
+            queued_id: item['queued_id'],
+          });
+      }
+
+      //not inserting to curated_feed_items table
+      // as approvedItem won't have info on time_live
+    });
+  }
   /**
    * inserts into curated_feed_prospects table.
    * unique index on (feed_id and resolved_id)

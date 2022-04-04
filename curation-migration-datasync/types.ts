@@ -12,6 +12,7 @@ export type AddScheduledItemPayload = {
   isSyndicated: boolean;
   createdAt: number;
   createdBy: string;
+  updatedBy?: string;
   updatedAt: number;
   scheduledSurfaceGuid: string;
   scheduledDate: string;
