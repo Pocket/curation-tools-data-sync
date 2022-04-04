@@ -43,17 +43,15 @@ export async function removeScheduledItem(
   const curatedRecord = await curatedItemModel.getByScheduledItemExternalId(
     eventBody.scheduledItemExternalId
   );
-  if (curatedRecord.length === 0) {
+  if (curatedRecord == null) {
     throw new Error(
       `No mapping found for scheduledItemExternalId=${eventBody.scheduledItemExternalId}`
     );
   }
-  // TODO: Confused about why result of getByScheduledItemExternalId is an array; isn't it only 1:1?
-  // TODO: Make sure this is ok...
 
   // Delete records in legacy database
-  await dbService.deleteScheduledItem(curatedRecord[0].curatedRecId);
+  await dbService.deleteScheduledItem(curatedRecord.curatedRecId);
 
   // Remove association from DynamoDB
-  await curatedItemModel.deleteByCuratedRecId(curatedRecord[0].curatedRecId);
+  await curatedItemModel.deleteByCuratedRecId(curatedRecord.curatedRecId);
 }

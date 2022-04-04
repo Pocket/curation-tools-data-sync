@@ -85,7 +85,9 @@ export class DataService {
   }
 
   public async deleteScheduledItem(curatedRecId: number) {
-    const item = await this.db<CuratedFeedItemModel>('curated_feed_items')
+    const item = await this.db<CuratedFeedItemModel>(
+      config.tables.curatedFeedItems
+    )
       .select(
         'prospect_id',
         'feed_id',
@@ -103,7 +105,7 @@ export class DataService {
       throw new Error(`No record found for curatedRecId=${curatedRecId}`);
     }
     // Delete all related records and insert into audit table
-    this.db.transaction(async (trx) => {
+    await this.db.transaction(async (trx) => {
       await trx(config.tables.curatedFeedItemsDeleted).insert({
         curated_rec_id: curatedRecId,
         feed_id: item.feed_id,
@@ -114,7 +116,7 @@ export class DataService {
         time_live: item.time_live,
         time_added: item.time_added,
         time_updated: item.time_updated,
-        deleted_user_id: 21,
+        deleted_user_id: config.db.deleteUserId,
       });
       await trx(config.tables.curatedFeedProspects)
         .where('prospect_id', item.prospect_id)
