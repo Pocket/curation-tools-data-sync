@@ -84,22 +84,8 @@ export async function updatedApprovedItem(
   for (const curatedItem of curatedItems) {
     try {
       const dbService = new DataService(db);
-
-      if (eventBody.publisher) {
-        //fetch domainId from parser only when publisher is changed.
-        //resolved_id is not expected to change for the url.
-        const parserResponse = await getParserMetadata(eventBody.url);
-        await dbService.updateApprovedItem(
-          eventBody,
-          curatedItem.curatedRecId,
-          parserResponse.domainId
-        );
-      } else {
-        //don't send domain_id when publisher is not changed.
-        await dbService.updateApprovedItem(eventBody, curatedItem.curatedRecId);
-      }
-
-      //update lastUpdatedAt alone.
+      await dbService.updateApprovedItem(eventBody, curatedItem.curatedRecId);
+      //update lastUpdatedAt alone in dynamoDb.
       curatedItem.lastUpdatedAt = Math.round(new Date().getTime() / 1000);
       await curatedItemModel.insert(curatedItem);
     } catch (e) {

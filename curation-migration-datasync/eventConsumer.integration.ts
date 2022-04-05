@@ -432,16 +432,9 @@ describe('event consumption integration test', function () {
         name: 'Personal Finance',
         status: 'live',
       });
-
-      await db(config.tables.domains).insert({
-        domain_id: '123',
-        domain: 'bongo_cat.com',
-        top_domain_id: '456',
-      });
     });
 
     it('should update only fields set to not-null', async () => {
-      nockParser(testEventBody);
       await updatedApprovedItem(testEventBody, db);
 
       const prospectRecord = await db(config.tables.curatedFeedProspects)
@@ -528,9 +521,6 @@ describe('event consumption integration test', function () {
         queuedItemPriorUpdate_2
       );
 
-      nockParser(testEventBody);
-      nockParser(testEventBody);
-
       await updatedApprovedItem(testEventBody, db);
 
       const prospectRecord = await db(config.tables.curatedFeedProspects)
@@ -614,15 +604,14 @@ function assertForUpdateApprovedItems(
   expect(prospectRecord.title).toEqual(testEventBody.title);
   expect(prospectRecord.time_updated).toEqual(testEventBody.updatedAt);
   expect(prospectRecord.image_src).toEqual(testEventBody.imageUrl);
+  //points to personal_finance
+  expect(queuedItemRecord.topic_id).toEqual(2);
   expect(prospectRecord.curator).toEqual('sri');
-  //publisher changed.
-  expect(prospectRecord.top_domain_id).toEqual(456);
+
   //records set as null in the event body should not be changed
   expect(prospectRecord.excerpt).toEqual(prospectPriorUpdate.excerpt);
   expect(prospectRecord.time_added).toEqual(prospectPriorUpdate.time_added);
-
+  expect(prospectRecord.top_domain_id).toEqual(419);
   expect(queuedItemRecord.curator).toEqual(prospectRecord.curator);
   expect(queuedItemRecord.time_updated).toEqual(prospectRecord.time_updated);
-  //points to personal_finance
-  expect(queuedItemRecord.topic_id).toEqual(2);
 }

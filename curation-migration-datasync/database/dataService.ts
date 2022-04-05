@@ -143,8 +143,7 @@ export class DataService {
    */
   public async updateApprovedItem(
     eventBody: ApprovedItemPayload,
-    curatedRecId: number,
-    domainId?: string
+    curatedRecId: number
   ): Promise<void> {
     const item = await this.db(config.tables.curatedFeedItems)
       .select()
@@ -160,10 +159,6 @@ export class DataService {
       )
       .where('curated_rec_id', curatedRecId)
       .first();
-
-    const topDomainId = domainId
-      ? await this.fetchTopDomain(eventBody.url, domainId)
-      : item['domain_id'];
 
     const curator = eventBody.createdBy
       ? getCuratorNameFromSso(eventBody.createdBy)
@@ -185,7 +180,6 @@ export class DataService {
           excerpt: eventBody.excerpt ?? item.excerpt,
           time_updated: eventBody.updatedAt,
           curator: curator ?? item.curator,
-          top_domain_id: topDomainId ?? item.top_domain_id,
           image_src: eventBody.imageUrl ?? item.image_src,
         })
         .where({
