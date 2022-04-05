@@ -12,10 +12,9 @@ import {
   PocketPagerDuty,
   PocketVPC,
 } from '@pocket-tools/terraform-modules';
-import { iam, lambdafunction, sqs } from '@cdktf/provider-aws';
+import { iam, sqs } from '@cdktf/provider-aws';
 import { getEnvVariableValues } from './utilities';
 import { config } from './config';
-import { LambdaPermissionConfig } from '@cdktf/provider-aws/lib/lambdafunction';
 
 export class DatasyncLambda extends Resource {
   constructor(
@@ -71,21 +70,6 @@ export class DatasyncLambda extends Resource {
         `${config.prefix}-EventBridge-Rule`,
         dataSyncEventRuleConfig
       );
-
-    const dataSyncEventRule = dataSyncEventRuleWithTargetObj.getEventBridge();
-
-    new lambdafunction.LambdaPermission(
-      this,
-      `${config.prefix}-Datasync-Lambda-Permission`,
-      {
-        action: 'lambda:InvokeFunction',
-        functionName: target.lambda.versionedLambda.functionName,
-        qualifier: target.lambda.versionedLambda.name,
-        principal: 'events.amazonaws.com',
-        sourceArn: dataSyncEventRule.rule.arn,
-        dependsOn: [target.lambda.versionedLambda, dataSyncEventRule.rule],
-      } as LambdaPermissionConfig
-    );
 
     // Permissions for EventBridge publishing to SQS Target and DLQ (if fail to send)
     this.createPolicyForEventBridgeRuleToSQS(
