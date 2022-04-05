@@ -7,22 +7,24 @@ import config from './config';
 const client = new SecretsManagerClient({ region: config.aws.region });
 
 export type DbCredentials = {
-  readHost: string;
-  readUsername: string;
-  readPassword: string;
-  writeHost: string;
-  writeUsername: string;
-  writePassword: string;
-  port?: string;
+  host: string;
+  username: string;
+  password: string;
+  port: string;
 };
 
 let dbCredentials: DbCredentials;
-export async function getDbCredentials(): Promise<DbCredentials> {
+/**
+ * Retrieve database credentials from Secrets store
+ * @param id The ID (name) of the Secret, or the ARN string
+ * @returns Promise<DbCredentials>
+ */
+export async function getDbCredentials(id: string): Promise<DbCredentials> {
   if (dbCredentials) return dbCredentials;
 
   const data = await client.send(
     new GetSecretValueCommand({
-      SecretId: config.db.secretId,
+      SecretId: id,
     })
   );
 

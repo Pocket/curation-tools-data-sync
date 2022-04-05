@@ -39,12 +39,9 @@ describe('database integration test', function () {
   beforeAll(async () => {
     await truncateDynamoDb(dbClient);
     sinon.stub(SecretManager, 'getDbCredentials').resolves({
-      readHost: 'localhost',
-      readUsername: 'root',
-      readPassword: '',
-      writeHost: 'localhost',
-      writeUsername: 'root',
-      writePassword: '',
+      host: 'localhost',
+      username: 'root',
+      password: '',
       port: config.db.port,
     });
     db = await writeClient();

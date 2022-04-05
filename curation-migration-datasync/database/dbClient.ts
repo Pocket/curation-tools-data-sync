@@ -11,13 +11,14 @@ let writeDb: Knex;
 export async function readClient(): Promise<Knex> {
   if (readDb) return readDb;
 
-  const { readHost, readUsername, readPassword, port } =
-    await getDbCredentials();
+  const { host, username, password, port } = await getDbCredentials(
+    config.db.readSecretId
+  );
 
   readDb = createConnection({
-    host: readHost,
-    user: readUsername,
-    password: readPassword,
+    host,
+    user: username,
+    password,
     port,
   });
 
@@ -30,13 +31,14 @@ export async function readClient(): Promise<Knex> {
 export async function writeClient(): Promise<Knex> {
   if (writeDb) return writeDb;
 
-  const { writeHost, writeUsername, writePassword, port } =
-    await getDbCredentials();
+  const { host, username, password, port } = await getDbCredentials(
+    config.db.writeSecretId
+  );
 
   writeDb = createConnection({
-    host: writeHost,
-    user: writeUsername,
-    password: writePassword,
+    host,
+    user: username,
+    password,
     port,
   });
 

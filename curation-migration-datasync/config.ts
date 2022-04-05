@@ -32,7 +32,8 @@ const config = {
     },
   },
   db: {
-    secretId: process.env.DATABASE_SECRET_ID || '',
+    readSecretId: process.env.READ_DATABASE_SECRET_ID || '',
+    writeSecretId: process.env.WRITE_DATABASE_SECRET_ID || '',
     port: process.env.DATABASE_PORT || '3310',
     dbName: process.env.DATABASE || 'readitla_ril-tmp',
     tz: process.env.DATABASE_TZ || 'US/Central',

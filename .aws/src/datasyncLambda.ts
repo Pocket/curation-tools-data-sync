@@ -157,10 +157,14 @@ export class DatasyncLambda extends Resource {
           CURATION_MIGRATION_TABLE: this.curationMigrationTable.dynamodb.name,
           CURATION_MIGRATION_TABLE_HASH_KEY:
             this.curationMigrationTable.dynamodb.hashKey,
-          DATABASE_SECRET_ID:
+          READ_DATABASE_SECRET_ID:
             config.environment === 'Prod'
-              ? config.datasyncLambda.dbSecretId
+              ? config.datasyncLambda.readDbSecretId
               : rdsCluster.secretARN, // Can fetch by either ID or ARN; pass ARN if we created RDS resource
+          WRITE_DATABASE_SECRET_ID:
+            config.environment === 'Prod'
+              ? config.datasyncLambda.writeDbSecretId
+              : rdsCluster.secretARN,
           REGION: this.vpc.region,
           SENTRY_DSN: sentryDsn,
           GIT_SHA: gitSha,
