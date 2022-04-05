@@ -7,15 +7,14 @@ import {
   PocketEventBridgeProps,
   PocketEventBridgeRuleWithMultipleTargets,
   PocketEventBridgeTargets,
+  PocketSQSWithLambdaTarget,
+  PocketSQSWithLambdaTargetProps,
   PocketPagerDuty,
-  PocketVersionedLambda,
-  PocketVersionedLambdaProps,
   PocketVPC,
 } from '@pocket-tools/terraform-modules';
-import { iam, lambdafunction, sqs } from '@cdktf/provider-aws';
+import { iam, sqs } from '@cdktf/provider-aws';
 import { getEnvVariableValues } from './utilities';
 import { config } from './config';
-import { LambdaPermissionConfig } from '@cdktf/provider-aws/lib/lambdafunction';
 
 export class DatasyncLambda extends Resource {
   constructor(
@@ -27,23 +26,23 @@ export class DatasyncLambda extends Resource {
   ) {
     super(scope, name);
 
-    this.createEventBridgeRuleWithLambdaTargetAndDLQ();
+    this.createEventBridgeRuleWithSQSLambdaTarget();
   }
 
   /**
-   * Creates an event bridge rule with a lambda target
+   * Creates an event bridge rule with an SQS+Lambda target
    * @private
    */
-  private createEventBridgeRuleWithLambdaTargetAndDLQ() {
-    const targetLambda = this.createLambdaTarget();
+  private createEventBridgeRuleWithSQSLambdaTarget() {
+    const target = this.createSQSLambdaTarget();
 
-    const targetLambdaDLQ = this.createSqsForDlq();
+    const eventBridgeDLQ = this.createSqsForDlq();
 
     const eventBridgeTarget: PocketEventBridgeTargets = {
-      targetId: `${config.prefix}-Datasync-Target-Lambda-Id`,
-      arn: targetLambda.lambda.versionedLambda.arn,
-      terraformResource: targetLambda.lambda.versionedLambda,
-      deadLetterArn: targetLambdaDLQ.arn,
+      targetId: `${config.prefix}-Datasync-Target-SQS-Id`,
+      arn: target.sqsQueueResource.arn,
+      terraformResource: target.sqsQueueResource as sqs.SqsQueue,
+      deadLetterArn: eventBridgeDLQ.arn,
     };
 
     const dataSyncEventRuleConfig: PocketEventBridgeProps = {
@@ -72,26 +71,15 @@ export class DatasyncLambda extends Resource {
         dataSyncEventRuleConfig
       );
 
-    const dataSyncEventRule = dataSyncEventRuleWithTargetObj.getEventBridge();
-
-    new lambdafunction.LambdaPermission(
-      this,
-      `${config.prefix}-Datasync-Lambda-Permission`,
-      {
-        action: 'lambda:InvokeFunction',
-        functionName: targetLambda.lambda.versionedLambda.functionName,
-        qualifier: targetLambda.lambda.versionedLambda.name,
-        principal: 'events.amazonaws.com',
-        sourceArn: dataSyncEventRule.rule.arn,
-        dependsOn: [
-          targetLambda.lambda.versionedLambda,
-          dataSyncEventRule.rule,
-        ],
-      } as LambdaPermissionConfig
+    // Permissions for EventBridge publishing to SQS Target and DLQ (if fail to send)
+    this.createPolicyForEventBridgeRuleToSQS(
+      'DLQ',
+      eventBridgeDLQ,
+      dataSyncEventRuleWithTargetObj.getEventBridge().rule.arn
     );
-
-    this.createPolicyForEventBridgeRuleToDlq(
-      targetLambdaDLQ,
+    this.createPolicyForEventBridgeRuleToSQS(
+      'Datasync-SQS',
+      target.sqsQueueResource,
       dataSyncEventRuleWithTargetObj.getEventBridge().rule.arn
     );
   }
@@ -109,7 +97,7 @@ export class DatasyncLambda extends Resource {
   /**
    * @private
    */
-  private createLambdaTarget() {
+  private createSQSLambdaTarget() {
     /**
      * Create an RDS instance if we are working in the Dev account.
      * This is only to facilitate testing
@@ -120,8 +108,12 @@ export class DatasyncLambda extends Resource {
 
     const { sentryDsn, gitSha, parserEndpoint } = getEnvVariableValues(this);
 
-    const lambdaConfig: PocketVersionedLambdaProps = {
+    const lambdaConfig: PocketSQSWithLambdaTargetProps = {
       name: `${config.prefix}-Datasync-Lambda`,
+      sqsQueue: {
+        visibilityTimeoutSeconds: 150,
+        maxReceiveCount: 3,
+      },
       lambda: {
         runtime: LAMBDA_RUNTIMES.NODEJS14,
         handler: 'index.handler',
@@ -177,7 +169,7 @@ export class DatasyncLambda extends Resource {
         ],
       },
     };
-    return new PocketVersionedLambda(
+    return new PocketSQSWithLambdaTarget(
       this,
       `${config.prefix}-Datasync-Lambda`,
       lambdaConfig
@@ -185,19 +177,19 @@ export class DatasyncLambda extends Resource {
   }
 
   /**
-   * Todo: the policy seems correct, but the dlq is not receiving messages
    * Reference: https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-rule-dlq.html
    * @param sqsQueue
    * @param eventBridgeRuleArn
    * @private
    */
-  private createPolicyForEventBridgeRuleToDlq(
+  private createPolicyForEventBridgeRuleToSQS(
+    name: string,
     sqsQueue: sqs.SqsQueue | sqs.DataAwsSqsQueue,
     eventBridgeRuleArn: string
   ) {
-    const eventBridgeRuleDlqPolicy = new iam.DataAwsIamPolicyDocument(
+    const eventBridgeRuleSQSPolicy = new iam.DataAwsIamPolicyDocument(
       this,
-      `${config.prefix}-EventBridge-DLQ-Policy`,
+      `${config.prefix}-EventBridge-${name}-Policy`,
       {
         statement: [
           {
@@ -222,9 +214,9 @@ export class DatasyncLambda extends Resource {
       }
     ).json;
 
-    return new sqs.SqsQueuePolicy(this, 'dlq-policy', {
+    return new sqs.SqsQueuePolicy(this, `${name.toLowerCase()}-policy`, {
       queueUrl: sqsQueue.url,
-      policy: eventBridgeRuleDlqPolicy,
+      policy: eventBridgeRuleSQSPolicy,
     });
   }
 

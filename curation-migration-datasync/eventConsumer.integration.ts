@@ -513,7 +513,5 @@ function nockParser(testEventBody) {
     url: testEventBody.url,
   });
 
-  nock(config.parserEndpoint)
-    .get('/' + params.toString())
-    .reply(200, parserData);
+  nock(config.parserEndpoint).get('/').query(params).reply(200, parserData);
 }
