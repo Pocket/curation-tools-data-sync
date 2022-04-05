@@ -1,5 +1,5 @@
 import {
-  AddScheduledItemPayload,
+  ScheduledItemPayload,
   CuratedFeedItem,
   CuratedFeedProspectItem,
   CuratedFeedQueuedItems,
@@ -32,7 +32,7 @@ export function hydrateCuratedFeedItem(
 }
 
 export function hydrateCuratedFeedProspectItem(
-  eventBody: AddScheduledItemPayload,
+  eventBody: ScheduledItemPayload,
   resolvedId: number,
   topDomainId: number
 ): CuratedFeedProspectItem {

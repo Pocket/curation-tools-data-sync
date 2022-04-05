@@ -68,7 +68,7 @@ describe('dynamodb read and write test', () => {
       lastUpdatedAt: timestamp2,
     };
     await curatedItemModel.insert(itemToBeAdded);
-    const res: CuratedItemRecord = await curatedItemModel.getByCuratedRecId(
+    const res = await curatedItemModel.getByCuratedRecId(
       itemToBeAdded.curatedRecId
     );
 
@@ -107,19 +107,18 @@ describe('dynamodb read and write test', () => {
   });
 
   it('should get curatedItem by scheduledItems external Id', async () => {
-    const res: CuratedItemRecord[] =
-      await curatedItemModel.getByScheduledItemExternalId(
-        'random-scheduled-guid-4'
-      );
+    const res = await curatedItemModel.getByScheduledItemExternalId(
+      'random-scheduled-guid-4'
+    );
     expect(res).not.toBeUndefined();
-    expect(res.length).toEqual(1);
-    expect(res?.[0].curatedRecId).toEqual(4);
-    expect(res?.[0].scheduledItemExternalId).toEqual('random-scheduled-guid-4');
-    expect(res?.[0].approvedItemExternalId).toEqual('random-approved-guid-4');
-    expect(res?.[0].scheduledSurfaceGuid).toEqual(
+    expect(res).not.toBeNull();
+    expect(res?.curatedRecId).toEqual(4);
+    expect(res?.scheduledItemExternalId).toEqual('random-scheduled-guid-4');
+    expect(res?.approvedItemExternalId).toEqual('random-approved-guid-4');
+    expect(res?.scheduledSurfaceGuid).toEqual(
       ScheduledSurfaceGuid.NEW_TAB_EN_GB
     );
-    expect(res?.[0].lastUpdatedAt).toEqual(timestamp2);
+    expect(res?.lastUpdatedAt).toEqual(timestamp2);
   });
 
   it('should get all curatedItemRecords matching with approvedItemexternalId', async () => {
@@ -150,9 +149,13 @@ describe('dynamodb read and write test', () => {
       curatedItemRecords[3].curatedRecId
     );
 
-    const res: CuratedItemRecord = await curatedItemModel.getByCuratedRecId(
+    const res = await curatedItemModel.getByCuratedRecId(
       curatedItemRecords[3].curatedRecId
     );
-    expect(res.curatedRecId).toBeUndefined();
+    expect(res).toBeNull();
+  });
+  it('should return null if curatedRecId does not exist', async () => {
+    const res = await curatedItemModel.getByCuratedRecId(999991111113234);
+    expect(res).toBeNull();
   });
 });

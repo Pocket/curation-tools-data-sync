@@ -12,7 +12,7 @@ import {
 import config from '../config';
 import * as Sentry from '@sentry/serverless';
 import { dbClient } from './dynamoDbClient';
-import { AddScheduledItemPayload } from '../types';
+import { ScheduledItemPayload } from '../types';
 
 export class CuratedItemRecordModel {
   private client: DynamoDBDocumentClient;
@@ -27,7 +27,7 @@ export class CuratedItemRecordModel {
    */
   public async getByScheduledItemExternalId(
     scheduledItemExternalId: string
-  ): Promise<CuratedItemRecord[]> {
+  ): Promise<CuratedItemRecord | null> {
     const input: QueryCommandInput = {
       TableName: config.aws.dynamoDB.curationMigrationTable,
       IndexName: 'scheduledItemExternalId-GSI',
@@ -36,33 +36,23 @@ export class CuratedItemRecordModel {
       ExpressionAttributeValues: {
         ':scheduledItemExternalId': scheduledItemExternalId,
       },
+      Limit: 1,
     };
     const res: QueryCommandOutput = await this.client.send(
       new QueryCommand(input)
     );
 
-    //this must always be false coz we are expecting only one item per record.
-    //if this gets thrown, we need to investigate the bug
-    if (res.LastEvaluatedKey) {
-      Sentry.captureMessage(
-        `method 'getByScheduledItemExternalId' called with '${scheduledItemExternalId}'
-       has multiple pages of results that we are not handling!`
-      );
-    }
-
     if (res.Items?.length) {
-      return res.Items.map((item): CuratedItemRecord => {
-        // force type safety
-        return {
-          curatedRecId: item.curatedRecId,
-          scheduledSurfaceGuid: item.scheduledSurfaceGuid,
-          scheduledItemExternalId: item.scheduledItemExternalId,
-          approvedItemExternalId: item.approvedItemExternalId,
-          lastUpdatedAt: item.lastUpdatedAt,
-        };
-      });
+      const item = res.Items[0];
+      return {
+        curatedRecId: item.curatedRecId,
+        scheduledSurfaceGuid: item.scheduledSurfaceGuid,
+        scheduledItemExternalId: item.scheduledItemExternalId,
+        approvedItemExternalId: item.approvedItemExternalId,
+        lastUpdatedAt: item.lastUpdatedAt,
+      };
     } else {
-      return [];
+      return null;
     }
   }
 
@@ -141,7 +131,7 @@ export class CuratedItemRecordModel {
    */
   public async getByCuratedRecId(
     curatedRecId: number
-  ): Promise<CuratedItemRecord> {
+  ): Promise<CuratedItemRecord | null> {
     const input: GetCommandInput = {
       TableName: config.aws.dynamoDB.curationMigrationTable,
       Key: {
@@ -150,12 +140,16 @@ export class CuratedItemRecordModel {
     };
 
     const res = await this.client.send(new GetCommand(input));
+    if (res.Item == null) {
+      return null;
+    }
+
     return {
-      curatedRecId: res.Item?.curatedRecId,
-      scheduledSurfaceGuid: res.Item?.scheduledSurfaceGuid,
-      scheduledItemExternalId: res.Item?.scheduledItemExternalId,
-      approvedItemExternalId: res.Item?.approvedItemExternalId,
-      lastUpdatedAt: res.Item?.lastUpdatedAt,
+      curatedRecId: res.Item.curatedRecId,
+      scheduledSurfaceGuid: res.Item.scheduledSurfaceGuid,
+      scheduledItemExternalId: res.Item.scheduledItemExternalId,
+      approvedItemExternalId: res.Item.approvedItemExternalId,
+      lastUpdatedAt: res.Item.lastUpdatedAt,
     };
   }
 
@@ -182,7 +176,7 @@ export class CuratedItemRecordModel {
    * @returns Omit<CuratedItemRecord, 'curatedRecId'>
    */
   recordFromEvent(
-    eventBody: AddScheduledItemPayload
+    eventBody: ScheduledItemPayload
   ): Omit<CuratedItemRecord, 'curatedRecId'> {
     return {
       scheduledItemExternalId: eventBody.scheduledItemExternalId,
@@ -203,7 +197,7 @@ export class CuratedItemRecordModel {
    */
   public async insertFromEvent(
     curatedRecId: number,
-    eventBody: AddScheduledItemPayload
+    eventBody: ScheduledItemPayload
   ): Promise<void> {
     const inputItem: CuratedItemRecord = {
       curatedRecId,

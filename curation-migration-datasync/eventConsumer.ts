@@ -1,6 +1,6 @@
 import { DataService } from './database/dataService';
 import { getParserMetadata } from './externalCaller/parser';
-import { AddScheduledItemPayload } from './types';
+import { ApprovedItemPayload, ScheduledItemPayload } from './types';
 import { CuratedItemRecordModel } from './dynamodb/curatedItemRecordModel';
 import { Knex } from 'knex';
 import { CuratedItemRecord, ScheduledSurfaceGuid } from './dynamodb/types';
@@ -12,7 +12,7 @@ import { CuratedItemRecord, ScheduledSurfaceGuid } from './dynamodb/types';
  * @param eventBody
  */
 export async function addScheduledItem(
-  eventBody: AddScheduledItemPayload,
+  eventBody: ScheduledItemPayload,
   db: Knex
 ) {
   const dbService = new DataService(db);
@@ -31,12 +31,39 @@ export async function addScheduledItem(
 }
 
 /**
+ * Remove scheduled item from dynamoDB mapping and legacy database
+ * @param eventBody event payload; only need scheduledItemExternalId
+ * @param db db connection
+ */
+export async function removeScheduledItem(
+  eventBody: ScheduledItemPayload,
+  db: Knex
+) {
+  const dbService = new DataService(db);
+  const curatedItemModel = new CuratedItemRecordModel();
+  const curatedRecord = await curatedItemModel.getByScheduledItemExternalId(
+    eventBody.scheduledItemExternalId
+  );
+  if (curatedRecord == null) {
+    throw new Error(
+      `No mapping found for scheduledItemExternalId=${eventBody.scheduledItemExternalId}`
+    );
+  }
+
+  // Delete records in legacy database
+  await dbService.deleteScheduledItem(curatedRecord.curatedRecId);
+
+  // Remove association from DynamoDB
+  await curatedItemModel.deleteByCuratedRecId(curatedRecord.curatedRecId);
+}
+
+/**
  * fetches all curatedRecId related to the approvedItem's externalId.
  * and updates them.
  * @param eventBody
  */
 export async function updatedApprovedItem(
-  eventBody: AddScheduledItemPayload,
+  eventBody: ApprovedItemPayload,
   db: Knex
 ) {
   // dynamoDb will have a record of the approvedItem only if it's scheduled.
@@ -76,7 +103,7 @@ export async function updatedApprovedItem(
       await curatedItemModel.insert(curatedItem);
     } catch (e) {
       throw new Error(
-        `updateApprovedItem for ${eventBody}. couldnt find ${curatedItem.curatedRecId}`
+        `updateApprovedItem for ${eventBody}. couldn't find ${curatedItem.curatedRecId}`
       );
     }
   }

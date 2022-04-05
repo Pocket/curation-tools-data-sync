@@ -1,10 +1,12 @@
 import { Knex } from 'knex';
 import {
-  AddScheduledItemPayload,
+  ScheduledItemPayload,
   CuratedFeedItem,
   CuratedFeedProspectItem,
   CuratedFeedQueuedItems,
   TileSource,
+  CuratedFeedItemModel,
+  ApprovedItemPayload,
 } from '../types';
 import config from '../config';
 import {
@@ -31,7 +33,7 @@ export class DataService {
    * @param domainId domainId returned by the parser
    */
   public async addScheduledItem(
-    eventBody: AddScheduledItemPayload,
+    eventBody: ScheduledItemPayload,
     resolvedId: number,
     domainId: string
   ): Promise<number> {
@@ -84,8 +86,50 @@ export class DataService {
     }
   }
 
-  public async deleteScheduledItem() {
-    return;
+  public async deleteScheduledItem(curatedRecId: number) {
+    const item = await this.db<CuratedFeedItemModel>(
+      config.tables.curatedFeedItems
+    )
+      .select(
+        'prospect_id',
+        'feed_id',
+        'queued_id',
+        'resolved_id',
+        'status',
+        'time_added',
+        'time_updated',
+        'time_live',
+        'resolved_id'
+      )
+      .where('curated_rec_id', curatedRecId)
+      .first();
+    if (item == null) {
+      throw new Error(`No record found for curatedRecId=${curatedRecId}`);
+    }
+    // Delete all related records and insert into audit table
+    await this.db.transaction(async (trx) => {
+      await trx(config.tables.curatedFeedItemsDeleted).insert({
+        curated_rec_id: curatedRecId,
+        feed_id: item.feed_id,
+        resolved_id: item.resolved_id,
+        prospect_id: item.prospect_id,
+        queued_id: item.queued_id,
+        status: item.status,
+        time_live: item.time_live,
+        time_added: item.time_added,
+        time_updated: item.time_updated,
+        deleted_user_id: config.db.deleteUserId,
+      });
+      await trx(config.tables.curatedFeedProspects)
+        .where('prospect_id', item.prospect_id)
+        .del();
+      await trx(config.tables.curatedFeedQueuedItems)
+        .where('queued_id', item.queued_id)
+        .del();
+      await trx(config.tables.curatedFeedItems)
+        .where('curated_rec_id', curatedRecId)
+        .del();
+    });
   }
 
   /**
@@ -98,15 +142,22 @@ export class DataService {
    *        topic is not null in the event body.
    */
   public async updateApprovedItem(
-    eventBody: AddScheduledItemPayload,
+    eventBody: ApprovedItemPayload,
     curatedRecId: number,
     domainId?: string
   ): Promise<void> {
-    //update records.
     const item = await this.db(config.tables.curatedFeedItems)
       .select()
-      .join(config.tables.curatedFeedProspects, 'prospect_id', 'prospect_id')
-      .join(config.tables.curatedFeedQueuedItems, 'queued_id', 'queued_id')
+      .join(
+        config.tables.curatedFeedProspects,
+        'curated_feed_prospects.prospect_id',
+        'curated_feed_items.prospect_id'
+      )
+      .join(
+        config.tables.curatedFeedQueuedItems,
+        'curated_feed_queued_items.queued_id',
+        'curated_feed_items.queued_id'
+      )
       .where('curated_rec_id', curatedRecId)
       .first();
 
@@ -115,6 +166,7 @@ export class DataService {
       : item['domain_id'];
 
     //todo: check are we populating updatedBy in the update-approved-item event.
+    //coz item creator need to be curator
     const curator = eventBody.createdBy
       ? getCuratorNameFromSso(eventBody.createdBy)
       : null;
@@ -123,22 +175,22 @@ export class DataService {
       ? await this.getTopicIdByName(
           getTopicForReaditLaTmpDatabase(eventBody.topic)
         )
-      : item['topic_id'];
+      : null;
 
     //populate fields if corresponding eventBody field is set,
     //otherwise set them to what's existing in the databse
     await this.db.transaction(async (trx) => {
       await trx(config.tables.curatedFeedProspects)
         .update({
-          title: eventBody.title ?? item['title'],
-          excerpt: eventBody.excerpt ?? item['excerpt'],
+          title: eventBody.title ?? item?.title,
+          excerpt: eventBody.excerpt ?? item.excerpt,
           time_updated: eventBody.updatedAt,
-          curator: curator ?? item['curator'],
-          domain_id: topDomainId ?? item['domain_id'],
-          image_src: eventBody.imageUrl ?? item['image_src'],
+          curator: curator ?? item.curator,
+          top_domain_id: topDomainId ?? item.top_domain_id,
+          image_src: eventBody.imageUrl ?? item.image_src,
         })
         .where({
-          prospect_id: item['prospect_id'],
+          prospect_id: item.prospect_id,
         });
 
       if (eventBody.topic || eventBody.createdBy) {
@@ -152,7 +204,6 @@ export class DataService {
             queued_id: item['queued_id'],
           });
       }
-
       //not inserting to curated_feed_items table
       // as approvedItem won't have info on time_live
     });

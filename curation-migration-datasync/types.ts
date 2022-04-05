@@ -1,4 +1,4 @@
-export type AddScheduledItemPayload = {
+export type ScheduledItemPayload = {
   eventType: string;
   scheduledItemExternalId: string;
   approvedItemExternalId: string;
@@ -16,6 +16,22 @@ export type AddScheduledItemPayload = {
   updatedAt: number;
   scheduledSurfaceGuid: string;
   scheduledDate: string;
+};
+
+export type ApprovedItemPayload = {
+  eventType: string;
+  approvedItemExternalId: string;
+  url: string;
+  title: string | null;
+  excerpt: string | null;
+  language: string | null;
+  publisher: string | null;
+  imageUrl: string | null;
+  topic: string | null;
+  createdAt: number | null;
+  createdBy: string | null;
+  updatedAt: number | null;
+  isSyndicated: boolean;
 };
 
 //these events are defined in eventBridge in .aws folder
@@ -78,4 +94,16 @@ export type CuratedFeedItem = {
 export type TileSource = {
   tile_id?: number;
   source_id: number;
+};
+
+export type CuratedFeedItemModel = {
+  curated_rec_id: number;
+  feed_id: number;
+  resolved_id: number;
+  prospect_id: number;
+  queued_id: number;
+  status: 'live' | 'removed' | 'spoc';
+  time_live: number;
+  time_added: number;
+  time_updated: number;
 };
