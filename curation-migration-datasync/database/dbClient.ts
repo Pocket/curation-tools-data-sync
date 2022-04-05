@@ -1,6 +1,6 @@
 import knex, { Knex } from 'knex';
-import config from '../config';
-import { getDbCredentials } from '../secretManager';
+import { config } from '../config';
+import { getDbCredentials } from './secretManager';
 
 let readDb: Knex;
 let writeDb: Knex;

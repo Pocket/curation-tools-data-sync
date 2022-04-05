@@ -1,4 +1,4 @@
-import config from './config';
+import { config } from './config';
 import * as Sentry from '@sentry/serverless';
 import { writeClient } from './database/dbClient';
 import {

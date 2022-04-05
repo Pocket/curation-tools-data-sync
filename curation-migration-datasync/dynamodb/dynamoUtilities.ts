@@ -4,7 +4,7 @@ import {
   ScanCommand,
   ScanCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
-import config from '../config';
+import { config } from '../config';
 
 /**
  * test helper method for integration tests

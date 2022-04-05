@@ -1,7 +1,7 @@
 const environment = process.env.ENVIRONMENT || 'development';
 const isDev = environment === 'development';
 
-const config = {
+export const config = {
   isDev,
   app: {
     name: 'Curation-Migration-Datasync-Lambda',
@@ -50,5 +50,3 @@ const config = {
   },
   parserEndpoint: process.env.PARSER_ENDPOINT || 'http://parser.getpocket.dev',
 };
-
-export default config;

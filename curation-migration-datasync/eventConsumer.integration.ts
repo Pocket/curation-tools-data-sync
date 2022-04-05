@@ -1,12 +1,12 @@
 import { CuratedItemRecord, ScheduledSurfaceGuid } from './dynamodb/types';
 import { truncateDynamoDb } from './dynamodb/dynamoUtilities';
 import { dbClient } from './dynamodb/dynamoDbClient';
-import * as SecretManager from '../curation-migration-datasync/secretManager';
+import * as SecretManager from './database/secretManager';
 import sinon from 'sinon';
 import { writeClient } from './database/dbClient';
 import { ScheduledItemPayload, EventDetailType } from './types';
 import nock from 'nock';
-import config from './config';
+import { config } from './config';
 import { Knex } from 'knex';
 import { CuratedItemRecordModel } from './dynamodb/curatedItemRecordModel';
 import { DataService } from './database/dataService';
