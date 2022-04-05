@@ -188,14 +188,14 @@ export class CuratedItemRecordModel {
   }
 
   /**
-   * Insert a new CuratedItemRecord into the mapping for the given
+   * Insert/replace a CuratedItemRecord into the mapping for the given
    * curatedRecID and event body data
    * @param curatedRecId the legacy itemId in the readitla-tmp database,
    * to associate the record to
    * @param eventBody the event data sent to the Event Bus, containing
    * information about the curated item
    */
-  public async insertFromEvent(
+  public async upsertFromEvent(
     curatedRecId: number,
     eventBody: ScheduledItemPayload
   ): Promise<void> {
@@ -203,13 +203,13 @@ export class CuratedItemRecordModel {
       curatedRecId,
       ...this.recordFromEvent(eventBody),
     };
-    await this.insert(inputItem);
+    await this.upsert(inputItem);
   }
   /**
-   * Insert a new CuratedItemRecord into the mapping
+   * Insert/replace a CuratedItemRecord into the mapping
    * @param data the CuratedItemRecord to insert
    */
-  public async insert(data: CuratedItemRecord) {
+  public async upsert(data: CuratedItemRecord) {
     const command = new PutCommand({
       TableName: config.aws.dynamoDB.curationMigrationTable,
       Item: data,

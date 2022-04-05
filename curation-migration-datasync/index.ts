@@ -7,7 +7,11 @@ import {
   SQSBatchItemFailure,
   EventBridgeEvent,
 } from 'aws-lambda';
-import { addScheduledItem, removeScheduledItem } from './eventConsumer';
+import {
+  addScheduledItem,
+  removeScheduledItem,
+  updateScheduledItem,
+} from './eventConsumer';
 import { EventDetailType, ScheduledItemPayload } from './types';
 
 /**
@@ -66,6 +70,9 @@ async function _handlerFn(
   }
   if (eventBody['detail-type'] === EventDetailType.DELETE_SCHEDULED_ITEM) {
     await removeScheduledItem(eventBody.detail, db);
+  }
+  if (eventBody['detail-type'] == EventDetailType.UPDATE_SCHEDULED_ITEM) {
+    await updateScheduledItem(eventBody.detail, db);
   }
 }
 
