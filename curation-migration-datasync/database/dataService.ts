@@ -160,14 +160,17 @@ export class DataService {
       .where('curated_rec_id', curatedRecId)
       .first();
 
+    let topicId;
+    if (eventBody.topic) {
+      topicId = await this.getTopicIdByName(
+        getTopicForReaditLaTmpDatabase(eventBody.topic)
+      );
+    } else {
+      topicId = item['topic_id'];
+    }
+
     const curator = eventBody.createdBy
       ? getCuratorNameFromSso(eventBody.createdBy)
-      : null;
-
-    const topicId = eventBody.topic
-      ? await this.getTopicIdByName(
-          getTopicForReaditLaTmpDatabase(eventBody.topic)
-        )
       : null;
 
     //update curated_feed_prosects and curated_feed_queued_items fields
