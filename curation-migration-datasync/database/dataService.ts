@@ -147,8 +147,7 @@ export class DataService {
       getTopicForReaditLaTmpDatabase(eventBody.topic)
     );
 
-    const trx = await this.db.transaction();
-    try {
+    await this.db.transaction(async (trx: Knex.Transaction) => {
       const curatedFeedItem: CuratedFeedItem & { prospect_id: number } =
         await this.db(config.tables.curatedFeedItems)
           .where({ curated_rec_id: curatedRecId })
@@ -179,19 +178,8 @@ export class DataService {
         .update(curatedItem)
         .where({ curated_rec_id: curatedRecId });
 
-      await trx.commit();
-
       return curatedRecId;
-    } catch (e) {
-      await trx.rollback();
-      throw new Error(
-        `Failed to update scheduled item.\n Event data: ${JSON.stringify({
-          eventBody,
-          curatedRecId,
-          resolvedId,
-        })}\n error: ${e}`
-      );
-    }
+    });
   }
 
   /**

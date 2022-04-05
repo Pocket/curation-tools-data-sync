@@ -442,9 +442,7 @@ describe('event consumption integration test', function () {
       it('rolls back updates if an error occurs before all tables are updated', async () => {
         sinon.stub(hydrator, 'hydrateCuratedFeedItem').throws('error');
 
-        await expect(updateScheduledItem(testEventBody, db)).rejects.toThrow(
-          'Failed to update scheduled item'
-        );
+        await expect(updateScheduledItem(testEventBody, db)).rejects.toThrow();
 
         const prospectRecord = await db(config.tables.curatedFeedProspects)
           .where({ prospect_id: curatedRecord.prospect_id })

@@ -2,7 +2,7 @@ import config from './config';
 import * as Sentry from '@sentry/serverless';
 import { writeClient } from './database/dbClient';
 import { EventBridgeEvent } from 'aws-lambda';
-import { addScheduledItem } from './eventConsumer';
+import { addScheduledItem, updateScheduledItem } from './eventConsumer';
 import { EventDetailType } from './types';
 
 export async function handlerFn(event: EventBridgeEvent<any, any>) {
@@ -28,6 +28,10 @@ export async function handlerFn(event: EventBridgeEvent<any, any>) {
   const db = await writeClient();
   if (event['detail-type'] == EventDetailType.ADD_SCHEDULED_ITEM) {
     await addScheduledItem(event.detail, db);
+  }
+
+  if (event['detail-type'] == EventDetailType.UPDATE_SCHEDULED_ITEM) {
+    await updateScheduledItem(event.detail, db);
   }
 }
 
