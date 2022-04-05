@@ -64,7 +64,7 @@ export function createConnection(dbConfig: {
     password: dbConfig.password,
     database: dbConfig.dbname,
     port: parseInt(dbConfig.port || config.db.port),
-    charset: 'utf8mb4',
+    charset: config.db.charset,
   };
   return knex({
     client: 'mysql',

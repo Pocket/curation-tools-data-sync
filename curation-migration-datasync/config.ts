@@ -37,6 +37,7 @@ export const config = {
     port: process.env.DATABASE_PORT || '3310',
     tz: process.env.DATABASE_TZ || 'US/Central',
     deleteUserId: 21, // used for inserting deleted records in legacy audit table
+    charset: 'utf8mb4',
   },
   tables: {
     curatedFeedProspects: 'curated_feed_prospects',
