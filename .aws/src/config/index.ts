@@ -20,7 +20,7 @@ export const config = {
     environment,
   },
   datasyncLambda: {
-    dbSecretId: `${name}/${environment}/DatabaseCredentials`,
+    dbSecretId: `${name}/${environment}/DatabaseCredentials`, // For production; in dev, uses the generated secret for RDS instead
     allowFeeds: 'SANDBOX', // comma-separated list of scheduledSurfaceGUID to sync
   },
 };
