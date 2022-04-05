@@ -11,7 +11,7 @@ let writeDb: Knex;
 export async function readClient(): Promise<Knex> {
   if (readDb) return readDb;
 
-  const { host, username, password, port } = await getDbCredentials(
+  const { host, username, password, port, dbname } = await getDbCredentials(
     config.db.readSecretId
   );
 
@@ -19,6 +19,7 @@ export async function readClient(): Promise<Knex> {
     host,
     user: username,
     password,
+    dbname,
     port,
   });
 
@@ -31,7 +32,7 @@ export async function readClient(): Promise<Knex> {
 export async function writeClient(): Promise<Knex> {
   if (writeDb) return writeDb;
 
-  const { host, username, password, port } = await getDbCredentials(
+  const { host, username, password, port, dbname } = await getDbCredentials(
     config.db.writeSecretId
   );
 
@@ -39,6 +40,7 @@ export async function writeClient(): Promise<Knex> {
     host,
     user: username,
     password,
+    dbname,
     port,
   });
 
@@ -53,16 +55,20 @@ export function createConnection(dbConfig: {
   host: string;
   user: string;
   password: string;
+  dbname: string;
   port?: string;
 }): Knex {
+  const connection = {
+    host: dbConfig.host,
+    user: dbConfig.user,
+    password: dbConfig.password,
+    database: dbConfig.dbname,
+    port: parseInt(dbConfig.port || config.db.port),
+    charset: 'utf8mb4',
+  };
   return knex({
     client: 'mysql',
-    connection: {
-      ...dbConfig,
-      port: parseInt(dbConfig.port || config.db.port),
-      database: config.db.dbName,
-      charset: 'utf8mb4',
-    },
+    connection,
     pool: {
       /**
        * Explicitly set the session timezone. We don't want to take any chances with this

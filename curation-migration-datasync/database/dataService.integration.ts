@@ -43,6 +43,7 @@ describe('database integration test', function () {
       username: 'root',
       password: '',
       port: config.db.port,
+      dbname: 'readitla_ril-tmp',
     });
     db = await writeClient();
     await db(config.tables.curatedFeedTopics).truncate();

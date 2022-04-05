@@ -11,16 +11,19 @@ export type DbCredentials = {
   username: string;
   password: string;
   port: string;
+  dbname: string;
 };
 
-let dbCredentials: DbCredentials;
+let dbCredentials: {
+  [key: string]: DbCredentials;
+};
 /**
  * Retrieve database credentials from Secrets store
  * @param id The ID (name) of the Secret, or the ARN string
  * @returns Promise<DbCredentials>
  */
 export async function getDbCredentials(id: string): Promise<DbCredentials> {
-  if (dbCredentials) return dbCredentials;
+  if (dbCredentials[id]) return dbCredentials[id];
 
   const data = await client.send(
     new GetSecretValueCommand({
@@ -28,7 +31,7 @@ export async function getDbCredentials(id: string): Promise<DbCredentials> {
     })
   );
 
-  return (dbCredentials = JSON.parse(
+  return (dbCredentials[id] = JSON.parse(
     data.SecretString as string
   ) as DbCredentials);
 }
