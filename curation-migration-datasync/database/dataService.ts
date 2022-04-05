@@ -7,7 +7,7 @@ import {
   TileSource,
   CuratedFeedItemModel,
 } from '../types';
-import config from '../config';
+import { config } from '../config';
 import {
   hydrateCuratedFeedItem,
   hydrateCuratedFeedProspectItem,

@@ -9,7 +9,7 @@ import {
   QueryCommandInput,
   QueryCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
-import config from '../config';
+import { config } from '../config';
 import * as Sentry from '@sentry/serverless';
 import { dbClient } from './dynamoDbClient';
 import { ScheduledItemPayload } from '../types';

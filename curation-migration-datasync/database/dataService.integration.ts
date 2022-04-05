@@ -2,7 +2,7 @@ import { truncateDynamoDb } from '../dynamodb/dynamoUtilities';
 import { dbClient } from '../dynamodb/dynamoDbClient';
 import sinon from 'sinon';
 import { expect } from 'chai';
-import * as SecretManager from '../secretManager';
+import * as SecretManager from './secretManager';
 import { writeClient } from './dbClient';
 import { Knex } from 'knex';
 import { DataService } from './dataService';
@@ -11,7 +11,7 @@ import {
   CuratedFeedProspectItem,
   EventDetailType,
 } from '../types';
-import config from '../config';
+import { config } from '../config';
 
 describe('database integration test', function () {
   //aim of this test is to validate knex integration and assumptions.
@@ -39,13 +39,11 @@ describe('database integration test', function () {
   beforeAll(async () => {
     await truncateDynamoDb(dbClient);
     sinon.stub(SecretManager, 'getDbCredentials').resolves({
-      readHost: 'localhost',
-      readUsername: 'root',
-      readPassword: '',
-      writeHost: 'localhost',
-      writeUsername: 'root',
-      writePassword: '',
+      host: 'localhost',
+      username: 'root',
+      password: '',
       port: config.db.port,
+      dbname: 'readitla_ril-tmp',
     });
     db = await writeClient();
     await db(config.tables.curatedFeedTopics).truncate();

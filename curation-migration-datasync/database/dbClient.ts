@@ -1,6 +1,6 @@
 import knex, { Knex } from 'knex';
-import config from '../config';
-import { getDbCredentials } from '../secretManager';
+import { config } from '../config';
+import { getDbCredentials } from './secretManager';
 
 let readDb: Knex;
 let writeDb: Knex;
@@ -11,13 +11,15 @@ let writeDb: Knex;
 export async function readClient(): Promise<Knex> {
   if (readDb) return readDb;
 
-  const { readHost, readUsername, readPassword, port } =
-    await getDbCredentials();
+  const { host, username, password, port, dbname } = await getDbCredentials(
+    config.db.readSecretId
+  );
 
   readDb = createConnection({
-    host: readHost,
-    user: readUsername,
-    password: readPassword,
+    host,
+    user: username,
+    password,
+    dbname,
     port,
   });
 
@@ -30,13 +32,15 @@ export async function readClient(): Promise<Knex> {
 export async function writeClient(): Promise<Knex> {
   if (writeDb) return writeDb;
 
-  const { writeHost, writeUsername, writePassword, port } =
-    await getDbCredentials();
+  const { host, username, password, port, dbname } = await getDbCredentials(
+    config.db.writeSecretId
+  );
 
   writeDb = createConnection({
-    host: writeHost,
-    user: writeUsername,
-    password: writePassword,
+    host,
+    user: username,
+    password,
+    dbname,
     port,
   });
 
@@ -51,16 +55,20 @@ export function createConnection(dbConfig: {
   host: string;
   user: string;
   password: string;
+  dbname: string;
   port?: string;
 }): Knex {
+  const connection = {
+    host: dbConfig.host,
+    user: dbConfig.user,
+    password: dbConfig.password,
+    database: dbConfig.dbname,
+    port: parseInt(dbConfig.port || config.db.port),
+    charset: config.db.charset,
+  };
   return knex({
     client: 'mysql',
-    connection: {
-      ...dbConfig,
-      port: parseInt(dbConfig.port || config.db.port),
-      database: config.db.dbName,
-      charset: 'utf8mb4',
-    },
+    connection,
     pool: {
       /**
        * Explicitly set the session timezone. We don't want to take any chances with this

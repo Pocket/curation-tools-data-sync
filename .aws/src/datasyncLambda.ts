@@ -102,11 +102,22 @@ export class DatasyncLambda extends Resource {
      * Create an RDS instance if we are working in the Dev account.
      * This is only to facilitate testing
      */
+    let rdsCluster: ApplicationRDSCluster;
     if (config.isDev) {
-      this.createRds();
+      rdsCluster = this.createRds();
     }
 
     const { sentryDsn, gitSha, parserEndpoint } = getEnvVariableValues(this);
+
+    // Conditionally build secrets depending on environment
+    const secretResources = [
+      `arn:aws:secretsmanager:${this.vpc.region}:${this.vpc.accountId}:secret:CurationToolsDataSync/${config.environment}`,
+      `arn:aws:secretsmanager:${this.vpc.region}:${this.vpc.accountId}:secret:CurationToolsDataSync/${config.environment}/*`,
+    ];
+    // Add the ARN to the RDS cluster if in dev
+    if (config.isDev) {
+      secretResources.push(rdsCluster.secretARN);
+    }
 
     const lambdaConfig: PocketSQSWithLambdaTargetProps = {
       name: `${config.prefix}-Datasync-Lambda`,
@@ -130,7 +141,14 @@ export class DatasyncLambda extends Resource {
           CURATION_MIGRATION_TABLE: this.curationMigrationTable.dynamodb.name,
           CURATION_MIGRATION_TABLE_HASH_KEY:
             this.curationMigrationTable.dynamodb.hashKey,
-          DATABASE_SECRET_ID: config.datasyncLambda.dbSecretId,
+          READ_DATABASE_SECRET_ID:
+            config.environment === 'Prod'
+              ? config.datasyncLambda.readDbSecretId
+              : rdsCluster.secretARN, // Can fetch by either ID or ARN; pass ARN if we created RDS resource
+          WRITE_DATABASE_SECRET_ID:
+            config.environment === 'Prod'
+              ? config.datasyncLambda.writeDbSecretId
+              : rdsCluster.secretARN,
           REGION: this.vpc.region,
           SENTRY_DSN: sentryDsn,
           GIT_SHA: gitSha,
@@ -142,10 +160,7 @@ export class DatasyncLambda extends Resource {
         executionPolicyStatements: [
           {
             actions: ['secretsmanager:GetSecretValue', 'kms:Decrypt'],
-            resources: [
-              `arn:aws:secretsmanager:${this.vpc.region}:${this.vpc.accountId}:secret:CurationToolsDataSync/${config.environment}`,
-              `arn:aws:secretsmanager:${this.vpc.region}:${this.vpc.accountId}:secret:CurationToolsDataSync/${config.environment}/*`,
-            ],
+            resources: secretResources,
           },
           {
             effect: 'Allow',
