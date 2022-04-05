@@ -18,9 +18,7 @@ describe('getParsedDomainId', () => {
   });
 
   it('fetches appropriate keys from response', async () => {
-    nock(config.parserEndpoint)
-      .get('/' + params.toString())
-      .reply(200, data);
+    nock(config.parserEndpoint).get('/').query(params).reply(200, data);
 
     const res = await getParserMetadata('myurl.com');
     expect(res).toEqual({ domainId: '124', resolvedId: '1' });
@@ -29,14 +27,15 @@ describe('getParsedDomainId', () => {
   it('should throw error after retrying three times', async () => {
     const parserCallerSpy = jest.spyOn(parser, 'parserCaller');
     nock(config.parserEndpoint)
-      .get('/' + params.toString())
+      .get('/')
+      .query(params)
       .times(3)
       .replyWithError(testError);
 
     await expect(getParserMetadata('myurl.com')).rejects.toThrowError(
       `request to ${
         config.parserEndpoint
-      }/${params.toString()} failed, reason: ${testError}`
+      }/?${params.toString()} failed, reason: ${testError}`
     );
     expect(parserCallerSpy).toBeCalledTimes(3);
   });
@@ -44,12 +43,11 @@ describe('getParsedDomainId', () => {
   it('should succeed if the third attempt succeed', async () => {
     const parserCallerSpy = jest.spyOn(parser, 'parserCaller');
     nock(config.parserEndpoint)
-      .get('/' + params.toString())
+      .get('/')
+      .query(params)
       .times(2)
       .replyWithError(testError);
-    nock(config.parserEndpoint)
-      .get('/' + params.toString())
-      .reply(200, data);
+    nock(config.parserEndpoint).get('/').query(params).reply(200, data);
 
     const res = await getParserMetadata(testUrl);
     expect(res).toEqual({ domainId: '124', resolvedId: '1' });
