@@ -62,7 +62,7 @@ describe('event consumption integration test', function () {
     //populating the database
     await Promise.all(
       curatedItemRecords.map((item) => {
-        curatedRecordModel.insert(item);
+        curatedRecordModel.upsert(item);
       })
     );
 
@@ -325,7 +325,7 @@ describe('event consumption integration test', function () {
       sinon.stub(DataService.prototype, 'insertTileSource').throws('sql error');
       const dymamoDbSpy = sinon.spy(
         CuratedItemRecordModel.prototype,
-        'insertFromEvent'
+        'upsertFromEvent'
       );
       nockParser(testEventBody);
       await expect(addScheduledItem(testEventBody, db)).rejects.toThrow(
@@ -396,6 +396,15 @@ describe('event consumption integration test', function () {
       queued_id: curatedRecord.queued_id,
     };
 
+    const lastUpdatedAt = new Date('2022-04-05 00:00:00');
+    let clock;
+    beforeEach(() => {
+      clock = sinon.useFakeTimers({
+        now: lastUpdatedAt,
+        shouldAdvanceTime: false,
+      });
+    });
+
     afterEach(async () => {
       await Promise.all(
         [
@@ -404,6 +413,7 @@ describe('event consumption integration test', function () {
           config.tables.curatedFeedItems,
         ].map((table) => db(table).truncate())
       );
+      clock.restore();
     });
 
     describe('scheduledItemExternalId exists in DynamoDB', () => {
@@ -437,6 +447,14 @@ describe('event consumption integration test', function () {
           .first();
         expect(curatedItem.resolved_id).toEqual(12345);
         expect(curatedItem.time_updated).toEqual(queuedItemRecord.time_updated);
+
+        const curatedItemRecord =
+          await curatedRecordModel.getByScheduledItemExternalId(
+            'random_scheduled_guid_2'
+          );
+        expect(curatedItemRecord?.lastUpdatedAt).toEqual(
+          Math.round(lastUpdatedAt.getTime() / 1000)
+        );
       });
 
       it('rolls back updates if an error occurs before all tables are updated', async () => {

@@ -50,7 +50,7 @@ describe('dynamodb read and write test', () => {
     await truncateDynamoDb(dbClient);
 
     const insertRecord = curatedItemRecords.map(async (item) => {
-      await curatedItemModel.insert(item);
+      await curatedItemModel.upsert(item);
     });
     await Promise.all(insertRecord);
   });
@@ -67,7 +67,7 @@ describe('dynamodb read and write test', () => {
       approvedItemExternalId: 'random-approved-guid-5',
       lastUpdatedAt: timestamp2,
     };
-    await curatedItemModel.insert(itemToBeAdded);
+    await curatedItemModel.upsert(itemToBeAdded);
     const res = await curatedItemModel.getByCuratedRecId(
       itemToBeAdded.curatedRecId
     );

@@ -28,7 +28,7 @@ export async function addScheduledItem(
 
   // Create mapping record in DynamoDB
   const curatedItemModel = new CuratedItemRecordModel();
-  await curatedItemModel.insertFromEvent(curatedRecId, eventBody);
+  await curatedItemModel.upsertFromEvent(curatedRecId, eventBody);
 }
 
 /**
@@ -91,4 +91,6 @@ export async function updateScheduledItem(
     parseInt(parserResponse.resolvedId),
     parserResponse.domainId
   );
+
+  await curatedItemModel.upsertFromEvent(scheduledItem.curatedRecId, eventBody);
 }
