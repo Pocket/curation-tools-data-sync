@@ -3,7 +3,6 @@ import { getParserMetadata } from './externalCaller/parser';
 import { ApprovedItemPayload, ScheduledItemPayload } from './types';
 import { CuratedItemRecordModel } from './dynamodb/curatedItemRecordModel';
 import { Knex } from 'knex';
-import { CuratedItemRecord, ScheduledSurfaceGuid } from './dynamodb/types';
 
 /**
  * fetches necessary field for database insertion and provide them to dataService.
@@ -82,7 +81,7 @@ export async function updatedApprovedItem(
   //if there are approvedItem in the dynamoDb, they must be scheduled before.
   //all scheduled item has a record in our legacy database.
   // so we update them as per the new eventBody.
-  for (let curatedItem of curatedItems) {
+  for (const curatedItem of curatedItems) {
     try {
       const dbService = new DataService(db);
 
