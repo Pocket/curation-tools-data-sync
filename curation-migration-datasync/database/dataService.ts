@@ -134,12 +134,12 @@ export class DataService {
 
   /**
    * updates the curated_feed_prospects table and curated_feed_queued_items
-   * that are set in the event body.
-   * updates only non-nullable fields in the event body.
+   * fields, if they are set in the eventBody.
+   * won't update the fields if they are set to null in the eventBody.
    * @param eventBody event body
    * @param curatedRecId curatedRecId corresponding to the approvedItem's externalId
    * @param domainId domain id from parser, optional field set only when
-   *        topic is not null in the event body.
+   *        publisher is not null in the event body.
    */
   public async updateApprovedItem(
     eventBody: ApprovedItemPayload,
@@ -165,8 +165,6 @@ export class DataService {
       ? await this.fetchTopDomain(eventBody.url, domainId)
       : item['domain_id'];
 
-    //todo: check are we populating updatedBy in the update-approved-item event.
-    //coz item creator need to be curator
     const curator = eventBody.createdBy
       ? getCuratorNameFromSso(eventBody.createdBy)
       : null;
@@ -177,8 +175,9 @@ export class DataService {
         )
       : null;
 
-    //populate fields if corresponding eventBody field is set,
-    //otherwise set them to what's existing in the databse
+    //update curated_feed_prosects and curated_feed_queued_items fields
+    //if corresponding eventBody field is set,
+    //otherwise set them to what's existing in the database
     await this.db.transaction(async (trx) => {
       await trx(config.tables.curatedFeedProspects)
         .update({

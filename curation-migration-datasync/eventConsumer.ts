@@ -66,20 +66,22 @@ export async function updatedApprovedItem(
   eventBody: ApprovedItemPayload,
   db: Knex
 ) {
-  // dynamoDb will have a record of the approvedItem only if it's scheduled.
+  // dynamoDb will have a record of curatedRecId mapped to approvedItem
+  // only if it was previously scheduled.
   const curatedItemModel = new CuratedItemRecordModel();
   const curatedItems = await curatedItemModel.getByApprovedItemExternalId(
     eventBody.approvedItemExternalId
   );
 
-  //if the record returns 0, then the approvedItem is not scheduled,
+  //if dynamo returns 0 curatedItem, then the approvedItem was not scheduled before,
   //so we can safely ignore this event.
   if (curatedItems.length == 0) {
     return;
   }
 
   //if there are approvedItem in the dynamoDb, they must be scheduled before.
-  //so we go ahead and update them as per the new eventBody in the legacy database.
+  //all scheduled item has a record in our legacy database.
+  // so we update them as per the new eventBody.
   for (let curatedItem of curatedItems) {
     try {
       const dbService = new DataService(db);
