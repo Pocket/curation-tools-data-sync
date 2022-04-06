@@ -13,7 +13,7 @@ import {
   updateScheduledItem,
   updateApprovedItem,
 } from './eventConsumer';
-import { EventDetailType, ScheduledItemPayload } from './types';
+import { EventDetailType } from './types';
 
 /**
  * Handler entrypoint. Loops over every record in the message and calls
