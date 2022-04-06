@@ -7,14 +7,15 @@ import {
   PocketEventBridgeProps,
   PocketEventBridgeRuleWithMultipleTargets,
   PocketEventBridgeTargets,
+  PocketPagerDuty,
   PocketSQSWithLambdaTarget,
   PocketSQSWithLambdaTargetProps,
-  PocketPagerDuty,
   PocketVPC,
 } from '@pocket-tools/terraform-modules';
-import { iam, sqs } from '@cdktf/provider-aws';
+import { cloudwatch, iam, sqs } from '@cdktf/provider-aws';
 import { getEnvVariableValues } from './utilities';
 import { config } from './config';
+import { SqsQueue } from '@cdktf/provider-aws/lib/sqs';
 
 export class DatasyncLambda extends Resource {
   constructor(
@@ -22,7 +23,7 @@ export class DatasyncLambda extends Resource {
     private name: string,
     private vpc: PocketVPC,
     private curationMigrationTable: ApplicationDynamoDBTable,
-    pagerDuty?: PocketPagerDuty
+    private pagerDuty?: PocketPagerDuty
   ) {
     super(scope, name);
 
@@ -89,9 +90,13 @@ export class DatasyncLambda extends Resource {
    * @private
    */
   private createSqsForDlq() {
-    return new sqs.SqsQueue(this, 'datasync-target-lambda-dlq', {
+    const dlq = new sqs.SqsQueue(this, 'datasync-target-lambda-dlq', {
       name: `${config.prefix}-Datasync-Lambda-DLQ`,
     });
+
+    this.creatEventBridgeDlqAlarm(dlq);
+
+    return dlq;
   }
 
   /**
@@ -192,7 +197,36 @@ export class DatasyncLambda extends Resource {
   }
 
   /**
+   * Create an alarm for the Event Bridge DLQ to monitor the number
+   * of messages that did not make it to the queue.
+   * Starting with 10 as a base. Update as needed.
+   * @param queue
+   * @private
+   */
+  private creatEventBridgeDlqAlarm(queue: SqsQueue) {
+    new cloudwatch.CloudwatchMetricAlarm(this, 'event-bridge-dlq-alarm', {
+      alarmName: `${config.prefix}-EventBridgeDLQ-Alarm`,
+      alarmDescription: 'Number of messages in DQL >= 10',
+      namespace: 'AWS/SQS',
+      metricName: 'ApproximateNumberOfMessagesVisible',
+      dimensions: { QueueName: queue.name },
+      comparisonOperator: 'GreaterThanOrEqualToThreshold',
+      evaluationPeriods: 1,
+      period: 300,
+      threshold: 10,
+      statistic: 'Sum',
+      alarmActions: config.isDev
+        ? []
+        : [this.pagerDuty.snsNonCriticalAlarmTopic.arn],
+      okActions: config.isDev
+        ? []
+        : [this.pagerDuty.snsNonCriticalAlarmTopic.arn],
+    });
+  }
+
+  /**
    * Reference: https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-rule-dlq.html
+   * @param name
    * @param sqsQueue
    * @param eventBridgeRuleArn
    * @private
