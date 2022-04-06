@@ -16,7 +16,10 @@ import { config } from './config';
 import { Knex } from 'knex';
 import { CuratedItemRecordModel } from './dynamodb/curatedItemRecordModel';
 import { DataService } from './database/dataService';
-import { convertDateToTimestamp } from './helpers/dataTransformers';
+import {
+  convertDateToTimestamp,
+  convertUtcStringToTimestamp,
+} from './helpers/dataTransformers';
 import {
   addScheduledItem,
   removeScheduledItem,
@@ -205,7 +208,7 @@ describe('event consumption integration test', function () {
   });
 
   describe('add-scheduled-item', () => {
-    const testEventBody = {
+    const testEventBody: ScheduledItemPayload = {
       eventType: EventDetailType.ADD_SCHEDULED_ITEM,
       scheduledItemExternalId: 'random_scheduled_guid_1',
       approvedItemExternalId: 'random_approved_guid_1',
@@ -217,9 +220,9 @@ describe('event consumption integration test', function () {
       imageUrl: 'https://some-s3-url.com',
       topic: 'SELF_IMPROVEMENT',
       isSyndicated: false,
-      createdAt: 1648593897,
+      createdAt: 'Fri, 01 Apr 2022 21:55:15 GMT', //1648850115",
       createdBy: 'ad|Mozilla-LDAP|sri',
-      updatedAt: 1648593897,
+      updatedAt: 'Sat, 02 Apr 2022 21:55:15 GMT', //1648936515
       scheduledSurfaceGuid: 'NEW_TAB_EN_US',
       scheduledDate: '2022-03-25',
     };
@@ -253,8 +256,12 @@ describe('event consumption integration test', function () {
       expect(curatedItem.feed_id).toEqual(1);
       expect(curatedItem.resolved_id).toEqual(12345);
       expect(curatedItem.status).toEqual('live');
-      expect(curatedItem.time_added).toEqual(testEventBody.createdAt);
-      expect(curatedItem.time_updated).toEqual(testEventBody.updatedAt);
+      expect(curatedItem.time_added).toEqual(
+        convertUtcStringToTimestamp(testEventBody.createdAt)
+      );
+      expect(curatedItem.time_updated).toEqual(
+        convertUtcStringToTimestamp(testEventBody.updatedAt)
+      );
 
       const queuedItems = await db(config.tables.curatedFeedQueuedItems)
         .select()
@@ -268,8 +275,12 @@ describe('event consumption integration test', function () {
       expect(queuedItems.curator).toEqual('sri');
       expect(queuedItems.relevance_length).toEqual('week');
       expect(queuedItems.topic_id).toEqual(1);
-      expect(queuedItems.time_added).toEqual(testEventBody.createdAt);
-      expect(queuedItems.time_updated).toEqual(testEventBody.updatedAt);
+      expect(queuedItems.time_added).toEqual(
+        convertUtcStringToTimestamp(testEventBody.createdAt)
+      );
+      expect(queuedItems.time_updated).toEqual(
+        convertUtcStringToTimestamp(testEventBody.updatedAt)
+      );
       expect(queuedItems.prospect_id).toEqual(curatedItem.prospect_id);
 
       const prospectItem = await db(config.tables.curatedFeedProspects)
@@ -285,8 +296,12 @@ describe('event consumption integration test', function () {
       expect(prospectItem.curator).toEqual('sri');
       expect(prospectItem.status).toEqual('ready');
       expect(prospectItem.top_domain_id).toEqual(topDomainId);
-      expect(prospectItem.time_added).toEqual(testEventBody.createdAt);
-      expect(prospectItem.time_updated).toEqual(testEventBody.updatedAt);
+      expect(prospectItem.time_added).toEqual(
+        convertUtcStringToTimestamp(testEventBody.createdAt)
+      );
+      expect(prospectItem.time_updated).toEqual(
+        convertUtcStringToTimestamp(testEventBody.updatedAt)
+      );
       expect(prospectItem.prospect_id).toEqual(curatedItem.prospect_id);
       expect(prospectItem.title).toEqual(testEventBody.title);
       expect(prospectItem.excerpt).toEqual(testEventBody.excerpt);
@@ -334,7 +349,7 @@ describe('event consumption integration test', function () {
   });
 
   describe('update-scheduled-item', () => {
-    const testEventBody = {
+    const testEventBody: ScheduledItemPayload = {
       eventType: EventDetailType.UPDATE_SCHEDULED_ITEM,
       scheduledItemExternalId: 'random_scheduled_guid_2',
       approvedItemExternalId: 'random_approved_guid_2',
@@ -346,9 +361,9 @@ describe('event consumption integration test', function () {
       imageUrl: 'https://bongo-cat.com/collection/2',
       topic: 'SELF_IMPROVEMENT',
       isSyndicated: false,
-      createdAt: 1649194016,
+      createdAt: 'Fri, 01 Apr 2022 21:55:15 GMT', //1648850115
       createdBy: 'ad|Mozilla-LDAP|kelvin',
-      updatedAt: 1649194017,
+      updatedAt: 'Sat, 02 Apr 2022 21:55:15 GMT', //1648936515
       scheduledSurfaceGuid: 'NEW_TAB_EN_US',
       scheduledDate: '2022-03-25',
     };
@@ -430,7 +445,9 @@ describe('event consumption integration test', function () {
           .where({ prospect_id: curatedRecord.prospect_id })
           .first();
         expect(prospectRecord.title).toEqual(testEventBody.title);
-        expect(prospectRecord.time_updated).toEqual(testEventBody.updatedAt);
+        expect(prospectRecord.time_updated).toEqual(
+          convertUtcStringToTimestamp(testEventBody.updatedAt)
+        );
 
         const queuedItemRecord = await db(config.tables.curatedFeedQueuedItems)
           .where({ queued_id: curatedRecord.queued_id })

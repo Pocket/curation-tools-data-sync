@@ -8,6 +8,7 @@ import {
 } from '../types';
 import {
   convertDateToTimestamp,
+  convertUtcStringToTimestamp,
   getCuratorNameFromSso,
 } from '../helpers/dataTransformers';
 
@@ -42,8 +43,8 @@ export function hydrateCuratedFeedProspectItem(
     type: null,
     status: 'ready',
     curator: getCuratorNameFromSso(eventBody.createdBy),
-    time_added: eventBody.createdAt,
-    time_updated: eventBody.updatedAt,
+    time_added: convertUtcStringToTimestamp(eventBody.createdAt),
+    time_updated: convertUtcStringToTimestamp(eventBody.updatedAt),
     top_domain_id: topDomainId,
     title: eventBody.title,
     excerpt: eventBody.excerpt,
