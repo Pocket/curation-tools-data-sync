@@ -49,12 +49,7 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
  * actually performs the logic for processing the event.
  */
 async function _handlerFn(
-  eventBody: EventBridgeEvent<
-    EventDetailType,
-    any
-    //before merging - is there a way to OR this?
-    //ScheduledItemPayload | ApprovedItemPayload
-  >
+  eventBody: EventBridgeEvent<EventDetailType, any>
 ): Promise<void> {
   const db = await writeClient();
 
