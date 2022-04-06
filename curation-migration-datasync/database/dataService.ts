@@ -3,7 +3,7 @@ import {
   ScheduledItemPayload,
   CuratedFeedItem,
   CuratedFeedProspectItem,
-  CuratedFeedQueuedItems,
+  CuratedFeedQueuedItem,
   TileSource,
   CuratedFeedItemModel,
   ApprovedItemPayload,
@@ -16,7 +16,10 @@ import {
   hydrateTileSource,
 } from './hydrator';
 import { getTopicForReaditLaTmpDatabase } from '../helpers/topicMapper';
-import { getCuratorNameFromSso } from '../helpers/dataTransformers';
+import {
+  convertUtcStringToTimestamp,
+  getCuratorNameFromSso,
+} from '../helpers/dataTransformers';
 
 export class DataService {
   private db: Knex;
@@ -160,6 +163,12 @@ export class DataService {
       .where('curated_rec_id', curatedRecId)
       .first();
 
+    if (item == undefined) {
+      throw new Error(
+        `couldn't find an item with curatedRecId -> ${curatedRecId}`
+      );
+    }
+
     let topicId;
     if (eventBody.topic) {
       topicId = await this.getTopicIdByName(
@@ -171,31 +180,45 @@ export class DataService {
 
     const curator = eventBody.createdBy
       ? getCuratorNameFromSso(eventBody.createdBy)
-      : null;
+      : item['curator'];
 
-    //update curated_feed_prosects and curated_feed_queued_items fields
+    const prospectItemUpdateObject = {
+      title: eventBody.title ?? item?.title,
+      excerpt: eventBody.excerpt ?? item.excerpt,
+      time_updated: eventBody.updatedAt
+        ? convertUtcStringToTimestamp(eventBody.updatedAt)
+        : item['time_updated'],
+      curator: curator ?? item.curator,
+      time_added: eventBody.createdAt
+        ? convertUtcStringToTimestamp(eventBody.createdAt)
+        : item['time_added'],
+      image_src: eventBody.imageUrl ?? item.image_src,
+    };
+
+    const queuedItemUpdateObject = {
+      curator: curator,
+      topic_id: topicId,
+      time_updated: eventBody.updatedAt
+        ? convertUtcStringToTimestamp(eventBody.updatedAt)
+        : item['time_updated'],
+      time_added: eventBody.createdAt
+        ? convertUtcStringToTimestamp(eventBody.createdAt)
+        : item['time_added'],
+    };
+
+    //update curated_feed_prospects and curated_feed_queued_items fields
     //if corresponding eventBody field is set,
     //otherwise set them to what's existing in the database
     await this.db.transaction(async (trx) => {
       await trx(config.tables.curatedFeedProspects)
-        .update({
-          title: eventBody.title ?? item?.title,
-          excerpt: eventBody.excerpt ?? item.excerpt,
-          time_updated: eventBody.updatedAt,
-          curator: curator ?? item.curator,
-          image_src: eventBody.imageUrl ?? item.image_src,
-        })
+        .update(prospectItemUpdateObject)
         .where({
           prospect_id: item.prospect_id,
         });
 
       if (eventBody.topic || eventBody.createdBy) {
         await trx(config.tables.curatedFeedQueuedItems)
-          .update({
-            curator: curator,
-            topic_id: topicId,
-            time_updated: eventBody.updatedAt,
-          })
+          .update(queuedItemUpdateObject)
           .where({
             queued_id: item['queued_id'],
           });
@@ -235,7 +258,7 @@ export class DataService {
    */
   async insertCuratedFeedQueuedItem(
     trx: Knex.Transaction,
-    queuedItem: CuratedFeedQueuedItems
+    queuedItem: CuratedFeedQueuedItem
   ): Promise<number> {
     //unique on prospect_id
     const row = await trx(config.tables.curatedFeedQueuedItems)

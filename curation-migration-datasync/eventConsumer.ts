@@ -89,8 +89,10 @@ export async function updatedApprovedItem(
       curatedItem.lastUpdatedAt = Math.round(new Date().getTime() / 1000);
       await curatedItemModel.insert(curatedItem);
     } catch (e) {
-      throw new Error(
-        `updateApprovedItem for ${eventBody}. couldn't find ${curatedItem.curatedRecId}`
+      console.log(
+        `updateApprovedItem event failed for event: ${JSON.stringify(
+          eventBody
+        )}, ${e}`
       );
     }
   }

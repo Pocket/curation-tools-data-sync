@@ -22,16 +22,16 @@ export type ApprovedItemPayload = {
   eventType: string;
   approvedItemExternalId: string;
   url: string;
-  title: string | null;
-  excerpt: string | null;
-  language: string | null;
-  publisher: string | null;
-  imageUrl: string | null;
-  topic: string | null;
-  createdAt: number | null;
-  createdBy: string | null;
-  updatedAt: number | null;
-  isSyndicated: boolean;
+  title?: string | null;
+  excerpt?: string | null;
+  language?: string | null;
+  publisher?: string | null;
+  imageUrl?: string | null;
+  topic?: string | null;
+  createdAt?: string | null;
+  createdBy?: string | null;
+  updatedAt?: string | null;
+  isSyndicated?: boolean;
 };
 
 //these events are defined in eventBridge in .aws folder
@@ -65,7 +65,7 @@ export type CuratedFeedProspectItem = {
   image_src: string;
 };
 
-export type CuratedFeedQueuedItems = {
+export type CuratedFeedQueuedItem = {
   prospect_id: number;
   feed_id: number;
   resolved_id: number;

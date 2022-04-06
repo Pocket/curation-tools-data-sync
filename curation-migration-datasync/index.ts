@@ -12,7 +12,11 @@ import {
   removeScheduledItem,
   updatedApprovedItem,
 } from './eventConsumer';
-import { EventDetailType, ScheduledItemPayload } from './types';
+import {
+  ApprovedItemPayload,
+  EventDetailType,
+  ScheduledItemPayload,
+} from './types';
 
 /**
  * Handler entrypoint. Loops over every record in the message and calls
@@ -45,7 +49,12 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
  * actually performs the logic for processing the event.
  */
 async function _handlerFn(
-  eventBody: EventBridgeEvent<EventDetailType, ScheduledItemPayload>
+  eventBody: EventBridgeEvent<
+    EventDetailType,
+    any
+    //before merging - is there a way to OR this?
+    //ScheduledItemPayload | ApprovedItemPayload
+  >
 ): Promise<void> {
   const db = await writeClient();
 

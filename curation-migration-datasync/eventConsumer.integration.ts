@@ -7,7 +7,7 @@ import { writeClient } from './database/dbClient';
 import {
   ScheduledItemPayload,
   EventDetailType,
-  CuratedFeedQueuedItems,
+  CuratedFeedQueuedItem,
   CuratedFeedProspectItem,
   ApprovedItemPayload,
 } from './types';
@@ -16,7 +16,10 @@ import config from './config';
 import { Knex } from 'knex';
 import { CuratedItemRecordModel } from './dynamodb/curatedItemRecordModel';
 import { DataService } from './database/dataService';
-import { convertDateToTimestamp } from './helpers/dataTransformers';
+import {
+  convertDateToTimestamp,
+  convertUtcStringToTimestamp,
+} from './helpers/dataTransformers';
 import {
   addScheduledItem,
   removeScheduledItem,
@@ -341,15 +344,15 @@ describe('event consumption integration test', function () {
       approvedItemExternalId: 'random_approved_guid_2',
       url: 'https://bongo-cat.com/',
       title: 'Welcome to the internet',
-      excerpt: null,
+      //excerpt: undefined,
       language: null,
       publisher: 'Pocket blog',
       imageUrl: 'https://bongo-cat.com/collection/2',
-      topic: 'PERSONAL_FINANCE',
+      //topic: 'PERSONAL_FINANCE',
       isSyndicated: false,
       createdAt: null,
       createdBy: 'ad|Mozilla-LDAP|sri',
-      updatedAt: 1649194017,
+      updatedAt: 'Mon, 04 Apr 2022 21:55:15 GMT', //1649194017,
     };
 
     const curatedRecordPriorUpdate = {
@@ -379,7 +382,7 @@ describe('event consumption integration test', function () {
       prospect_id: curatedRecordPriorUpdate.prospect_id,
     };
 
-    const queuedItemPriorUpdate: CuratedFeedQueuedItems = {
+    const queuedItemPriorUpdate: CuratedFeedQueuedItem = {
       curator: 'joy',
       feed_id: curatedRecordPriorUpdate.feed_id,
       prospect_id: curatedRecordPriorUpdate.prospect_id,
@@ -394,6 +397,7 @@ describe('event consumption integration test', function () {
     };
 
     afterEach(async () => {
+      jest.clearAllMocks();
       await Promise.all(
         [
           config.tables.curatedFeedProspects,
@@ -449,7 +453,8 @@ describe('event consumption integration test', function () {
         testEventBody,
         prospectRecord,
         prospectPriorUpdate,
-        queuedItemRecord
+        queuedItemRecord,
+        queuedItemPriorUpdate.topic_id
       );
 
       //curated_feed_items remains as it is.
@@ -460,6 +465,8 @@ describe('event consumption integration test', function () {
     });
 
     it('should update all the curated_rec_id mapped with the approvedItem', async () => {
+      testEventBody.topic = 'PERSONAL_FINANCE';
+
       //inserting another item in dynamo that has same approvedItem id.
       const curatedItemRecord: CuratedItemRecord = {
         curatedRecId: 3,
@@ -498,7 +505,7 @@ describe('event consumption integration test', function () {
         prospect_id: curatedRecordPriorUpdate_2.prospect_id,
       };
 
-      const queuedItemPriorUpdate_2: CuratedFeedQueuedItems = {
+      const queuedItemPriorUpdate_2: CuratedFeedQueuedItem = {
         curator: 'joy',
         feed_id: curatedRecordPriorUpdate_2.feed_id,
         prospect_id: curatedRecordPriorUpdate_2.prospect_id,
@@ -541,14 +548,16 @@ describe('event consumption integration test', function () {
         testEventBody,
         prospectRecord,
         prospectPriorUpdate,
-        queuedItemRecord
+        queuedItemRecord,
+        2 //personal finance id
       );
 
       assertForUpdateApprovedItems(
         testEventBody,
         prospectRecord_2,
         prospectPriorUpdate,
-        queuedItemRecord_2
+        queuedItemRecord_2,
+        2 // personal finance id
       );
 
       //curated_feed_items remains as it is.
@@ -560,6 +569,23 @@ describe('event consumption integration test', function () {
         .first();
       expect(curatedItem).toEqual(curatedRecordPriorUpdate);
       expect(curatedItem_2).toEqual(curatedRecordPriorUpdate_2);
+    });
+
+    it('should log error if curated_rec_id is not found in the database', async () => {
+      //inserting item that will not be in the database
+      const consoleSpy = jest.spyOn(console, 'log');
+      const nonExistentId = 10;
+      const curatedItemRecord: CuratedItemRecord = {
+        curatedRecId: nonExistentId,
+        scheduledSurfaceGuid: ScheduledSurfaceGuid.NEW_TAB_EN_GB,
+        scheduledItemExternalId: 'random_scheduled_guid_4',
+        approvedItemExternalId: 'random_approved_guid_2',
+        lastUpdatedAt: timestamp1,
+      };
+      await curatedRecordModel.insert(curatedItemRecord);
+      await updatedApprovedItem(testEventBody, db);
+      expect(consoleSpy.mock.calls.length).toEqual(1);
+      await curatedRecordModel.deleteByCuratedRecId(nonExistentId);
     });
 
     it('should ignore the event if approvedItem is not found in the dynamo', async () => {
@@ -599,13 +625,16 @@ function assertForUpdateApprovedItems(
   testEventBody,
   prospectRecord,
   prospectPriorUpdate,
-  queuedItemRecord
+  queuedItemRecord,
+  topicId
 ) {
   expect(prospectRecord.title).toEqual(testEventBody.title);
-  expect(prospectRecord.time_updated).toEqual(testEventBody.updatedAt);
+  expect(prospectRecord.time_updated).toEqual(
+    convertUtcStringToTimestamp(testEventBody.updatedAt)
+  );
   expect(prospectRecord.image_src).toEqual(testEventBody.imageUrl);
   //points to personal_finance
-  expect(queuedItemRecord.topic_id).toEqual(2);
+  expect(queuedItemRecord.topic_id).toEqual(topicId);
   expect(prospectRecord.curator).toEqual('sri');
 
   //records set as null in the event body should not be changed
@@ -614,4 +643,5 @@ function assertForUpdateApprovedItems(
   expect(prospectRecord.top_domain_id).toEqual(419);
   expect(queuedItemRecord.curator).toEqual(prospectRecord.curator);
   expect(queuedItemRecord.time_updated).toEqual(prospectRecord.time_updated);
+  expect(queuedItemRecord.time_added).toEqual(prospectRecord.time_added);
 }

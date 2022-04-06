@@ -25,3 +25,8 @@ export function getCuratorNameFromSso(ssoName: string): string {
   }
   return ssoName.substring(prefix.length);
 }
+
+export function convertUtcStringToTimestamp(utcString: string): number {
+  const dt = new Date(utcString).getTime();
+  return dt / 1000;
+}
