@@ -199,28 +199,28 @@ export class DatasyncLambda extends Resource {
   /**
    * Create an alarm for the Event Bridge DLQ to monitor the number
    * of messages that did not make it to the queue.
-   * Starting with 10 as a base. Update as needed.
+   * Starting with 5 as a base. Update as needed.
+   * This is a critical service, ideally, there shouldn't be any failed
+   * sends/messages from event bridge in the DLQ.
    * @param queue
    * @private
    */
   private creatEventBridgeDlqAlarm(queue: SqsQueue) {
     new cloudwatch.CloudwatchMetricAlarm(this, 'event-bridge-dlq-alarm', {
       alarmName: `${config.prefix}-EventBridgeDLQ-Alarm`,
-      alarmDescription: 'Number of messages in DQL >= 10',
+      alarmDescription: 'Number of messages in DQL >= 5',
       namespace: 'AWS/SQS',
       metricName: 'ApproximateNumberOfMessagesVisible',
       dimensions: { QueueName: queue.name },
       comparisonOperator: 'GreaterThanOrEqualToThreshold',
       evaluationPeriods: 1,
       period: 300,
-      threshold: 10,
+      threshold: 5,
       statistic: 'Sum',
       alarmActions: config.isDev
         ? []
-        : [this.pagerDuty.snsNonCriticalAlarmTopic.arn],
-      okActions: config.isDev
-        ? []
-        : [this.pagerDuty.snsNonCriticalAlarmTopic.arn],
+        : [this.pagerDuty.snsCriticalAlarmTopic.arn],
+      okActions: config.isDev ? [] : [this.pagerDuty.snsCriticalAlarmTopic.arn],
     });
   }
 
