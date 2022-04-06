@@ -1,4 +1,4 @@
-import config from './config';
+import { config } from './config';
 import * as Sentry from '@sentry/serverless';
 import { writeClient } from './database/dbClient';
 import {
@@ -10,13 +10,10 @@ import {
 import {
   addScheduledItem,
   removeScheduledItem,
-  updatedApprovedItem,
+  updateScheduledItem,
+  updateApprovedItem,
 } from './eventConsumer';
-import {
-  ApprovedItemPayload,
-  EventDetailType,
-  ScheduledItemPayload,
-} from './types';
+import { EventDetailType, ScheduledItemPayload } from './types';
 
 /**
  * Handler entrypoint. Loops over every record in the message and calls
@@ -55,7 +52,7 @@ async function _handlerFn(
 
   //only update-approved-item event will not have scheduledSurfaceGuid
   if (eventBody['detail-type'] == EventDetailType.UPDATE_APPROVED_ITEM) {
-    await updatedApprovedItem(eventBody.detail, db);
+    await updateApprovedItem(eventBody.detail, db);
     return;
   }
 
@@ -77,6 +74,9 @@ async function _handlerFn(
   }
   if (eventBody['detail-type'] === EventDetailType.DELETE_SCHEDULED_ITEM) {
     await removeScheduledItem(eventBody.detail, db);
+  }
+  if (eventBody['detail-type'] == EventDetailType.UPDATE_SCHEDULED_ITEM) {
+    await updateScheduledItem(eventBody.detail, db);
   }
 }
 

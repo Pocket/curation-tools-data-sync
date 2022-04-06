@@ -8,7 +8,7 @@ import {
   CuratedFeedItemModel,
   ApprovedItemPayload,
 } from '../types';
-import config from '../config';
+import { config } from '../config';
 import {
   hydrateCuratedFeedItem,
   hydrateCuratedFeedProspectItem,
@@ -132,6 +132,58 @@ export class DataService {
       await trx(config.tables.curatedFeedItems)
         .where('curated_rec_id', curatedRecId)
         .del();
+    });
+  }
+
+  /**
+   * Update curated feed item and the associated curated_feed_* tables
+   * @param eventBody
+   * @param curatedRecId
+   * @param resolvedId
+   * @param domainId
+   */
+  public async updateScheduledItem(
+    eventBody: ScheduledItemPayload,
+    curatedRecId: number,
+    resolvedId: number,
+    domainId: string
+  ) {
+    const topicId = await this.getTopicIdByName(
+      getTopicForReaditLaTmpDatabase(eventBody.topic)
+    );
+
+    await this.db.transaction(async (trx: Knex.Transaction) => {
+      const curatedFeedItem: CuratedFeedItem & { prospect_id: number } =
+        await this.db(config.tables.curatedFeedItems)
+          .where({ curated_rec_id: curatedRecId })
+          .first();
+
+      const topDomainId = await this.fetchTopDomain(eventBody.url, domainId);
+      const prospectItem = {
+        ...hydrateCuratedFeedProspectItem(eventBody, resolvedId, topDomainId),
+        prospect_id: curatedFeedItem.prospect_id,
+      };
+      await trx(config.tables.curatedFeedProspects)
+        .update(prospectItem)
+        .where({ prospect_id: curatedFeedItem.prospect_id });
+
+      const queuedItem = {
+        ...hydrateCuratedFeedQueuedItem(prospectItem, topicId),
+        queued_id: curatedFeedItem.queued_id,
+      };
+      await trx(config.tables.curatedFeedQueuedItems)
+        .update(queuedItem)
+        .where({ queued_id: curatedFeedItem.queued_id });
+
+      const curatedItem = hydrateCuratedFeedItem(
+        queuedItem,
+        eventBody.scheduledDate
+      );
+      await trx(config.tables.curatedFeedItems)
+        .update(curatedItem)
+        .where({ curated_rec_id: curatedRecId });
+
+      return curatedRecId;
     });
   }
 

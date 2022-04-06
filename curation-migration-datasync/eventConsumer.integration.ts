@@ -1,18 +1,19 @@
+import * as Sentry from '@sentry/serverless';
 import { CuratedItemRecord, ScheduledSurfaceGuid } from './dynamodb/types';
 import { truncateDynamoDb } from './dynamodb/dynamoUtilities';
 import { dbClient } from './dynamodb/dynamoDbClient';
-import * as SecretManager from '../curation-migration-datasync/secretManager';
+import * as SecretManager from './database/secretManager';
 import sinon from 'sinon';
 import { writeClient } from './database/dbClient';
 import {
   ScheduledItemPayload,
   EventDetailType,
-  CuratedFeedQueuedItem,
   CuratedFeedProspectItem,
+  CuratedFeedQueuedItem,
   ApprovedItemPayload,
 } from './types';
 import nock from 'nock';
-import config from './config';
+import { config } from './config';
 import { Knex } from 'knex';
 import { CuratedItemRecordModel } from './dynamodb/curatedItemRecordModel';
 import { DataService } from './database/dataService';
@@ -23,9 +24,10 @@ import {
 import {
   addScheduledItem,
   removeScheduledItem,
-  updatedApprovedItem,
+  updateScheduledItem,
+  updateApprovedItem,
 } from './eventConsumer';
-
+import * as hydrator from './database/hydrator';
 const curatedRecordModel = new CuratedItemRecordModel();
 
 describe('event consumption integration test', function () {
@@ -44,13 +46,11 @@ describe('event consumption integration test', function () {
 
   beforeAll(async () => {
     sinon.stub(SecretManager, 'getDbCredentials').resolves({
-      readHost: 'localhost',
-      readUsername: 'root',
-      readPassword: '',
-      writeHost: 'localhost',
-      writeUsername: 'root',
-      writePassword: '',
+      host: 'localhost',
+      username: 'root',
+      password: '',
       port: config.db.port,
+      dbname: 'readitla_ril-tmp',
     });
     db = await writeClient();
   });
@@ -64,7 +64,7 @@ describe('event consumption integration test', function () {
     //populating the database
     await Promise.all(
       curatedItemRecords.map((item) => {
-        curatedRecordModel.insert(item);
+        curatedRecordModel.upsert(item);
       })
     );
 
@@ -87,13 +87,12 @@ describe('event consumption integration test', function () {
         domain: 'nytimes.com',
         top_domain_id: 200,
       },
-    ].map((row) => {
-      return {
-        domain_id: row.domain_id,
-        domain: row.domain,
-        top_domain_id: row.top_domain_id,
-      };
-    });
+      {
+        domain_id: 419,
+        domain: 'https://bongo-cat.com',
+        top_domain_id: 10,
+      },
+    ];
     await db(config.tables.domains).insert(inputDomainData);
 
     await db(config.tables.syndicatedArticles).truncate();
@@ -328,13 +327,199 @@ describe('event consumption integration test', function () {
       sinon.stub(DataService.prototype, 'insertTileSource').throws('sql error');
       const dymamoDbSpy = sinon.spy(
         CuratedItemRecordModel.prototype,
-        'insertFromEvent'
+        'upsertFromEvent'
       );
       nockParser(testEventBody);
       await expect(addScheduledItem(testEventBody, db)).rejects.toThrow(
         'failed to transact for the event body'
       );
       expect(dymamoDbSpy.callCount).toEqual(0);
+    });
+  });
+
+  describe('update-scheduled-item', () => {
+    const testEventBody = {
+      eventType: EventDetailType.UPDATE_SCHEDULED_ITEM,
+      scheduledItemExternalId: 'random_scheduled_guid_2',
+      approvedItemExternalId: 'random_approved_guid_2',
+      url: 'https://bongo-cat.com/',
+      title: 'Welcome to the internet',
+      excerpt: 'Anything and everything, all of the time',
+      language: 'EN',
+      publisher: 'Pocket blog',
+      imageUrl: 'https://bongo-cat.com/collection/2',
+      topic: 'SELF_IMPROVEMENT',
+      isSyndicated: false,
+      createdAt: 1649194016,
+      createdBy: 'ad|Mozilla-LDAP|kelvin',
+      updatedAt: 1649194017,
+      scheduledSurfaceGuid: 'NEW_TAB_EN_US',
+      scheduledDate: '2022-03-25',
+    };
+
+    const curatedRecord = {
+      curated_rec_id: 2,
+      prospect_id: 10,
+      feed_id: 9,
+      queued_id: 12,
+      resolved_id: 99,
+      status: 'live',
+      time_added: 1649094016,
+      time_updated: 1649094017,
+      time_live: 1649094018,
+    };
+
+    const prospect: CuratedFeedProspectItem = {
+      curator: 'joy',
+      excerpt: 'Tomorrow is a mystery',
+      feed_id: 0,
+      image_src: 'https://cool-cry.com/collections/3',
+      resolved_id: 99,
+      status: 'ready',
+      time_added: 1649094016,
+      time_updated: 1649094017,
+      title: 'Yesterday is history',
+      top_domain_id: 419,
+      type: 'live',
+      prospect_id: curatedRecord.prospect_id,
+    };
+
+    const queuedItem: CuratedFeedQueuedItem = {
+      curator: 'joy',
+      feed_id: 0,
+      prospect_id: 10,
+      relevance_length: 'week',
+      resolved_id: 99,
+      status: 'ready',
+      time_added: 1649094016,
+      time_updated: 1649094017,
+      topic_id: 1,
+      weight: 1,
+      queued_id: curatedRecord.queued_id,
+    };
+
+    const lastUpdatedAt = new Date('2022-04-05 00:00:00');
+    let clock;
+    beforeEach(() => {
+      clock = sinon.useFakeTimers({
+        now: lastUpdatedAt,
+        shouldAdvanceTime: false,
+      });
+    });
+
+    afterEach(async () => {
+      await Promise.all(
+        [
+          config.tables.curatedFeedProspects,
+          config.tables.curatedFeedQueuedItems,
+          config.tables.curatedFeedItems,
+        ].map((table) => db(table).truncate())
+      );
+      clock.restore();
+    });
+
+    describe('scheduledItemExternalId exists in DynamoDB', () => {
+      beforeEach(async () => {
+        await db(config.tables.curatedFeedItems).insert(curatedRecord);
+        await db(config.tables.curatedFeedProspects).insert(prospect);
+        await db(config.tables.curatedFeedQueuedItems).insert(queuedItem);
+
+        nockParser(testEventBody);
+      });
+
+      it('updates the curated feed item and the associated curated feed records', async () => {
+        await updateScheduledItem(testEventBody, db);
+
+        const prospectRecord = await db(config.tables.curatedFeedProspects)
+          .where({ prospect_id: curatedRecord.prospect_id })
+          .first();
+        expect(prospectRecord.title).toEqual(testEventBody.title);
+        expect(prospectRecord.time_updated).toEqual(testEventBody.updatedAt);
+
+        const queuedItemRecord = await db(config.tables.curatedFeedQueuedItems)
+          .where({ queued_id: curatedRecord.queued_id })
+          .first();
+        expect(queuedItemRecord.curator).toEqual(prospectRecord.curator);
+        expect(queuedItemRecord.time_updated).toEqual(
+          prospectRecord.time_updated
+        );
+
+        const curatedItem = await db(config.tables.curatedFeedItems)
+          .where({ curated_rec_id: curatedRecord.curated_rec_id })
+          .first();
+        expect(curatedItem.resolved_id).toEqual(12345);
+        expect(curatedItem.time_updated).toEqual(queuedItemRecord.time_updated);
+
+        const curatedItemRecord =
+          await curatedRecordModel.getByScheduledItemExternalId(
+            'random_scheduled_guid_2'
+          );
+        expect(curatedItemRecord?.lastUpdatedAt).toEqual(
+          Math.round(lastUpdatedAt.getTime() / 1000)
+        );
+      });
+
+      it('rolls back updates if an error occurs before all tables are updated', async () => {
+        sinon.stub(hydrator, 'hydrateCuratedFeedItem').throws('error');
+
+        await expect(updateScheduledItem(testEventBody, db)).rejects.toThrow();
+
+        const prospectRecord = await db(config.tables.curatedFeedProspects)
+          .where({ prospect_id: curatedRecord.prospect_id })
+          .first();
+        expect(prospectRecord.resolved_id).toEqual(prospect.resolved_id);
+
+        const queuedItemRecord = await db(config.tables.curatedFeedQueuedItems)
+          .where({ queued_id: curatedRecord.queued_id })
+          .first();
+        expect(queuedItemRecord.resolved_id).toEqual(queuedItem.resolved_id);
+
+        const curatedItemRecord = await db(config.tables.curatedFeedItems)
+          .where({ curated_rec_id: curatedRecord.curated_rec_id })
+          .first();
+        expect(curatedItemRecord.resolved_id).toEqual(
+          curatedRecord.resolved_id
+        );
+      });
+    });
+
+    it('adds the curated feed item and the associated curated feed records if mapping does not exist', async () => {
+      const eventBody = {
+        ...testEventBody,
+        scheduledItemExternalId: 'faketh_not',
+      };
+      const resolvedId = 12345;
+      const consoleSpy = sinon.spy(console, 'log');
+      const sentrySpy = sinon.spy(Sentry, 'captureMessage');
+      nockParser(eventBody);
+      await updateScheduledItem(eventBody, db);
+
+      const prospect = await db(config.tables.curatedFeedProspects)
+        .where({ resolved_id: resolvedId })
+        .first();
+      expect(prospect).not.toBeUndefined();
+
+      const queuedItem = await db(config.tables.curatedFeedQueuedItems)
+        .where({ resolved_id: resolvedId })
+        .first();
+      expect(queuedItem).not.toBeUndefined();
+
+      const curatedItem = await db(config.tables.curatedFeedItems)
+        .where({ resolved_id: resolvedId })
+        .first();
+      expect(curatedItem.queued_id).toEqual(queuedItem.queued_id);
+      expect(curatedItem.prospect_id).toEqual(prospect.prospect_id);
+
+      const scheduledItemRecord =
+        await curatedRecordModel.getByScheduledItemExternalId(
+          eventBody.scheduledItemExternalId
+        );
+      expect(scheduledItemRecord).not.toBeUndefined();
+
+      const errorMessage =
+        'update-scheduled-item: No mapping found for scheduledItemExternalId=faketh_not';
+      sinon.assert.calledWith(consoleSpy, errorMessage);
+      sinon.assert.calledWith(sentrySpy, errorMessage);
     });
   });
 
@@ -439,7 +624,7 @@ describe('event consumption integration test', function () {
     });
 
     it('should update only fields set to not-null', async () => {
-      await updatedApprovedItem(testEventBody, db);
+      await updateApprovedItem(testEventBody, db);
 
       const prospectRecord = await db(config.tables.curatedFeedProspects)
         .where({ prospect_id: curatedRecordPriorUpdate.prospect_id })
@@ -475,7 +660,7 @@ describe('event consumption integration test', function () {
         approvedItemExternalId: 'random_approved_guid_2',
         lastUpdatedAt: timestamp1,
       };
-      await curatedRecordModel.insert(curatedItemRecord);
+      await curatedRecordModel.upsert(curatedItemRecord);
 
       //populating the second item that matches with the same random_approved_guid_2
       const curatedRecordPriorUpdate_2 = {
@@ -528,7 +713,7 @@ describe('event consumption integration test', function () {
         queuedItemPriorUpdate_2
       );
 
-      await updatedApprovedItem(testEventBody, db);
+      await updateApprovedItem(testEventBody, db);
 
       const prospectRecord = await db(config.tables.curatedFeedProspects)
         .where({ prospect_id: curatedRecordPriorUpdate.prospect_id })
@@ -582,15 +767,15 @@ describe('event consumption integration test', function () {
         approvedItemExternalId: 'random_approved_guid_2',
         lastUpdatedAt: timestamp1,
       };
-      await curatedRecordModel.insert(curatedItemRecord);
-      await updatedApprovedItem(testEventBody, db);
+      await curatedRecordModel.upsert(curatedItemRecord);
+      await updateApprovedItem(testEventBody, db);
       expect(consoleSpy.mock.calls.length).toEqual(1);
       await curatedRecordModel.deleteByCuratedRecId(nonExistentId);
     });
 
     it('should ignore the event if approvedItem is not found in the dynamo', async () => {
       testEventBody.approvedItemExternalId = 'non-existent-approved-id';
-      await updatedApprovedItem(testEventBody, db);
+      await updateApprovedItem(testEventBody, db);
       const prospectRecord = await db(config.tables.curatedFeedProspects)
         .where({ prospect_id: curatedRecordPriorUpdate.prospect_id })
         .first();

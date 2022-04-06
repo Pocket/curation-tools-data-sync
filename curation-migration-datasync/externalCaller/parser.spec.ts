@@ -1,6 +1,6 @@
 import nock from 'nock';
 import { getParserMetadata, parser } from './parser';
-import config from '../config';
+import { config } from '../config';
 
 describe('getParsedDomainId', () => {
   const testError = 'Something went wrong';

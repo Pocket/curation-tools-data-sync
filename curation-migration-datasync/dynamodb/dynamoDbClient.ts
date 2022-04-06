@@ -1,7 +1,7 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 
-import config from '../config';
+import { config } from '../config';
 
 // base dynamo client
 const dynamo = new DynamoDBClient({
