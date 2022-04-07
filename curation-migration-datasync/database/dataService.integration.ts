@@ -29,9 +29,9 @@ describe('database integration test', function () {
     imageUrl: 'https://some-s3-url.com',
     topic: 'HEALTH_FITNESS',
     isSyndicated: false,
-    createdAt: 1648593897,
+    createdAt: 'Fri, 01 Apr 2022 21:55:15 GMT', //1648850115
+    updatedAt: 'Sat, 02 Apr 2022 21:55:15 GMT', //1648936515
     createdBy: 'ad|Mozilla-LDAP|sri',
-    updatedAt: 1648593897,
     scheduledSurfaceGuid: 'NEW_TAB_EN_US',
     scheduledDate: '2022-03-25',
   };
