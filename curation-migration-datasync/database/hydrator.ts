@@ -2,7 +2,7 @@ import {
   ScheduledItemPayload,
   CuratedFeedItem,
   CuratedFeedProspectItem,
-  CuratedFeedQueuedItems,
+  CuratedFeedQueuedItem,
   ScheduledSurfaceToFeedIdMap,
   TileSource,
 } from '../types';
@@ -13,7 +13,7 @@ import {
 } from '../helpers/dataTransformers';
 
 export function hydrateCuratedFeedItem(
-  queuedItem: CuratedFeedQueuedItems,
+  queuedItem: CuratedFeedQueuedItem,
   scheduledDate: string
 ): CuratedFeedItem {
   if (queuedItem.queued_id == undefined) {
@@ -55,7 +55,7 @@ export function hydrateCuratedFeedProspectItem(
 export function hydrateCuratedFeedQueuedItem(
   prospectItem: CuratedFeedProspectItem,
   topicId: number
-): CuratedFeedQueuedItems {
+): CuratedFeedQueuedItem {
   if (prospectItem.prospect_id == undefined) {
     throw new Error(`prospect_id cannot be undefined in  ${prospectItem}`);
   }

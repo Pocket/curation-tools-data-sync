@@ -1,5 +1,6 @@
 import {
   convertDateToTimestamp,
+  convertUtcStringToTimestamp,
   getCuratorNameFromSso,
 } from './dataTransformers';
 
@@ -23,6 +24,14 @@ describe('data transformer methods', () => {
       const expected = 1648512000;
       //convertDateToTimestamp epoc timestamp shows 2022-03-29 08:05 pm gmt
       expect(convertDateToTimestamp('2022-03-29')).toEqual(expected);
+    });
+  });
+
+  describe('utc string to timestamp', () => {
+    it('returns epoc timestamp for a utc string', () => {
+      const expected = 1649109315;
+      const epoc = convertUtcStringToTimestamp('Mon, 04 Apr 2022 21:55:15 GMT');
+      expect(epoc).toEqual(expected);
     });
   });
 });

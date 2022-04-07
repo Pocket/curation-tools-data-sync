@@ -1,6 +1,6 @@
 import { DataService } from './database/dataService';
 import { getParserMetadata } from './externalCaller/parser';
-import { ScheduledItemPayload } from './types';
+import { ApprovedItemPayload, ScheduledItemPayload } from './types';
 import { CuratedItemRecordModel } from './dynamodb/curatedItemRecordModel';
 import { Knex } from 'knex';
 import * as Sentry from '@sentry/serverless';
@@ -93,4 +93,52 @@ export async function updateScheduledItem(
   );
 
   await curatedItemModel.upsertFromEvent(scheduledItem.curatedRecId, eventBody);
+}
+
+/**
+ * fetches all curatedRecId related to the approvedItem's externalId.
+ * and updates them.
+ * @param eventBody
+ */
+export async function updateApprovedItem(
+  eventBody: ApprovedItemPayload,
+  db: Knex
+) {
+  // dynamoDb will have a record of curatedRecId mapped to approvedItem
+  // only if it was previously scheduled.
+  const curatedItemModel = new CuratedItemRecordModel();
+  const curatedItems = await curatedItemModel.getByApprovedItemExternalId(
+    eventBody.approvedItemExternalId
+  );
+
+  //if dynamo returns 0 curatedItem, then the approvedItem was not scheduled before,
+  //so we can safely ignore this event.
+  if (curatedItems.length == 0) {
+    return;
+  }
+
+  //if there are approvedItem in the dynamoDb, they must be scheduled before.
+  //all scheduled item has a record in our legacy database.
+  // so we update them as per the new eventBody.
+  for (const curatedItem of curatedItems) {
+    try {
+      const dbService = new DataService(db);
+      await dbService.updateApprovedItem(eventBody, curatedItem.curatedRecId);
+      //update lastUpdatedAt alone in dynamoDb.
+      curatedItem.lastUpdatedAt = Math.round(new Date().getTime() / 1000);
+      await curatedItemModel.upsert(curatedItem);
+    } catch (e) {
+      //logging error and iterate to next item
+      console.log(
+        `updateApprovedItem event failed for event: ${JSON.stringify(
+          eventBody
+        )}, ${e}`
+      );
+      Sentry.captureException(
+        `updateApprovedItem event failed for event: ${JSON.stringify(
+          eventBody
+        )}, ${e}`
+      );
+    }
+  }
 }

@@ -11,8 +11,9 @@ import {
   addScheduledItem,
   removeScheduledItem,
   updateScheduledItem,
+  updateApprovedItem,
 } from './eventConsumer';
-import { EventDetailType, ScheduledItemPayload } from './types';
+import { EventDetailType } from './types';
 
 /**
  * Handler entrypoint. Loops over every record in the message and calls
@@ -45,8 +46,16 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
  * actually performs the logic for processing the event.
  */
 async function _handlerFn(
-  eventBody: EventBridgeEvent<EventDetailType, ScheduledItemPayload>
+  eventBody: EventBridgeEvent<EventDetailType, any>
 ): Promise<void> {
+  const db = await writeClient();
+
+  //only update-approved-item event will not have scheduledSurfaceGuid
+  if (eventBody['detail-type'] == EventDetailType.UPDATE_APPROVED_ITEM) {
+    await updateApprovedItem(eventBody.detail, db);
+    return;
+  }
+
   // Check if the feed is included in the allowlist
   if (
     eventBody.detail.scheduledSurfaceGuid &&
@@ -59,12 +68,7 @@ async function _handlerFn(
     );
     return;
   }
-  // TODO: INFRA-401
-  // update-approved-item events will not have scheduledSurfaceGuid; this
-  // validation must be performed when checking to see if the underlying
-  // approved item in the event is scheduled
 
-  const db = await writeClient();
   if (eventBody['detail-type'] === EventDetailType.ADD_SCHEDULED_ITEM) {
     await addScheduledItem(eventBody.detail, db);
   }

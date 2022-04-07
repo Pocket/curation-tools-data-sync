@@ -3,9 +3,10 @@ import {
   ScheduledItemPayload,
   CuratedFeedItem,
   CuratedFeedProspectItem,
-  CuratedFeedQueuedItems,
+  CuratedFeedQueuedItem,
   TileSource,
   CuratedFeedItemModel,
+  ApprovedItemPayload,
 } from '../types';
 import { config } from '../config';
 import {
@@ -15,6 +16,10 @@ import {
   hydrateTileSource,
 } from './hydrator';
 import { getTopicForReaditLaTmpDatabase } from '../helpers/topicMapper';
+import {
+  convertUtcStringToTimestamp,
+  getCuratorNameFromSso,
+} from '../helpers/dataTransformers';
 
 export class DataService {
   private db: Knex;
@@ -183,6 +188,98 @@ export class DataService {
   }
 
   /**
+   * updates the curated_feed_prospects table and curated_feed_queued_items
+   * fields, if they are set in the eventBody.
+   * won't update the fields if they are set to null in the eventBody.
+   * @param eventBody event body
+   * @param curatedRecId curatedRecId corresponding to the approvedItem's externalId
+   * @param domainId domain id from parser, optional field set only when
+   *        publisher is not null in the event body.
+   */
+  public async updateApprovedItem(
+    eventBody: ApprovedItemPayload,
+    curatedRecId: number
+  ): Promise<void> {
+    const item = await this.db(config.tables.curatedFeedItems)
+      .select()
+      .join(
+        config.tables.curatedFeedProspects,
+        'curated_feed_prospects.prospect_id',
+        'curated_feed_items.prospect_id'
+      )
+      .join(
+        config.tables.curatedFeedQueuedItems,
+        'curated_feed_queued_items.queued_id',
+        'curated_feed_items.queued_id'
+      )
+      .where('curated_rec_id', curatedRecId)
+      .first();
+
+    if (item == undefined) {
+      throw new Error(
+        `couldn't find an item with curatedRecId -> ${curatedRecId}`
+      );
+    }
+
+    let topicId;
+    if (eventBody.topic) {
+      topicId = await this.getTopicIdByName(
+        getTopicForReaditLaTmpDatabase(eventBody.topic)
+      );
+    } else {
+      topicId = item['topic_id'];
+    }
+
+    const curator = eventBody.createdBy
+      ? getCuratorNameFromSso(eventBody.createdBy)
+      : item['curator'];
+
+    const prospectItemUpdateObject = {
+      title: eventBody.title ?? item?.title,
+      excerpt: eventBody.excerpt ?? item.excerpt,
+      time_updated: eventBody.updatedAt
+        ? convertUtcStringToTimestamp(eventBody.updatedAt)
+        : item['time_updated'],
+      curator: curator ?? item.curator,
+      time_added: eventBody.createdAt
+        ? convertUtcStringToTimestamp(eventBody.createdAt)
+        : item['time_added'],
+      image_src: eventBody.imageUrl ?? item.image_src,
+    };
+
+    const queuedItemUpdateObject = {
+      curator: curator,
+      topic_id: topicId,
+      time_updated: eventBody.updatedAt
+        ? convertUtcStringToTimestamp(eventBody.updatedAt)
+        : item['time_updated'],
+      time_added: eventBody.createdAt
+        ? convertUtcStringToTimestamp(eventBody.createdAt)
+        : item['time_added'],
+    };
+
+    //update curated_feed_prospects and curated_feed_queued_items fields
+    //if corresponding eventBody field is set,
+    //otherwise set them to what's existing in the database
+    await this.db.transaction(async (trx) => {
+      await trx(config.tables.curatedFeedProspects)
+        .update(prospectItemUpdateObject)
+        .where({
+          prospect_id: item.prospect_id,
+        });
+
+      if (eventBody.topic || eventBody.createdBy) {
+        await trx(config.tables.curatedFeedQueuedItems)
+          .update(queuedItemUpdateObject)
+          .where({
+            queued_id: item['queued_id'],
+          });
+      }
+      //not inserting to curated_feed_items table
+      // as approvedItem won't have info on time_live
+    });
+  }
+  /**
    * inserts into curated_feed_prospects table.
    * unique index on (feed_id and resolved_id)
    * @param trx
@@ -213,7 +310,7 @@ export class DataService {
    */
   async insertCuratedFeedQueuedItem(
     trx: Knex.Transaction,
-    queuedItem: CuratedFeedQueuedItems
+    queuedItem: CuratedFeedQueuedItem
   ): Promise<number> {
     //unique on prospect_id
     const row = await trx(config.tables.curatedFeedQueuedItems)
