@@ -10,9 +10,9 @@ export type ScheduledItemPayload = {
   imageUrl: string;
   topic: string;
   isSyndicated: boolean;
-  createdAt: number;
+  createdAt: string;
   createdBy: string;
-  updatedAt: number;
+  updatedAt: string;
   scheduledSurfaceGuid: string;
   scheduledDate: string;
 };
