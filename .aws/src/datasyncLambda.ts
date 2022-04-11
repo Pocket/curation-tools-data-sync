@@ -3,18 +3,20 @@ import { Construct } from 'constructs';
 import {
   ApplicationDynamoDBTable,
   ApplicationRDSCluster,
+  ApplicationSQSQueue,
   LAMBDA_RUNTIMES,
   PocketEventBridgeProps,
   PocketEventBridgeRuleWithMultipleTargets,
   PocketEventBridgeTargets,
+  PocketPagerDuty,
   PocketSQSWithLambdaTarget,
   PocketSQSWithLambdaTargetProps,
-  PocketPagerDuty,
   PocketVPC,
 } from '@pocket-tools/terraform-modules';
-import { iam, sqs } from '@cdktf/provider-aws';
+import { cloudwatch, iam, sqs } from '@cdktf/provider-aws';
 import { getEnvVariableValues } from './utilities';
 import { config } from './config';
+import { SqsQueue } from '@cdktf/provider-aws/lib/sqs';
 
 export class DatasyncLambda extends Resource {
   constructor(
@@ -22,7 +24,7 @@ export class DatasyncLambda extends Resource {
     private name: string,
     private vpc: PocketVPC,
     private curationMigrationTable: ApplicationDynamoDBTable,
-    pagerDuty?: PocketPagerDuty
+    private pagerDuty?: PocketPagerDuty
   ) {
     super(scope, name);
 
@@ -89,9 +91,13 @@ export class DatasyncLambda extends Resource {
    * @private
    */
   private createSqsForDlq() {
-    return new sqs.SqsQueue(this, 'datasync-target-lambda-dlq', {
+    const dlq = new sqs.SqsQueue(this, 'datasync-target-lambda-dlq', {
       name: `${config.prefix}-Datasync-Lambda-DLQ`,
     });
+
+    this.creatEventBridgeDlqAlarm(dlq);
+
+    return dlq;
   }
 
   /**
@@ -184,15 +190,83 @@ export class DatasyncLambda extends Resource {
         ],
       },
     };
-    return new PocketSQSWithLambdaTarget(
+    const sqsLambda = new PocketSQSWithLambdaTarget(
       this,
       `${config.prefix}-Datasync-Lambda`,
       lambdaConfig
     );
+
+    this.createSqsLambdaDlqAlarm(sqsLambda.applicationSqsQueue);
+
+    return sqsLambda;
+  }
+
+  /**
+   * Create an alarm for the Event Bridge DLQ to monitor the number
+   * of messages that did not make it to the queue.
+   * Starting with 5 as a base. Update as needed.
+   * This is a critical service, ideally, there shouldn't be any failed
+   * sends/messages from event bridge in the DLQ.
+   * @param queue
+   * @private
+   */
+  private creatEventBridgeDlqAlarm(queue: SqsQueue) {
+    this.createSqsAlarm(queue.name, 'EventBridgeDLQ-Alarm');
+  }
+
+  /**
+   * Create an alarm for the SQS Lambda integration DLQ to monitor the number
+   * of messages that did not make it to the queue.
+   * Starting with 5 as a base. Update as needed.
+   * This is a critical service, ideally, there shouldn't be any failed
+   * events/errors from the lambda to its DLQ.
+   * @param applicationSqsQueue
+   * @private
+   */
+  private createSqsLambdaDlqAlarm(applicationSqsQueue: ApplicationSQSQueue) {
+    this.createSqsAlarm(
+      applicationSqsQueue.deadLetterQueue.name,
+      'SQS-Lambda-DLQ-Alarm'
+    );
+  }
+
+  /**
+   * Create a critical SQS queue alarm based on the number of messages visible
+   * @param queueName
+   * @param alarmName
+   * @param evaluationPeriods
+   * @param period
+   * @param threshold
+   * @private
+   */
+  private createSqsAlarm(
+    queueName,
+    alarmName,
+    evaluationPeriods = 1,
+    period = 300,
+    threshold = 5
+  ) {
+    new cloudwatch.CloudwatchMetricAlarm(this, alarmName.toLowerCase(), {
+      alarmName: `${config.prefix}-${alarmName}`,
+      alarmDescription: `Number of messages >= ${threshold}`,
+      namespace: 'AWS/SQS',
+      metricName: 'ApproximateNumberOfMessagesVisible',
+      dimensions: { QueueName: queueName },
+      comparisonOperator: 'GreaterThanOrEqualToThreshold',
+      evaluationPeriods: evaluationPeriods,
+      period: period,
+      threshold: threshold,
+      statistic: 'Sum',
+      alarmActions: config.isDev
+        ? []
+        : [this.pagerDuty.snsCriticalAlarmTopic.arn],
+      okActions: config.isDev ? [] : [this.pagerDuty.snsCriticalAlarmTopic.arn],
+    });
   }
 
   /**
    * Reference: https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-rule-dlq.html
+   * @param name
    * @param sqsQueue
    * @param eventBridgeRuleArn
    * @private
