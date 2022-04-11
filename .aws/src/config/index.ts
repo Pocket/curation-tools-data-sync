@@ -23,6 +23,8 @@ export const config = {
     dbName: 'readitla_ril-tmp',
     readDbSecretId: `${name}/${environment}/READITLA_DATABASE_READ`, // For production; in dev, uses the generated secret for RDS instead
     writeDbSecretId: `${name}/${environment}/READITLA_DATABASE_WRITE`, // For production; in dev, uses the generated secret for RDS instead
-    allowFeeds: 'SANDBOX', // comma-separated list of scheduledSurfaceGUID to sync
+    allowFeeds: isDev
+      ? 'SANDBOX,NEW_TAB_EN_US,NEW_TAB_DE_DE,NEW_TAB_EN_GB,NEW_TAB_EN_INTL'
+      : 'SANDBOX', // comma-separated list of scheduledSurfaceGUID to sync
   },
 };
