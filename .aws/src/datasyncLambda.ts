@@ -219,7 +219,7 @@ export class DatasyncLambda extends Resource {
    * of messages that did not make it to the queue.
    * Starting with 5 as a base. Update as needed.
    * This is a critical service, ideally, there shouldn't be any failed
-   * sends/messages from event bridge in the DLQ.
+   * events/errors from the lambda to its DLQ.
    * @param applicationSqsQueue
    * @private
    */
