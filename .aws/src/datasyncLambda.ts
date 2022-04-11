@@ -3,6 +3,7 @@ import { Construct } from 'constructs';
 import {
   ApplicationDynamoDBTable,
   ApplicationRDSCluster,
+  ApplicationSQSQueue,
   LAMBDA_RUNTIMES,
   PocketEventBridgeProps,
   PocketEventBridgeRuleWithMultipleTargets,
@@ -189,11 +190,15 @@ export class DatasyncLambda extends Resource {
         ],
       },
     };
-    return new PocketSQSWithLambdaTarget(
+    const sqsLambda = new PocketSQSWithLambdaTarget(
       this,
       `${config.prefix}-Datasync-Lambda`,
       lambdaConfig
     );
+
+    this.createSqsLambdaDlqAlarm(sqsLambda.applicationSqsQueue);
+
+    return sqsLambda;
   }
 
   /**
@@ -206,16 +211,51 @@ export class DatasyncLambda extends Resource {
    * @private
    */
   private creatEventBridgeDlqAlarm(queue: SqsQueue) {
-    new cloudwatch.CloudwatchMetricAlarm(this, 'event-bridge-dlq-alarm', {
-      alarmName: `${config.prefix}-EventBridgeDLQ-Alarm`,
-      alarmDescription: 'Number of messages in DQL >= 5',
+    this.createSqsAlarm(queue.name, 'EventBridgeDLQ-Alarm');
+  }
+
+  /**
+   * Create an alarm for the SQS Lambda integration DLQ to monitor the number
+   * of messages that did not make it to the queue.
+   * Starting with 5 as a base. Update as needed.
+   * This is a critical service, ideally, there shouldn't be any failed
+   * sends/messages from event bridge in the DLQ.
+   * @param applicationSqsQueue
+   * @private
+   */
+  private createSqsLambdaDlqAlarm(applicationSqsQueue: ApplicationSQSQueue) {
+    this.createSqsAlarm(
+      applicationSqsQueue.deadLetterQueue.name,
+      'SQS-Lambda-DLQ-Alarm'
+    );
+  }
+
+  /**
+   * Create a critical SQS queue alarm based on the number of messages visible
+   * @param queueName
+   * @param alarmName
+   * @param evaluationPeriods
+   * @param period
+   * @param threshold
+   * @private
+   */
+  private createSqsAlarm(
+    queueName,
+    alarmName,
+    evaluationPeriods = 1,
+    period = 300,
+    threshold = 5
+  ) {
+    new cloudwatch.CloudwatchMetricAlarm(this, alarmName.toLowerCase(), {
+      alarmName: `${config.prefix}-${alarmName}`,
+      alarmDescription: `Number of messages >= ${threshold}`,
       namespace: 'AWS/SQS',
       metricName: 'ApproximateNumberOfMessagesVisible',
-      dimensions: { QueueName: queue.name },
+      dimensions: { QueueName: queueName },
       comparisonOperator: 'GreaterThanOrEqualToThreshold',
-      evaluationPeriods: 1,
-      period: 300,
-      threshold: 5,
+      evaluationPeriods: evaluationPeriods,
+      period: period,
+      threshold: threshold,
       statistic: 'Sum',
       alarmActions: config.isDev
         ? []
