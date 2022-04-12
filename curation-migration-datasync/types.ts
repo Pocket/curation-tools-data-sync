@@ -38,7 +38,7 @@ export enum EventDetailType {
   ADD_SCHEDULED_ITEM = 'add-scheduled-item',
   UPDATE_APPROVED_ITEM = 'update-approved-item',
   UPDATE_SCHEDULED_ITEM = 'update-scheduled-item',
-  DELETE_SCHEDULED_ITEM = 'delete-scheduled-item',
+  REMOVE_SCHEDULED_ITEM = 'remove-scheduled-item',
 }
 
 //feed_id mapping in curated-feeds table
