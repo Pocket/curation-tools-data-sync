@@ -17,7 +17,6 @@ type JwtPayload = {
 /**
  * Generates jwt token from the given private key.
  * @param privateKey
- * @param fxaId
  * https://www.npmjs.com/package/jsonwebtoken
  */
 export function generateJwt(privateKey) {

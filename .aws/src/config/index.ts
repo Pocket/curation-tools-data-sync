@@ -11,8 +11,20 @@ export const config = {
   circleCIPrefix: `/${name}/CircleCI/${environment}`,
   shortName: 'CTSYNC',
   environment,
+  rds: {
+    minCapacity: 1,
+    maxCapacity: isDev ? 1 : undefined,
+  },
   tags: {
     service: name,
     environment,
+  },
+  datasyncLambda: {
+    dbName: 'readitla_ril-tmp',
+    readDbSecretId: `${name}/${environment}/READITLA_DATABASE_READ`, // For production; in dev, uses the generated secret for RDS instead
+    writeDbSecretId: `${name}/${environment}/READITLA_DATABASE_WRITE`, // For production; in dev, uses the generated secret for RDS instead
+    allowFeeds: isDev
+      ? 'SANDBOX,NEW_TAB_EN_US,NEW_TAB_DE_DE,NEW_TAB_EN_GB,NEW_TAB_EN_INTL'
+      : 'SANDBOX', // comma-separated list of scheduledSurfaceGUID to sync
   },
 };

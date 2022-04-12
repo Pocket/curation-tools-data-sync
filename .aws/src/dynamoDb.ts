@@ -49,17 +49,25 @@ export class DynamoDB extends Resource {
             type: 'S',
           },
           {
+            // externalId of the approvedItem table in curatedCorpusApi
+            name: 'approvedItemExternalId',
+            type: 'S',
+          },
+          {
             // last updated unix timestamp, incase we need to filter by last updated date (for rollbacks)
             name: 'lastUpdatedAt',
             type: 'N',
           },
         ],
-        //for curatedItem datasync - we will get the externalId of the scheduledItems
-        // then we can retrieve curatedRecId from this index
         globalSecondaryIndex: [
           {
             name: 'scheduledItemExternalId-GSI',
             hashKey: 'scheduledItemExternalId',
+            projectionType: 'ALL',
+          },
+          {
+            name: 'approvedItemExternalId-GSI',
+            hashKey: 'approvedItemExternalId',
             projectionType: 'ALL',
           },
           {

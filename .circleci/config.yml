@@ -73,7 +73,9 @@ commands:
           command: echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" > ~/.npmrc
       - run:
           name: << parameters.description >>
-          command: cd << parameters.dir >> && npm ci
+          command: |
+            ROOT_DIR=$(pwd)
+            cd << parameters.dir >> && npm ci && cd $ROOT_DIR
       # Save the cache to avoid extraneous downloads
       - save_cache:
           key: node-v1-<< parameters.dir >>-{{ checksum "package-lock.json" }}
@@ -89,6 +91,9 @@ commands:
       - setup_node:
           description: Install dependencies for the curation migration backfill
           dir: curation-migration-backfill
+      - setup_node:
+          description: Install dependencies for the curation migration datasync
+          dir: curation-migration-datasync
 
 jobs:
   run_code_build:
@@ -223,6 +228,21 @@ jobs:
           NODE_ENV: test
           AWS_XRAY_LOG_LEVEL: silent
           AWS_XRAY_CONTEXT_MISSING: LOG_ERROR
+      - image: mysql:5.6
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
+        environment:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          TZ: 'US/Central'
+      - image: circleci/node:16
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
+        environment:
+          NODE_ENV: test
+          AWS_XRAY_LOG_LEVEL: silent
+          AWS_XRAY_CONTEXT_MISSING: LOG_ERROR
       - image: localstack/localstack
         auth:
           username: $DOCKERHUB_USERNAME
@@ -238,10 +258,13 @@ jobs:
       - install_dependencies
       - run:
           name: Setup test dependencies
-          command: ./.circleci/scripts/setup.sh --aws
+          command: |
+            export $(egrep -v '^#' .docker/local.env | xargs -0) && ./.circleci/scripts/setup.sh --hosts --db --aws
       - run:
           name: run tests
-          command: npm run test-integration  -- --ci --watchAll=false
+          command: |
+            export $(egrep -v '^#' .docker/local.env | xargs -0)
+            npm run test-integration  -- --ci --watchAll=false
 
   test_specs:
     description: Run spec tests
@@ -290,46 +313,46 @@ workflows:
           env_lower_name: prod
           env_capital_name: Prod
 
-#      # Datasync lambda deployment
-#      # Build the Datasync lambda on each branch
-#      - build_and_deploy_lambda:
-#          <<: *not_dev_main
-#          context: pocket
-#          name: build_curation-migration-datasync_lambda
-#          dir: curation-migration-datasync
-#          env_lower_name: prod
-#          env_capital_name: Prod
-#          lambda_lower_name: datasync-lambda
-#          lambda_name: Datasync-Lambda
-#
-#
-#      # Build & Deploy Datasync lambda on dev branch
-#      - build_and_deploy_lambda:
-#          <<: *only_dev
-#          context: pocket
-#          name: deploy_curation_migration_datasync_lambda_dev
-#          dir: curation-migration-datasync
-#          env_lower_name: dev
-#          env_capital_name: Dev
-#          lambda_lower_name: datasync-lambda
-#          lambda_name: Datasync-Lambda
-#          deploy: true
-#          requires:
-#            - run_dev_code_build
-#
-#      # Build & Deploy Datasync lambda in main branch
-#      - build_and_deploy_lambda:
-#          <<: *only_main
-#          context: pocket
-#          name: deploy_curation_migration_datasync_lambda_prod
-#          dir: curation-migration-datasync
-#          env_lower_name: prod
-#          env_capital_name: Prod
-#          lambda_lower_name: datasync-lambda
-#          lambda_name:  Datasync-Lambda
-#          deploy: true
-#          requires:
-#            - run_prod_code_build
+      # Datasync lambda deployment
+      # Build the Datasync lambda on each branch
+      - build_and_deploy_lambda:
+          <<: *not_dev_main
+          context: pocket
+          name: build_curation-migration-datasync_lambda
+          dir: curation-migration-datasync
+          env_lower_name: prod
+          env_capital_name: Prod
+          lambda_lower_name: datasync-lambda
+          lambda_name: Datasync-Lambda
+
+
+      # Build & Deploy Datasync lambda on dev branch
+      - build_and_deploy_lambda:
+          <<: *only_dev
+          context: pocket
+          name: deploy_curation_migration_datasync_lambda_dev
+          dir: curation-migration-datasync
+          env_lower_name: dev
+          env_capital_name: Dev
+          lambda_lower_name: datasync-lambda
+          lambda_name: Datasync-Lambda
+          deploy: true
+          requires:
+            - run_dev_code_build
+
+      # Build & Deploy Datasync lambda in main branch
+      - build_and_deploy_lambda:
+          <<: *only_main
+          context: pocket
+          name: deploy_curation_migration_datasync_lambda_prod
+          dir: curation-migration-datasync
+          env_lower_name: prod
+          env_capital_name: Prod
+          lambda_lower_name: datasync-lambda
+          lambda_name: Datasync-Lambda
+          deploy: true
+          requires:
+            - run_prod_code_build
 
       # Backfill lambda deployment
       # Build the Backfill lambda on each branch
@@ -403,7 +426,7 @@ workflows:
           workspace-path: /tmp/workspace
           requires:
             - deploy_curation_migration_backfill_lambda_prod
-            #- deploy_curation_migration_datasync_lambda_prod
+            - deploy_curation_migration_datasync_lambda_prod
 
 
       # Notify sentry of dev deployment
@@ -418,4 +441,4 @@ workflows:
           workspace-path: /tmp/workspace
           requires:
             - deploy_curation_migration_backfill_lambda_dev
-            #- deploy_curation_migration_datasync_lambda_dev
+            - deploy_curation_migration_datasync_lambda_dev
