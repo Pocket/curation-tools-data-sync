@@ -81,28 +81,16 @@ export class BackfillLambda extends Resource {
         ],
         alarms: {
           errors: {
-            // The backfill lambda will likely only run for 10-15 minutes total,
-            // so having more than one evaluation period is not necessary.
+            // The backfill lambda is throttled to concurrency of 10.
             evaluationPeriods: 1,
             comparisonOperator: 'GreaterThanOrEqualToThreshold',
-            period: 300, // 5 minutes
-            threshold: 50,
-            // TODO: remove this alarm from Dev when testing is complete
-            // actions: config.isDev
-            //   ? []
-            //   : [pagerDuty!.snsNonCriticalAlarmTopic.arn],
-
-            // For now, we need alerts in Dev, too
-            actions: [pagerDuty.snsNonCriticalAlarmTopic.arn],
-          },
-          invocations: {
-            evaluationPeriods: 1,
-            comparisonOperator: 'LessThanLowerOrGreaterThanUpperThreshold',
-            period: 300, // 5 minutes
-            // approx. 10 batches of 20 records each, it in an estimated ~1000 batches within 5 minutes.
-            threshold: 10,
-            // TODO: disable this alarm for Dev when testing is complete
-            actions: [pagerDuty.snsNonCriticalAlarmTopic.arn],
+            period: 1800, // 30 minutes
+            // approx. 5% failure rate (taken from test runs on EN_INTL,
+            // which is the shortest backfill run)
+            threshold: 150,
+            actions: config.isDev
+              ? []
+              : [pagerDuty!.snsNonCriticalAlarmTopic.arn],
           },
         },
       },
