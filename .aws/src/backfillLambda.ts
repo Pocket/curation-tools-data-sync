@@ -44,6 +44,7 @@ export class BackfillLambda extends Resource {
           REGION: vpc.region,
           SENTRY_DSN: sentryDsn,
           GIT_SHA: gitSha,
+          JWT_KEY: `${config.name}/${config.environment}/JWT_KEY`,
           ENVIRONMENT:
             config.environment === 'Prod' ? 'production' : 'development',
         },
@@ -74,8 +75,8 @@ export class BackfillLambda extends Resource {
           {
             actions: ['secretsmanager:GetSecretValue', 'kms:Decrypt'],
             resources: [
-              `arn:aws:secretsmanager:${vpc.region}:${vpc.accountId}:secret:CurationToolsDataSync/${config.environment}`,
-              `arn:aws:secretsmanager:${vpc.region}:${vpc.accountId}:secret:CurationToolsDataSync/${config.environment}/*`,
+              `arn:aws:secretsmanager:${vpc.region}:${vpc.accountId}:secret:${config.name}/${config.environment}`,
+              `arn:aws:secretsmanager:${vpc.region}:${vpc.accountId}:secret:${config.name}/${config.environment}/*`,
             ],
           },
         ],
