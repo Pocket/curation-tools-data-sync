@@ -62,7 +62,7 @@ export function createConnection(dbConfig: {
     host: dbConfig.host,
     user: dbConfig.user,
     password: dbConfig.password,
-    database: dbConfig.dbname,
+    database: dbConfig.dbname || config.db.dbname,
     port: parseInt(dbConfig.port || config.db.port),
     charset: config.db.charset,
   };

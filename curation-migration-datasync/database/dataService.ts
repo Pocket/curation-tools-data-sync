@@ -1,12 +1,12 @@
 import { Knex } from 'knex';
 import {
-  ScheduledItemPayload,
+  ApprovedItemPayload,
   CuratedFeedItem,
+  CuratedFeedItemModel,
   CuratedFeedProspectItem,
   CuratedFeedQueuedItem,
+  ScheduledItemPayload,
   TileSource,
-  CuratedFeedItemModel,
-  ApprovedItemPayload,
 } from '../types';
 import { config } from '../config';
 import {
@@ -23,6 +23,7 @@ import {
 
 export class DataService {
   private db: Knex;
+
   constructor(db: Knex) {
     this.db = db;
   }
@@ -193,7 +194,6 @@ export class DataService {
    * won't update the fields if they are set to null in the eventBody.
    * @param eventBody event body
    * @param curatedRecId curatedRecId corresponding to the approvedItem's externalId
-   * @param domainId domain id from parser, optional field set only when
    *        publisher is not null in the event body.
    */
   public async updateApprovedItem(
@@ -279,6 +279,7 @@ export class DataService {
       // as approvedItem won't have info on time_live
     });
   }
+
   /**
    * inserts into curated_feed_prospects table.
    * unique index on (feed_id and resolved_id)
@@ -379,17 +380,7 @@ export class DataService {
    * Fetch the top domain ID for the given url and domain ID
    */
   public async fetchTopDomain(url: string, parserDomainId: string) {
-    const urlObj = new URL(url);
-    // Syndicated articles are always getpocket.com/explore/item/some-slug
-    if (
-      urlObj.hostname === 'getpocket.com' &&
-      urlObj.pathname.startsWith('/explore/item')
-    ) {
-      const slug = urlObj.pathname.split('/').pop() as string;
-      return await this.topDomainBySlug(slug);
-    } else {
-      return await this.topDomainByDomainId(parserDomainId);
-    }
+    return await this.topDomainByDomainId(parserDomainId);
   }
 
   /**
@@ -401,22 +392,6 @@ export class DataService {
     const res = await this.db(config.tables.domains)
       .select('top_domain_id')
       .where('domain_id', domainId)
-      .first();
-    return res.top_domain_id;
-  }
-  /**
-   * Fetch the top domain ID for the given slug. Used for retrieving
-   * the original domain ID of syndicated articles (re-hosted by Pocket)
-   */
-  async topDomainBySlug(slug: string): Promise<number> {
-    const res = await this.db(config.tables.syndicatedArticles)
-      .select('readitla_b.domains.top_domain_id')
-      .join(
-        'readitla_b.domains',
-        'syndicated_articles.domain_id',
-        'readitla_b.domains.domain_id'
-      )
-      .where('syndicated_articles.slug', slug)
       .first();
     return res.top_domain_id;
   }

@@ -121,7 +121,7 @@ describe('event consumption integration test', function () {
     describe('error handling', () => {
       it('throws error if curatedRecId is not found in database', async () => {
         const testEventBody = {
-          eventType: EventDetailType.DELETE_SCHEDULED_ITEM,
+          eventType: EventDetailType.REMOVE_SCHEDULED_ITEM,
           scheduledItemExternalId: 'random_scheduled_guid_2',
           // other fields we don't need
         } as ScheduledItemPayload;
@@ -131,7 +131,7 @@ describe('event consumption integration test', function () {
       });
       it('throws error if the scheduledItemExternalId is not present in dynamo map', async () => {
         const testEventBody = {
-          eventType: EventDetailType.DELETE_SCHEDULED_ITEM,
+          eventType: EventDetailType.REMOVE_SCHEDULED_ITEM,
           scheduledItemExternalId: 'not_a_real_guid_1',
           // other fields we don't need
         } as ScheduledItemPayload;
@@ -177,7 +177,7 @@ describe('event consumption integration test', function () {
       });
       it('deletes records and updates audit table', async () => {
         const testEventBody = {
-          eventType: EventDetailType.DELETE_SCHEDULED_ITEM,
+          eventType: EventDetailType.REMOVE_SCHEDULED_ITEM,
           scheduledItemExternalId: 'random_scheduled_guid_2',
           // other fields we don't need
         } as ScheduledItemPayload;
@@ -317,22 +317,10 @@ describe('event consumption integration test', function () {
 
       expect(tileSource.tile_id).toBeGreaterThan(0);
     }
-    it('adds non-syndicated articles', async () => {
+    it('adds articles', async () => {
       nockParser(testEventBody);
       await addScheduledItem(testEventBody, db);
       await assertTables(testEventBody, db, 100);
-    });
-
-    it('adds syndicated articles with domainId from syndicated_articles table', async () => {
-      const syndicatedTestEventBody = {
-        ...testEventBody,
-        isSyndicated: true,
-        url: 'https://getpocket.com/explore/item/the-most-important-scientific-problems-have-yet-to-be-solved?utm_source=pocket-newtab',
-      };
-
-      nockParser(syndicatedTestEventBody);
-      await addScheduledItem(syndicatedTestEventBody, db);
-      await assertTables(syndicatedTestEventBody, db, 200);
     });
 
     it('should not call dynamo db write when the sql transaction fails', async () => {

@@ -72,7 +72,7 @@ async function _handlerFn(
   if (eventBody['detail-type'] === EventDetailType.ADD_SCHEDULED_ITEM) {
     await addScheduledItem(eventBody.detail, db);
   }
-  if (eventBody['detail-type'] === EventDetailType.DELETE_SCHEDULED_ITEM) {
+  if (eventBody['detail-type'] === EventDetailType.REMOVE_SCHEDULED_ITEM) {
     await removeScheduledItem(eventBody.detail, db);
   }
   if (eventBody['detail-type'] == EventDetailType.UPDATE_SCHEDULED_ITEM) {

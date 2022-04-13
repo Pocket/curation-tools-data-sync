@@ -20,7 +20,6 @@ export const config = {
     environment,
   },
   datasyncLambda: {
-    dbName: 'readitla_ril-tmp',
     readDbSecretId: `${name}/${environment}/READITLA_DATABASE_READ`, // For production; in dev, uses the generated secret for RDS instead
     writeDbSecretId: `${name}/${environment}/READITLA_DATABASE_WRITE`, // For production; in dev, uses the generated secret for RDS instead
     allowFeeds: isDev

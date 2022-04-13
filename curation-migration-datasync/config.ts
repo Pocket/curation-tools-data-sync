@@ -1,5 +1,6 @@
 const environment = process.env.ENVIRONMENT || 'development';
 const isDev = environment === 'development';
+const defaultDb = 'readitla_ril-tmp';
 
 export const config = {
   isDev,
@@ -32,6 +33,7 @@ export const config = {
     },
   },
   db: {
+    dbname: process.env.DATABASE_NAME || defaultDb,
     readSecretId: process.env.READ_DATABASE_SECRET_ID || '',
     writeSecretId: process.env.WRITE_DATABASE_SECRET_ID || '',
     port: process.env.DATABASE_PORT || '3310',
@@ -40,14 +42,14 @@ export const config = {
     charset: 'utf8mb4',
   },
   tables: {
-    curatedFeedProspects: 'curated_feed_prospects',
-    curatedFeedQueuedItems: 'curated_feed_queued_items',
-    curatedFeedItems: 'curated_feed_items',
-    curatedFeedTopics: 'curated_feed_topics',
-    tileSource: 'tile_source',
-    syndicatedArticles: 'syndicated_articles',
+    curatedFeedProspects: `${defaultDb}.curated_feed_prospects`,
+    curatedFeedQueuedItems: `${defaultDb}.curated_feed_queued_items`,
+    curatedFeedItems: `${defaultDb}.curated_feed_items`,
+    curatedFeedTopics: `${defaultDb}.curated_feed_topics`,
+    tileSource: `${defaultDb}.tile_source`,
+    syndicatedArticles: `${defaultDb}.syndicated_articles`,
     domains: 'readitla_b.domains',
-    curatedFeedItemsDeleted: 'curated_feed_items_deleted',
+    curatedFeedItemsDeleted: `${defaultDb}.curated_feed_items_deleted`,
   },
-  parserEndpoint: process.env.PARSER_ENDPOINT || 'http://parser.getpocket.dev',
+  parserEndpoint: process.env.PARSER_ENDPOINT || 'https://parser.getpocket.dev',
 };
