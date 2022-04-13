@@ -11,6 +11,7 @@ const feedIdToGuid = {
   3: 'NEW_TAB_DE_DE',
   6: 'NEW_TAB_EN_GB',
   8: 'NEW_TAB_EN_INTL',
+  2: 'SANDBOX',
 };
 
 const curatorSsoMap = {

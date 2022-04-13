@@ -47,6 +47,7 @@ export enum ScheduledSurfaceToFeedIdMap {
   NEW_TAB_DE_DE = 3,
   NEW_TAB_EN_GB = 6,
   NEW_TAB_EN_INTL = 8,
+  SANDBOX = 2,
 }
 
 export type CuratedFeedProspectItem = {
