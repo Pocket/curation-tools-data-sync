@@ -25,7 +25,7 @@ const config = {
   },
   AdminApi: isDev
     ? process.env.CLIENT_API_URI || 'https://admin-api.getpocket.dev'
-    : process.env.CLIENT_API_URI || 'https://admin-api.readitlater.com',
+    : process.env.CLIENT_API_URI || 'https://admin-api.getpocket.com',
   jwt: {
     key: process.env.JWT_KEY || 'CurationToolsDataSync/Dev/JWT_KEY',
     iss: process.env.JWT_ISS || 'https://getpocket.com',
