@@ -55,7 +55,7 @@ export type CuratedFeedProspectItem = {
   feed_id: number;
   resolved_id: number;
   type: string | null;
-  status: 'ready';
+  status: 'approved';
   curator: string;
   time_added: number;
   time_updated: number;
@@ -69,7 +69,7 @@ export type CuratedFeedQueuedItem = {
   prospect_id: number;
   feed_id: number;
   resolved_id: number;
-  status: 'ready';
+  status: 'used';
   curator: string;
   time_added: number;
   time_updated: number;
