@@ -295,7 +295,7 @@ describe('event consumption integration test', function () {
       expect(prospectItem.resolved_id).toEqual(12345);
       expect(prospectItem.type).toBeNull();
       expect(prospectItem.curator).toEqual('sri');
-      expect(prospectItem.status).toEqual('ready');
+      expect(prospectItem.status).toEqual('approved');
       expect(prospectItem.top_domain_id).toEqual(topDomainId);
       expect(prospectItem.time_added).toEqual(
         convertUtcStringToTimestamp(testEventBody.createdAt)
@@ -375,7 +375,7 @@ describe('event consumption integration test', function () {
       feed_id: 0,
       image_src: 'https://cool-cry.com/collections/3',
       resolved_id: 99,
-      status: 'ready',
+      status: 'approved',
       time_added: 1649094016,
       time_updated: 1649094017,
       title: 'Yesterday is history',
@@ -390,7 +390,7 @@ describe('event consumption integration test', function () {
       prospect_id: 10,
       relevance_length: 'week',
       resolved_id: 99,
-      status: 'ready',
+      status: 'used',
       time_added: 1649094016,
       time_updated: 1649094017,
       topic_id: 1,
@@ -560,7 +560,7 @@ describe('event consumption integration test', function () {
       feed_id: curatedRecordPriorUpdate.feed_id,
       image_src: 'https://cool-cry.com/collections/3',
       resolved_id: curatedRecordPriorUpdate.resolved_id,
-      status: 'ready',
+      status: 'approved',
       time_added: curatedRecordPriorUpdate.time_added,
       time_updated: curatedRecordPriorUpdate.time_updated,
       title: 'Yesterday is history',
@@ -575,7 +575,7 @@ describe('event consumption integration test', function () {
       prospect_id: curatedRecordPriorUpdate.prospect_id,
       relevance_length: 'week',
       resolved_id: curatedRecordPriorUpdate.resolved_id,
-      status: 'ready',
+      status: 'used',
       time_added: curatedRecordPriorUpdate.time_added,
       time_updated: curatedRecordPriorUpdate.time_updated,
       topic_id: 1,
@@ -683,7 +683,7 @@ describe('event consumption integration test', function () {
         feed_id: curatedRecordPriorUpdate_2.feed_id,
         image_src: 'https://cool-cry.com/collections/3',
         resolved_id: curatedRecordPriorUpdate_2.resolved_id,
-        status: 'ready',
+        status: 'approved',
         time_added: curatedRecordPriorUpdate_2.time_added,
         time_updated: curatedRecordPriorUpdate_2.time_updated,
         title: 'Yesterday is history',
@@ -698,7 +698,7 @@ describe('event consumption integration test', function () {
         prospect_id: curatedRecordPriorUpdate_2.prospect_id,
         relevance_length: 'week',
         resolved_id: curatedRecordPriorUpdate_2.resolved_id,
-        status: 'ready',
+        status: 'used',
         time_added: curatedRecordPriorUpdate_2.time_added,
         time_updated: curatedRecordPriorUpdate_2.time_updated,
         topic_id: 1,
