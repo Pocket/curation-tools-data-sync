@@ -1,0 +1,19 @@
+{
+  "name": "bin",
+  "version": "1.0.0",
+  "description": "Temporary script to move queued items to the curated_feed_items table",
+  "main": "load-queued-items.js",
+  "scripts": {
+    "load": "ts-node load-queued-items.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "knex": "^1.0.7",
+    "mysql": "^2.18.1"
+  },
+  "devDependencies": {
+    "ts-node": "^10.7.0",
+    "typescript": "^4.6.3"
+  }
+}
