@@ -7,9 +7,9 @@
 import knex from 'knex';
 
 const connection = {
-  host: '<host>',
-  user: '<user>',
-  password: '<password>',
+  host: process.env.DB_HOST || '<host>',
+  user: process.env.DB_USER || '<user>',
+  password: process.env.DB_PASSWORD || '<password>',
   port: 3306,
   database: 'readitla_ril-tmp',
   charset: 'utf8mb4',
