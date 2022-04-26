@@ -27,7 +27,7 @@
   "dependencies": {
     "@pocket-tools/apollo-utils": "^2.2.0",
     "@sentry/node": "^6.19.6",
-    "@sentry/tracing": "^6.19.6"
+    "@sentry/tracing": "^6.19.7"
   },
   "devDependencies": {
     "@pocket-tools/eslint-config": "^1.1.0",
