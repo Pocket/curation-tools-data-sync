@@ -33,3 +33,46 @@ with enough buffer to ensure the queue is drained for the given feed ID before t
    - DB_PASSWORD - `export DB_PASSWORD=<readitla_ril-tmp_password>`
  - `cd bin`
  - `npm run load <feed_id>`
+ - Note down the time we ran this script, we will use it in case we need to rollback
+
+## Rollback `rollback-queued-items.ts`
+## What is this?
+This is a script that reverts the `curated_feed_items`, `curated_feed_queued_items` and `tile_source` tables to the 
+state before `load-queued-items.ts` modified the records.
+
+## How to run
+- Get the time the `load-queded-items.ts` script was run as the `time_live`
+- Set up the database credentials by exporting the following env variables.
+   - DB_HOST - `export DB_HOST=<readitla_ril-tmp_host>`
+   - DB_USER - `export DB_USER=<readitla_ril-tmp_user>`
+   - DB_PASSWORD - `export DB_PASSWORD=<readitla_ril-tmp_password>`
+- `cd bin`
+- `npm run rollback <feed_id> <time_live>`
+
+## Test SQL Scripts
+- Get the queued IDs and the curated rec IDs for the items for a given feed and time_live
+```SQL
+SELECT queued_id, curated_rec_id FROM curated_feed_items WHERE feed_id = :feed_id AND time_live >= :time_live
+```
+- Check `tile_source` table to ensure that feed_item records have been added (migration) or delete (rollback)
+```SQL
+SELECT tile_id FROM tile_source where source_id in (SELECT curated_rec_id FROM curated_feed_items WHERE feed_id = :feed_id AND time_live >= :time_live);
+```
+- Get the count of all queued_items that has been moved to the `curated_feed_items` table
+```SQL
+SELECT
+	count(queued_id)
+FROM
+	curated_feed_queued_items
+where
+	queued_id in (
+	SELECT
+		queued_id
+	FROM
+		curated_feed_items
+	WHERE
+		feed_id = :feed_id
+		AND time_live >= :time_live)
+AND
+	status = 'used';
+```

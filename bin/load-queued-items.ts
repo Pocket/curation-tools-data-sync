@@ -1,34 +1,11 @@
 #! /usr/bin/env ts-node
 
+import { dbClient } from './db';
+import { Knex } from 'knex';
+
 /**
  * Usage: npm run load <feed_id>
  */
-
-import knex from 'knex';
-
-const connection = {
-  host: process.env.DB_HOST || '<host>',
-  user: process.env.DB_USER || '<user>',
-  password: process.env.DB_PASSWORD || '<password>',
-  port: 3306,
-  database: 'readitla_ril-tmp',
-  charset: 'utf8mb4',
-};
-
-const dbClient = knex({
-  client: 'mysql',
-  connection,
-  pool: {
-    /**
-     * Explicitly set the session timezone. We don't want to take any chances with this
-     */
-    afterCreate: (connection, callback) => {
-      connection.query(`SET time_zone = 'US/Central';`, (err) => {
-        callback(err, connection);
-      });
-    },
-  },
-});
 
 const GET_NEXT_QUEUED_ITEM =
   'SELECT\n' +
@@ -73,7 +50,11 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
 }
 
-async function insertIntoCuratedFeedItem(queuedItem, timeLive) {
+async function insertIntoCuratedFeedItem(
+  queuedItem,
+  timeLive,
+  trx: Knex.Transaction
+) {
   const now = Math.floor(new Date().getTime() / 1000);
 
   const rows = await dbClient('curated_feed_items')
@@ -87,28 +68,31 @@ async function insertIntoCuratedFeedItem(queuedItem, timeLive) {
       time_updated: now,
     })
     .onConflict()
-    .ignore();
+    .ignore()
+    .transacting(trx);
 
   return rows[0] || undefined;
 }
 
-async function updateQueuedItem(queuedId) {
+async function updateQueuedItem(queuedId, trx: Knex.Transaction) {
   await dbClient('curated_feed_queued_items')
     .update({
       status: 'used',
       time_updated: Math.floor(new Date().getTime() / 1000),
     })
-    .where('queued_id', '=', queuedId);
+    .where('queued_id', '=', queuedId)
+    .transacting(trx);
 }
 
-async function insertTileSource(curatedRecId) {
+async function insertTileSource(curatedRecId, trx: Knex.Transaction) {
   await dbClient('tile_source')
     .insert({
       source_id: curatedRecId,
       type: 'curated',
     })
     .onConflict()
-    .ignore();
+    .ignore()
+    .transacting(trx);
 }
 
 async function moveQueuedItems(feedId, baseTime) {
@@ -118,31 +102,51 @@ async function moveQueuedItems(feedId, baseTime) {
 
   let i = 1;
   while (queuedItem) {
-    const curatedRecId = await insertIntoCuratedFeedItem(
-      queuedItem,
-      i * 3600 + baseTime
-    );
-    await updateQueuedItem(queuedItem['queued_id']);
-    await insertTileSource(curatedRecId);
-    console.log(JSON.stringify(queuedItem));
+    const trx = await dbClient.transaction();
+    try {
+      const curatedRecId = await insertIntoCuratedFeedItem(
+        queuedItem,
+        i * 3600 + baseTime,
+        trx
+      );
+      await updateQueuedItem(queuedItem['queued_id'], trx);
+      await insertTileSource(curatedRecId, trx);
+      await trx.commit();
+      console.log(JSON.stringify(queuedItem));
+    } catch (e) {
+      await trx.rollback();
+      console.log(
+        `Number of items emptied from the queue before error occurred: ${i - 1}`
+      );
+      console.log(`Failed at queued item ID: ${queuedItem['queued_id']}`);
+      console.log(`Failed for the time_live: ${i * 3600 + baseTime}`);
+      throw e;
+    }
     queuedItem = await getNextQueuedItem(feedId);
     i++;
   }
 
   console.log('Done with feed ID: ' + feedId + '\n');
+
+  return i - 1;
 }
 
 async function load() {
   const feedId = process.argv.splice(2)[0];
-  await moveQueuedItems(
+  const startTime = Math.ceil(new Date().getTime() / 1000 / 3600) * 3600;
+  const count = await moveQueuedItems(
     feedId,
     // Starting from the next hour
-    Math.ceil(new Date().getTime() / 1000 / 3600) * 3600
+    startTime
   );
+
+  return { count, startTime };
 }
 
 load()
-  .then(() => {
+  .then((res) => {
+    console.log(`First queued item for feed scheduled for ${res.startTime}`);
+    console.log(`Number of items emptied from the queue: ${res.count}`);
     console.log('It is done!');
     process.exit();
   })

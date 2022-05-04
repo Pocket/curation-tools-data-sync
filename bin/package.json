@@ -4,7 +4,8 @@
   "description": "Temporary script to move queued items to the curated_feed_items table",
   "main": "load-queued-items.js",
   "scripts": {
-    "load": "ts-node load-queued-items.ts"
+    "load": "ts-node load-queued-items.ts",
+    "rollback": "ts-node rollback-queued-items.ts"
   },
   "author": "",
   "license": "ISC",
