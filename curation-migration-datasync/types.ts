@@ -8,7 +8,7 @@ export type ScheduledItemPayload = {
   language: string;
   publisher: string;
   imageUrl: string;
-  topic: string;
+  topic: string | null;
   isSyndicated: boolean;
   createdAt: string;
   createdBy: string;
