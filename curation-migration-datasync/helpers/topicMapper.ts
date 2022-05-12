@@ -18,12 +18,9 @@ enum TopicMappedToReaditlaTmpDb {
   TRAVEL = 'Travel',
 }
 
-export function getTopicForReaditLaTmpDatabase(input: string) {
-  if (!input) {
-    throw new Error('topic cannot be null or empty');
-  }
-  if (TopicMappedToReaditlaTmpDb[input] == undefined) {
-    throw new Error('invalid topic mapping');
+export function getTopicForReaditLaTmpDatabase(input: string | null) {
+  if (!input || TopicMappedToReaditlaTmpDb[input] == undefined) {
+    return null;
   }
 
   return TopicMappedToReaditlaTmpDb[input];

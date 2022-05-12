@@ -9,16 +9,12 @@ describe('topics mapper test', () => {
     );
   });
 
-  it('should throw an error if the topic is not in the mapping', () => {
+  it('should return null for unknown topic', () => {
     const curatedCorpusTopic = 'unknown topic';
-    expect(() => getTopicForReaditLaTmpDatabase(curatedCorpusTopic)).throw(
-      'invalid topic mapping'
-    );
+    expect(getTopicForReaditLaTmpDatabase(curatedCorpusTopic)).is.null;
   });
 
-  it('should throw an error if a null topic is passed', () => {
-    expect(() => getTopicForReaditLaTmpDatabase('')).throw(
-      'topic cannot be null or empty'
-    );
+  it('should return null for null topic', () => {
+    expect(getTopicForReaditLaTmpDatabase(null)).is.null;
   });
 });

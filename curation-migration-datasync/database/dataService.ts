@@ -366,6 +366,10 @@ export class DataService {
    * @returns topic_id matching with the topic
    */
   public async getTopicIdByName(topic: string): Promise<number> {
+    //curated_feed_queued_items defaults to 0 if topic_id is not set.
+    if (!topic) {
+      return 0;
+    }
     const response = await this.db(config.tables.curatedFeedTopics)
       .select('topic_id')
       .where({
