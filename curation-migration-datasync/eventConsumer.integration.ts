@@ -461,6 +461,17 @@ describe('event consumption integration test', function () {
         );
       });
 
+      it('should allow to update scheduled item when topic is null', async () => {
+        testEventBody.topic = null;
+        await updateScheduledItem(testEventBody, db);
+        const queuedItemRecord = await db(config.tables.curatedFeedQueuedItems)
+          .where({ queued_id: curatedRecord.queued_id })
+          .first();
+        expect(queuedItemRecord.topic_id).toEqual(0);
+        testEventBody.topic = 'SELF_IMPROVEMENT';
+        //resets as its being used by other tests
+      });
+
       it('rolls back updates if an error occurs before all tables are updated', async () => {
         sinon.stub(hydrator, 'hydrateCuratedFeedItem').throws('error');
 
