@@ -24,6 +24,6 @@ export const config = {
     writeDbSecretId: `${name}/${environment}/READITLA_DATABASE_WRITE`, // For production; in dev, uses the generated secret for RDS instead
     allowFeeds: isDev
       ? 'SANDBOX,NEW_TAB_EN_US,NEW_TAB_DE_DE,NEW_TAB_EN_GB,NEW_TAB_EN_INTL'
-      : 'SANDBOX,NEW_TAB_EN_INTL,NEW_TAB_EN_GB,NEW_TAB_DE_DE', // comma-separated list of scheduledSurfaceGUID to sync
+      : 'SANDBOX,NEW_TAB_EN_INTL,NEW_TAB_EN_GB,NEW_TAB_DE_DE,NEW_TAB_EN_US', // comma-separated list of scheduledSurfaceGUID to sync
   },
 };
