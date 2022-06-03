@@ -15,6 +15,7 @@ import { ArchiveProvider } from '@cdktf/provider-archive';
 import { BackfillLambda } from './backfillLambda';
 import { DynamoDB } from './dynamoDb';
 import { DatasyncLambda } from './datasyncLambda';
+import { BackfillAuthorsLambda } from './backfillAuthorsLambda';
 
 class CurationToolsDataSync extends TerraformStack {
   constructor(scope: Construct, name: string) {
@@ -41,6 +42,8 @@ class CurationToolsDataSync extends TerraformStack {
     // ** infrastructure for backfill process **
     //bucket for storing all the required csv files
     this.createMigrationBucket();
+
+    new BackfillAuthorsLambda(this, 'backfill-author-lambda', vpc, pagerDuty);
 
     new BackfillLambda(
       this,

@@ -1,0 +1,27 @@
+{
+  "name": "curation-authors-backfill",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^14.0.0",
+    "@types/node-fetch": "^2.6.1",
+    "aws-sdk-client-mock": "^0.6.2",
+    "aws-sdk-mock": "^5.6.2",
+    "nock": "^13.2.4",
+    "typescript": "^4.4.4"
+  },
+  "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.42.0",
+    "@aws-sdk/smithy-client": "^3.54.0",
+    "@aws-sdk/types": "^3.54.0",
+    "@sentry/serverless": "^6.15.0",
+    "aws-lambda": "^1.0.7",
+    "exponential-backoff": "^3.1.0",
+    "jsonwebtoken": "^8.5.1",
+    "jwk-to-pem": "^2.0.5",
+    "node-fetch": "^2.6.7"
+  }
+}

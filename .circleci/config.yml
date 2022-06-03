@@ -92,6 +92,9 @@ commands:
           description: Install dependencies for the curation migration backfill
           dir: curation-migration-backfill
       - setup_node:
+          description: Install dependencies for the curation authors backfill
+          dir: curation-authors-backfill
+      - setup_node:
           description: Install dependencies for the curation migration datasync
           dir: curation-migration-datasync
 
@@ -394,6 +397,46 @@ workflows:
           requires:
             - run_prod_code_build
 
+      # Backfill lambda deployment
+      # Build the Backfill Author lambda on each branch
+      - build_and_deploy_lambda:
+          <<: *not_dev_main
+          context: pocket
+          name: build_curation_migration_backfill_author_lambda
+          dir: curation-authors-backfill
+          env_lower_name: prod
+          env_capital_name: Prod
+          lambda_lower_name: backfill-author-lambda
+          lambda_name: Backfill-Author-Lambda
+
+      # Build & Deploy Backfill Author lambda on dev branch
+      - build_and_deploy_lambda:
+          <<: *only_dev
+          context: pocket
+          name: deploy_curation_migration_backfill_author_lambda_dev
+          dir: curation-authors-backfill
+          env_lower_name: dev
+          env_capital_name: Dev
+          lambda_lower_name: backfill-author-lambda
+          lambda_name: Backfill-Author-Lambda
+          deploy: true
+          requires:
+            - run_dev_code_build
+
+      # Build & Deploy Backfill Author lambda in main branch
+      - build_and_deploy_lambda:
+          <<: *only_main
+          context: pocket
+          name: deploy_curation_migration_backfill_author_lambda_prod
+          dir: curation-authors-backfill
+          env_lower_name: prod
+          env_capital_name: Prod
+          lambda_lower_name: backfill-author-lambda #this should match lambda name except prefix
+          lambda_name: Backfill-Author-Lambda
+          deploy: true
+          requires:
+            - run_prod_code_build
+
       # Prod
       - pocket/setup_deploy_params:
           <<: *only_main
@@ -427,6 +470,7 @@ workflows:
           requires:
             - deploy_curation_migration_backfill_lambda_prod
             - deploy_curation_migration_datasync_lambda_prod
+            - deploy_curation_migration_backfill_author_lambda_prod
 
 
       # Notify sentry of dev deployment
@@ -442,3 +486,4 @@ workflows:
           requires:
             - deploy_curation_migration_backfill_lambda_dev
             - deploy_curation_migration_datasync_lambda_dev
+            - deploy_curation_migration_backfill_author_lambda_dev
