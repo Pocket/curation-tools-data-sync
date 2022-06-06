@@ -12,7 +12,7 @@
       "dom"
     ],
     "outDir": "dist",
-    "rootDirs": ["curation-migration-backfill", "curation-migration-datasync"],
+    "rootDirs": ["curation-migration-backfill", "curation-authors-backfill", "curation-migration-datasync"],
     "removeComments": true,
     "esModuleInterop": true,
     "noEmitOnError": false,
@@ -23,5 +23,5 @@
     "declaration": true
   },
   "exclude": ["node_modules"],
-  "include": ["curation-migration-backfill/**/*.ts", "curation-migration-datasync/**/*.ts"]
+  "include": ["curation-migration-backfill/**/*.ts", "curation-authors-backfill/**/*.ts","curation-migration-datasync/**/*.ts"]
 }
