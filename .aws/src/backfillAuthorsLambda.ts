@@ -63,6 +63,7 @@ export class BackfillAuthorsLambda extends Resource {
             },
           ],
           alarms: {
+            // TODO: Do we need this at all?
             errors: {
               // The backfill lambda is throttled to concurrency of 10.
               evaluationPeriods: 1,
@@ -71,9 +72,7 @@ export class BackfillAuthorsLambda extends Resource {
               // approx. 5% failure rate (taken from test runs on EN_INTL,
               // which is the shortest backfill run)
               threshold: 150,
-              actions: config.isDev
-                ? []
-                : [pagerDuty!.snsNonCriticalAlarmTopic.arn],
+              actions: [],
             },
           },
         },
