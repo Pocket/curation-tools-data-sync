@@ -1,10 +1,11 @@
 import * as Sentry from '@sentry/serverless';
 import config from './config';
 import { SQSEvent, SQSBatchResponse, SQSBatchItemFailure } from 'aws-lambda';
-//import { fetchProspectData } from './externalCaller/prospectApiCaller';
-import { BackfillMessage } from './types';
-//import { hydrateCorpusInput, sleep } from './lib';
-//import { callImportMutation } from './externalCaller/importMutationCaller';
+import { SqsBackfillMessage } from './types';
+import { fetchProspectData } from './externalCaller/prospectApiCaller';
+import { parseAuthorsCsv } from './lib';
+//import { sleep } from './lib';
+//import { callUpdateMutation } from './externalCaller/importMutationCaller';
 /**
  * Lambda handler function. Separated from the Sentry wrapper
  * to make unit-testing easier.
@@ -13,14 +14,49 @@ import { BackfillMessage } from './types';
 export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
   // Not using map since we want to block after each record
   const batchFailures: SQSBatchItemFailure[] = [];
-  let curatedRecId;
-  let resolvedUrl;
-  let imageUrl;
-  let resolvedId;
+
+  let externalId;
+  let url;
+  let title;
+  let publisher;
+
   for await (const record of event.Records) {
     try {
-      const message: BackfillMessage = JSON.parse(record.body);
+      const message: SqsBackfillMessage = JSON.parse(record.body);
       console.log(message);
+
+      externalId = message.externalId;
+      url = message.url;
+      title = message.title;
+      publisher = message.publisher;
+
+      const prospectData = await fetchProspectData(url);
+
+      let authors = parseAuthorsCsv(prospectData.authors);
+
+      // if no valid authors were found, default to the publisher
+      if (!authors.length) {
+        authors = [
+          {
+            name: publisher,
+            sortOrder: 1,
+          },
+        ];
+      }
+
+      // Wait a sec... don't barrage the api. We're just backfilling here.
+
+      //await sleep(1000);
+
+      //const mutationResponse = await callUpdateMutation({
+      //  externalId,
+      //  authors,
+      //});
+
+      // TODO: do something with the response...
+
+      // copy / pasta code below - keeping for reference for now
+
       //as json stringify could throw error in catch, which can cause entire batch failure
       // fetching this value in try, and using them in catch.
       // curatedRecId = message.curated_rec_id;
@@ -51,14 +87,17 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
       //
       // await insertCuratedItem(dbClient, curatedItemRecord);
     } catch (error) {
-      console.log(`unable to process message -> curatedRecId: ${curatedRecId},
-       resolvedUrl : ${resolvedUrl}, resolvedId: ${resolvedId} image_src: ${imageUrl}`);
+      console.log(`unable to process message -> externalId: ${externalId},
+       url : ${url}, title: ${title}, publisher: ${publisher}`);
       console.log(error);
+
       Sentry.captureException(error);
+
       Sentry.addBreadcrumb({
-        message: `unable to process message -> curatedRecId: ${curatedRecId},
-       resolvedUrl : ${resolvedUrl}, resolvedId: ${resolvedId} image_src: ${imageUrl}`,
+        message: `unable to process message -> externalId: ${externalId},
+       url : ${url}, title: ${title}, publisher: ${publisher}`,
       });
+
       batchFailures.push({ itemIdentifier: record.messageId });
     }
   }

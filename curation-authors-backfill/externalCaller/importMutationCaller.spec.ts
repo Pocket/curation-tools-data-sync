@@ -5,7 +5,7 @@ import { CorpusInput } from '../types';
 import nock from 'nock';
 import config from '../config';
 import * as CuratedCorpusApi from './curatedCorpusApiCaller';
-import { callImportMutation } from './importMutationCaller';
+import { callUpdateMutation } from './importMutationCaller';
 
 describe('callImportMutation function', () => {
   beforeAll(() => {
@@ -63,7 +63,7 @@ describe('callImportMutation function', () => {
       CuratedCorpusApi,
       'importApprovedCorpusItem'
     );
-    const res = await callImportMutation(input);
+    const res = await callUpdateMutation(input);
     expect(curatedCorpusCallerSpy).toBeCalledTimes(3);
     expect(res).toEqual(testResponse);
   });
@@ -78,7 +78,7 @@ describe('callImportMutation function', () => {
       'importApprovedCorpusItem'
     );
 
-    await expect(callImportMutation(input)).rejects.toThrowError(testError);
+    await expect(callUpdateMutation(input)).rejects.toThrowError(testError);
     expect(curatedCorpusCallerSpy).toBeCalledTimes(3);
   });
 
@@ -89,6 +89,6 @@ describe('callImportMutation function', () => {
         errors: [{ message: 'test-error' }],
       });
 
-    await expect(callImportMutation(input)).rejects.toThrowError();
+    await expect(callUpdateMutation(input)).rejects.toThrowError();
   });
 });

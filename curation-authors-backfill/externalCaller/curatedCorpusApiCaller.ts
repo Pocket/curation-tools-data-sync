@@ -1,24 +1,25 @@
-import { CorpusInput } from '../types';
+import { ApprovedItemAuthorsInput } from '../types';
 import config from '../config';
 import fetch from 'node-fetch';
 import { generateJwt } from '../jwt';
 import { getCurationToolsDataSyncPrivateKey } from '../secretManager';
 
 /**
- * Call the importApprovedCorpusItem mutation
- * @param data input variables for the mutation. Of the type CorpusInput
- * @returns json response of type ImportApprovedCorpusItemPayload
+ * Call the updateApprovedCorpusItemAuthors mutation
+ * @param data input variables for the mutation. Of the type ApprovedItemAuthorsInput
+ * @returns TODO: what return do we need here? technically i think nothing, but maybe we return the fields requested below for logging/verification?
  */
-export async function importApprovedCorpusItem(data: CorpusInput) {
+export async function updateApprovedCorpusItemAuthors(
+  data: ApprovedItemAuthorsInput
+) {
   const mutation = `
-  mutation importApprovedItem($data: ImportApprovedCorpusItemInput!) {
-    importApprovedCorpusItem(data: $data) {
-      approvedItem {
-        externalId
-      }
-      scheduledItem {
-        externalId
-        scheduledSurfaceGuid
+  mutation updateApprovedCorpusItemAuthors($data: UpdateApprovedCorpusItemAuthorsInput!) {
+    updateApprovedCorpusItemAuthors(data: $data) {
+      externalId
+      url
+      title
+      authors {
+        name
       }
     }
   }
