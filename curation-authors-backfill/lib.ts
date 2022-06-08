@@ -15,6 +15,8 @@ export const parseAuthorsCsv = (
   const rawAuthors = authorsCsv.split(',');
   const validAuthors: ApprovedItemAuthor[] = [];
 
+  let sortOrder = 1;
+
   rawAuthors.forEach((rawAuthor, index) => {
     // get rid of whitespace
     const author = rawAuthor.trim();
@@ -25,8 +27,11 @@ export const parseAuthorsCsv = (
         // if author doesn't begin and end with an HTML bracket, we consider it valid
         validAuthors.push({
           name: author,
-          sortOrder: index + 1,
+          sortOrder,
         });
+
+        // Only increment sortOrder if a valid author was added.
+        sortOrder += 1;
       }
     }
   });
