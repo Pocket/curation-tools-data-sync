@@ -131,9 +131,7 @@ describe('curation migration', () => {
       // no batch item should fail
       sinon.stub(ProspectApi, 'fetchProspectData').returns(
         Promise.resolve({
-          isSyndicated: true,
-          isCollection: false,
-          publisher: 'Gums Weekly',
+          authors: 'Jack London,Mark Twain',
         })
       );
 
