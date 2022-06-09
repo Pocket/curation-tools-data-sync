@@ -123,8 +123,8 @@ export class BackfillLambda extends Resource {
       threshold: 4000,
       // rather than the average, we want to track how many messages in total end up in the DLQ
       statistic: 'Sum',
-      alarmActions: [this.pagerDuty.snsNonCriticalAlarmTopic.arn],
-      okActions: [this.pagerDuty.snsNonCriticalAlarmTopic.arn],
+      alarmActions: [this.pagerDuty?.snsNonCriticalAlarmTopic.arn],
+      okActions: [this.pagerDuty?.snsNonCriticalAlarmTopic.arn],
     });
   }
 }
