@@ -7,10 +7,6 @@ import config from './config';
 import { SQSEvent } from 'aws-lambda';
 import * as ProspectApi from './externalCaller/prospectApiCaller';
 
-// async function stubInsertCuratedItem() {
-//   return;
-// }
-
 describe('curation migration', () => {
   const record = {
     externalId: '123',
@@ -27,9 +23,6 @@ describe('curation migration', () => {
 
     // mock the generate jwt function
     sinon.stub(Jwt, 'generateJwt').returns('test-jwt');
-    // sinon
-    //   .stub(curatedItemIdMapper, 'insertCuratedItem')
-    //   .callsFake(stubInsertCuratedItem);
   });
 
   afterEach(() => {
@@ -38,29 +31,24 @@ describe('curation migration', () => {
   });
 
   describe('lambda handler', () => {
-    xit('returns batch item failure if prospect-api has error, with partial success', async () => {
+    it('returns batch item failure if prospect-api has error, with partial success', async () => {
       nock(config.AdminApi)
         .post('/') //prospect-api call for first event
         .reply(200, {
           data: {
             getUrlMetadata: {
-              isSyndicated: true,
-              isCollection: false,
-              publisher: 'Gums Weekly',
+              authors: 'Jane Doe,John Doe',
             },
           },
         })
         .post('/') //curated-corpus-api call for first event
         .reply(200, {
           data: {
-            importApprovedCorpusItem: {
-              approvedItem: {
-                externalId: 'random-approvedItem-guid',
-              },
-              scheduledItem: {
-                externalId: 'random-scheduledItem-guid',
-                scheduledSurfaceGuid: 'new_tab_en_us',
-              },
+            updateApprovedCorpusItemAuthors: {
+              authors: [
+                { name: 'Jane Doe', sortOrder: 1 },
+                { name: 'John Doe', sortOrder: 2 },
+              ],
             },
           },
         })
@@ -78,7 +66,7 @@ describe('curation migration', () => {
       expect(actual).toEqual({ batchItemFailures: [{ itemIdentifier: '2' }] });
     });
 
-    xit('returns batch item failure if prospect-api returns null data', async () => {
+    it('returns batch item failure if prospect-api returns null data', async () => {
       nock(config.AdminApi).post('/').reply(200, { data: null });
       const fakeEvent = {
         Records: [{ messageId: '1', body: JSON.stringify(record) }],
@@ -87,47 +75,8 @@ describe('curation migration', () => {
       expect(actual).toEqual({ batchItemFailures: [{ itemIdentifier: '1' }] });
     });
 
-    xit('returns batch item failure if curator is null', async () => {
-      const anotherRecord = { ...record, curator: null };
-      nock(config.AdminApi)
-        .post('/')
-        .reply(200, {
-          data: {
-            getUrlMetadata: {
-              isSyndicated: true,
-              isCollection: false,
-              publisher: 'Gums Weekly',
-            },
-          },
-        });
-      const fakeEvent = {
-        Records: [{ messageId: '1', body: JSON.stringify(anotherRecord) }],
-      } as unknown as SQSEvent;
-      const actual = await handlerFn(fakeEvent);
-      expect(actual).toEqual({ batchItemFailures: [{ itemIdentifier: '1' }] });
-    });
-    xit('returns batch item failure if curator cannot be mapped to sso user', async () => {
-      const anotherRecord = { ...record, curator: 'countdracula' };
-      nock(config.AdminApi)
-        .post('/')
-        .reply(200, {
-          data: {
-            getUrlMetadata: {
-              isSyndicated: true,
-              isCollection: false,
-              publisher: 'Gums Weekly',
-            },
-          },
-        });
-      const fakeEvent = {
-        Records: [{ messageId: '1', body: JSON.stringify(anotherRecord) }],
-      } as unknown as SQSEvent;
-      const actual = await handlerFn(fakeEvent);
-      expect(actual).toEqual({ batchItemFailures: [{ itemIdentifier: '1' }] });
-    });
-
-    xit('returns no batch item failures if curated-corpus-api request is successful', async () => {
-      //when both prospectApi and curatedCorpusApi call returns success,
+    it('returns no batch item failures if curated-corpus-api request is successful', async () => {
+      //when both prospectApi and curatedCorpusApi calls return success,
       // no batch item should fail
       sinon.stub(ProspectApi, 'fetchProspectData').returns(
         Promise.resolve({
@@ -140,28 +89,22 @@ describe('curation migration', () => {
         .post('/') //curated-corpus-api call for first event
         .reply(200, {
           data: {
-            importApprovedCorpusItem: {
-              approvedItem: {
-                externalId: 'random-approvedItem-guid',
-              },
-              scheduledItem: {
-                externalId: 'random-scheduledItem-guid',
-                scheduledSurfaceGuid: 'new_tab_en_us',
-              },
+            updateApprovedCorpusItemAuthors: {
+              authors: [
+                { name: 'Jack London', sortOrder: 1 },
+                { name: 'Mark Twain', sortOrder: 2 },
+              ],
             },
           },
         })
         .post('/') //curated-corpus-api call for first event
         .reply(200, {
           data: {
-            importApprovedCorpusItem: {
-              approvedItem: {
-                externalId: 'random-approvedItem-guid',
-              },
-              scheduledItem: {
-                externalId: 'random-scheduledItem-guid',
-                scheduledSurfaceGuid: 'new_tab_en_us',
-              },
+            updateApprovedCorpusItemAuthors: {
+              authors: [
+                { name: 'Another Author', sortOrder: 1 },
+                { name: 'More Authors Here', sortOrder: 2 },
+              ],
             },
           },
         });
@@ -183,7 +126,7 @@ describe('curation migration', () => {
       });
     });
 
-    xit('returns batch item failure if curated-corpus-api request throws an error', async () => {
+    it('returns batch item failure if curated-corpus-api request throws an error', async () => {
       // mock the first request to prospect-api to be successful
       // the second request (post) is made to curated-corpus-api, let's fail that one with a graphql error
 
@@ -193,9 +136,7 @@ describe('curation migration', () => {
         .reply(200, {
           data: {
             getUrlMetadata: {
-              isSyndicated: true,
-              isCollection: false,
-              publisher: 'Gums Weekly',
+              authors: 'Jane Doe,John Doe',
             },
           },
         })
@@ -210,9 +151,7 @@ describe('curation migration', () => {
         .reply(200, {
           data: {
             getUrlMetadata: {
-              isSyndicated: true,
-              isCollection: false,
-              publisher: 'Gums Weekly',
+              authors: 'Jane Doe,John Doe',
             },
           },
         })
