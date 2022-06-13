@@ -48,10 +48,7 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
         publisherUsed = true;
       }
 
-      console.log(
-        'AUTHOR LOG \n',
-        ` ${url} ${title} ${authors} ${publisherUsed}`
-      );
+      console.log('AUTHOR LOG \n', `${externalId} ${title} ${publisherUsed}`);
       // Wait a sec... don't barrage the api. We're just backfilling here.
 
       //await sleep(1000);
@@ -97,9 +94,9 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
       //
       // await insertCuratedItem(dbClient, curatedItemRecord);
     } catch (error) {
-      console.log(`unable to process message -> externalId: ${externalId},
+      console.warn(`unable to process message -> externalId: ${externalId},
        url : ${url}, title: ${title}, publisher: ${publisher}`);
-      console.log(error);
+      console.warn(error);
 
       Sentry.captureException(error);
 
