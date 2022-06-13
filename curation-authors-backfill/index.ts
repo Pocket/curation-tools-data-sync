@@ -20,6 +20,8 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
   let title;
   let publisher;
 
+  let publisherUsed;
+
   for await (const record of event.Records) {
     try {
       const message: SqsBackfillMessage = JSON.parse(record.body);
@@ -34,6 +36,7 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
 
       let authors = parseAuthorsCsv(prospectData.authors);
 
+      publisherUsed = false;
       // if no valid authors were found, default to the publisher
       if (!authors.length) {
         authors = [
@@ -42,8 +45,13 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
             sortOrder: 1,
           },
         ];
+        publisherUsed = true;
       }
 
+      console.log(
+        'AUTHOR LOG \n',
+        ` ${url} ${title} ${authors} ${publisherUsed}`
+      );
       // Wait a sec... don't barrage the api. We're just backfilling here.
 
       //await sleep(1000);
@@ -54,6 +62,8 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
       //});
 
       // TODO: do something with the response...
+
+      //
 
       // copy / pasta code below - keeping for reference for now
 
@@ -101,6 +111,7 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
       batchFailures.push({ itemIdentifier: record.messageId });
     }
   }
+
   return { batchItemFailures: batchFailures };
 }
 
