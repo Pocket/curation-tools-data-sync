@@ -20,7 +20,7 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
   let title;
   let publisher;
 
-  let publisherUsed;
+  let fallbackToPublisher;
 
   for await (const record of event.Records) {
     try {
@@ -36,7 +36,7 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
 
       let authors = parseAuthorsCsv(prospectData.authors);
 
-      publisherUsed = false;
+      fallbackToPublisher = false;
       // if no valid authors were found, default to the publisher
       if (!authors.length) {
         authors = [
@@ -45,12 +45,13 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
             sortOrder: 1,
           },
         ];
-        publisherUsed = true;
+        fallbackToPublisher = true;
       }
 
+      const authorNames = authors.map((author) => author.name).join(', ');
+
       console.log(
-        'AUTHOR LOG \n',
-        `${externalId} | ${title} | ${authors.join(',')} | ${publisherUsed}`
+        `AUTHOR LOG\t${authorNames}\t${fallbackToPublisher}\t${publisher}\t${externalId}\t${title}`
       );
       // Wait a sec... don't barrage the api. We're just backfilling here.
 
