@@ -48,7 +48,10 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
         publisherUsed = true;
       }
 
-      console.log('AUTHOR LOG \n', `${externalId} ${title} ${publisherUsed}`);
+      console.log(
+        'AUTHOR LOG \n',
+        `${externalId} | ${title} | ${authors.join(',')} | ${publisherUsed}`
+      );
       // Wait a sec... don't barrage the api. We're just backfilling here.
 
       //await sleep(1000);
