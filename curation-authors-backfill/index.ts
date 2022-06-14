@@ -51,7 +51,7 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
       const authorNames = authors.map((author) => author.name).join(', ');
 
       console.log(
-        `AUTHOR LOG\t${authorNames}\t${fallbackToPublisher}\t${publisher}\t${externalId}\t${title}`
+        `AUTHOR LOG\t${authorNames}\t${fallbackToPublisher}\t${publisher}\t${externalId}\t${title}\t${url}`
       );
       // Wait a sec... don't barrage the api. We're just backfilling here.
 
