@@ -1,12 +1,19 @@
 import * as Sentry from '@sentry/serverless';
 import config from './config';
 import { SQSEvent, SQSBatchResponse, SQSBatchItemFailure } from 'aws-lambda';
-import { SqsBackfillMessage } from './types';
+import { ApprovedItemAuthor, SqsBackfillMessage } from './types';
 import { fetchProspectData } from './externalCaller/prospectApiCaller';
 import { parseAuthorsCsv, sleep } from './lib';
 import { callUpdateMutation } from './externalCaller/importMutationCaller';
-//import { sleep } from './lib';
-//import { callUpdateMutation } from './externalCaller/importMutationCaller';
+
+// simple function to create a string representation of an array of author names and sort orders
+// returns a string like "Jane Austin (1), Octavia Butler (2)"
+function stringifyAuthors(authors: ApprovedItemAuthor[]): string {
+  return authors.reduce((previous, current: ApprovedItemAuthor) => {
+    return `${previous}, ${current.name} (${current.sortOrder})`;
+  }, '');
+}
+
 /**
  * Lambda handler function. Separated from the Sentry wrapper
  * to make unit-testing easier.
@@ -33,7 +40,7 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
 
       const prospectData = await fetchProspectData(url);
 
-      let authors = parseAuthorsCsv(prospectData.authors);
+      let authors: ApprovedItemAuthor[] = parseAuthorsCsv(prospectData.authors);
 
       // if no valid authors were found, default to the publisher
       if (!authors.length) {
@@ -48,11 +55,28 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
       // Wait a sec... don't barrage the API. We're just backfilling here.
       await sleep(1000);
 
+      console.log(`MUTATION INPUT:`);
+      console.log(`externalId: ${externalId}`);
+      console.log(`publisher: ${publisher}`);
+      console.log(`authors: ${stringifyAuthors(authors)}`);
+
       // Run the `updateApprovedCorpusItemAuthors` mutation
-      await callUpdateMutation({
+      const { data } = await callUpdateMutation({
         externalId,
         authors,
       });
+
+      console.log('MUTATION OUTPUT:');
+      console.log(
+        `externalId: ${data.updateApprovedCorpusItemAuthors.externalId}`
+      );
+      console.log(`url: ${data.updateApprovedCorpusItemAuthors.url}`);
+      console.log(`title: ${data.updateApprovedCorpusItemAuthors.title}`);
+      console.log(
+        `authors: ${stringifyAuthors(
+          data.updateApprovedCorpusItemAuthors.authors
+        )}`
+      );
     } catch (error) {
       console.log(`unable to process message -> externalId: ${externalId},
        url : ${url}, title: ${title}, publisher: ${publisher}`);
