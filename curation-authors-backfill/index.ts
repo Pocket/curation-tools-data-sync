@@ -38,7 +38,15 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
       title = message.title;
       publisher = message.publisher;
 
-      const prospectData = await fetchProspectData(url);
+      let prospectData;
+
+      try {
+        prospectData = await fetchProspectData(url);
+      } catch (error) {
+        console.warn(
+          `Failed to fetch prospect data from Parser. Error: ${error}`
+        );
+      }
 
       let authors: ApprovedItemAuthor[] = parseAuthorsCsv(prospectData.authors);
 
@@ -55,38 +63,42 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
       // Wait a sec... don't barrage the API. We're just backfilling here.
       await sleep(1000);
 
-      console.log(`MUTATION INPUT:`);
-      console.log(`externalId: ${externalId}`);
-      console.log(`publisher: ${publisher}`);
-      console.log(`authors: ${stringifyAuthors(authors)}`);
-
-      // Run the `updateApprovedCorpusItemAuthors` mutation
-      const { data } = await callUpdateMutation({
-        externalId,
-        authors,
-      });
-
-      console.log('MUTATION OUTPUT:');
       console.log(
-        `externalId: ${data.updateApprovedCorpusItemAuthors.externalId}`
-      );
-      console.log(`url: ${data.updateApprovedCorpusItemAuthors.url}`);
-      console.log(`title: ${data.updateApprovedCorpusItemAuthors.title}`);
-      console.log(
-        `authors: ${stringifyAuthors(
-          data.updateApprovedCorpusItemAuthors.authors
+        `MUTATION INPUT: externalId: ${externalId}, publisher: ${publisher}, authors: ${stringifyAuthors(
+          authors
         )}`
       );
+
+      try {
+        const { data } = await callUpdateMutation({
+          externalId,
+          authors,
+        });
+        console.log(
+          `MUTATION OUTPUT: externalId: ${
+            data.updateApprovedCorpusItemAuthors.externalId
+          }, url: ${data.updateApprovedCorpusItemAuthors.url}, title: ${
+            data.updateApprovedCorpusItemAuthors.title
+          } authors: ${stringifyAuthors(
+            data.updateApprovedCorpusItemAuthors.authors
+          )}`
+        );
+      } catch (error) {
+        console.warn(
+          `Update mutation call failed for item: ${externalId}. Error: ${error}`
+        );
+      }
+
+      // Run the `updateApprovedCorpusItemAuthors` mutation
     } catch (error) {
-      console.log(`unable to process message -> externalId: ${externalId},
-       url : ${url}, title: ${title}, publisher: ${publisher}`);
-      console.log(error);
+      console.warn(`unable to process message -> externalId: ${externalId},
+       url : ${url}, title: ${title}, publisher: ${publisher}. Error: ${error}`);
 
       Sentry.captureException(error);
 
       Sentry.addBreadcrumb({
         message: `unable to process message -> externalId: ${externalId},
-       url : ${url}, title: ${title}, publisher: ${publisher}`,
+       url : ${url}, title: ${title}, publisher: ${publisher}. Error: ${error}`,
       });
 
       batchFailures.push({ itemIdentifier: record.messageId });
