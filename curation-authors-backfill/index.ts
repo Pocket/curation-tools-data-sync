@@ -20,6 +20,8 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
   let title;
   let publisher;
 
+  let fallbackToPublisher;
+
   for await (const record of event.Records) {
     try {
       const message: SqsBackfillMessage = JSON.parse(record.body);
@@ -34,6 +36,7 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
 
       let authors = parseAuthorsCsv(prospectData.authors);
 
+      fallbackToPublisher = false;
       // if no valid authors were found, default to the publisher
       if (!authors.length) {
         authors = [
@@ -42,8 +45,14 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
             sortOrder: 1,
           },
         ];
+        fallbackToPublisher = true;
       }
 
+      const authorNames = authors.map((author) => author.name).join(', ');
+
+      console.log(
+        `AUTHOR LOG\t${authorNames}\t${fallbackToPublisher}\t${publisher}\t${externalId}\t${title}\t${url}`
+      );
       // Wait a sec... don't barrage the api. We're just backfilling here.
 
       //await sleep(1000);
@@ -54,6 +63,8 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
       //});
 
       // TODO: do something with the response...
+
+      //
 
       // copy / pasta code below - keeping for reference for now
 
@@ -87,9 +98,9 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
       //
       // await insertCuratedItem(dbClient, curatedItemRecord);
     } catch (error) {
-      console.log(`unable to process message -> externalId: ${externalId},
+      console.warn(`unable to process message -> externalId: ${externalId},
        url : ${url}, title: ${title}, publisher: ${publisher}`);
-      console.log(error);
+      console.warn(error);
 
       Sentry.captureException(error);
 
@@ -101,6 +112,7 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
       batchFailures.push({ itemIdentifier: record.messageId });
     }
   }
+
   return { batchItemFailures: batchFailures };
 }
 
