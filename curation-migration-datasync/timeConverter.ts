@@ -15,20 +15,32 @@ export function getLocalTimeFromScheduledDate(
   scheduledDate: string,
   scheduledSurfaceGuid: ScheduledSurfaceGuid
 ): number {
-  const date = new Date(scheduledDate);
+  const d = scheduledDate.split('-');
+  let date;
   switch (scheduledSurfaceGuid) {
     case ScheduledSurfaceGuid.NEW_TAB_EN_US:
-      date.setHours(7);
+      //add 7 hours to GMT timezone to make it 3am EST
+      date = new Date(
+        Date.UTC(parseInt(d[0]), parseInt(d[1]), parseInt(d[2]), 7, 0, 0)
+      );
       break;
     case ScheduledSurfaceGuid.NEW_TAB_DE_DE:
-      date.setHours(1);
+      //add 1 hour to GMT timezone to make it 3am Berlin time
+      date = new Date(
+        Date.UTC(parseInt(d[0]), parseInt(d[1]), parseInt(d[2]), 1, 0, 0)
+      );
       break;
     case ScheduledSurfaceGuid.NEW_TAB_EN_INTL:
-      date.setDate(date.getDate() - 5);
-      date.setHours(21, 30);
-      break;
+      //set to previous day 930 pm GMT to make it 3am IST
+      //todo: fix this is read in machine time, we need to convert it to UTC before subtracting
+      date = new Date(scheduledDate).toUTCString();
+      date.setUTCDate(date.getUTCDate() - 1);
+      date.setUTCHours(21, 30);
     default:
-      date.setDate(3);
+      //other new tabs, set to 3am GMT
+      date = new Date(
+        Date.UTC(parseInt(d[0]), parseInt(d[1]), parseInt(d[2]), 3, 0, 0)
+      );
   }
   return Math.round(date.getTime() / 1000);
 }

@@ -3,10 +3,10 @@ import { ScheduledSurfaceGuid } from './dynamodb/types';
 
 describe('time converter', function () {
   const testDate = '2022-06-29';
-  const istTimestamp = 1656451800; //'2022-06-28 00:21:30'; // subtract one day and set to 930 pm
-  const berlinTimestamp = 1656464400; //'2022-06-29 00:01:00'; //add one hour
-  const estTimestamp = 1656486000; //add 7 hrs to the given date
-  const gmtTimestamp = 1656460980; //add 3 hours with given date
+  const istTimestamp = 1656451800; //subtract one day and set to 930 pm
+  const berlinTimestamp = 1659056400; //add one hour to the given date
+  const estTimestamp = 1659078000; //add 7 hrs to the given date
+  const gmtTimestamp = 1659063600; //add 3 hours with given date
 
   it('convert given UTC date to EST 3am local time for NEW_TAB_EN_US', () => {
     const timeStamp = getLocalTimeFromScheduledDate(
@@ -27,7 +27,7 @@ describe('time converter', function () {
   it('convert given UTC date to IST 3am local time for NEW_TAB_EN_INTL', () => {
     const timeStamp = getLocalTimeFromScheduledDate(
       testDate,
-      ScheduledSurfaceGuid.NEW_TAB_DE_DE
+      ScheduledSurfaceGuid.NEW_TAB_EN_INTL
     );
     expect(timeStamp).toEqual(istTimestamp);
   });
