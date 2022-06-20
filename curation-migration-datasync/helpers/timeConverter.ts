@@ -34,7 +34,6 @@ export function getLocalTimeFromScheduledDate(
 
     case ScheduledSurfaceGuid.NEW_TAB_EN_INTL:
       //set to previous day 930 pm GMT to make it 3am IST
-      //todo: fix this is read in machine time, we need to convert it to UTC before subtracting
       date = new Date(
         Date.UTC(parseInt(d[0]), parseInt(d[1]) - 1, parseInt(d[2]), 21, 30, 0)
       );
