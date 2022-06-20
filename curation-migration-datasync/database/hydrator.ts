@@ -7,14 +7,16 @@ import {
   TileSource,
 } from '../types';
 import {
-  convertDateToTimestamp,
   convertUtcStringToTimestamp,
   getCuratorNameFromSso,
 } from '../helpers/dataTransformers';
+import { getLocalTimeFromScheduledDate } from '../helpers/timeConverter';
+import { ScheduledSurfaceGuid } from '../dynamodb/types';
 
 export function hydrateCuratedFeedItem(
   queuedItem: CuratedFeedQueuedItem,
-  scheduledDate: string
+  scheduledDate: string,
+  scheduledSurfaceGuid: ScheduledSurfaceGuid
 ): CuratedFeedItem {
   if (queuedItem.queued_id == undefined) {
     throw new Error(`queued_id cannot be undefined in ${queuedItem}`);
@@ -28,7 +30,10 @@ export function hydrateCuratedFeedItem(
     resolved_id: queuedItem.resolved_id,
     time_added: queuedItem.time_added,
     time_updated: queuedItem.time_updated,
-    time_live: convertDateToTimestamp(scheduledDate),
+    time_live: getLocalTimeFromScheduledDate(
+      scheduledDate,
+      scheduledSurfaceGuid
+    ),
   };
 }
 
