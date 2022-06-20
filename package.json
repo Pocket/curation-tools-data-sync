@@ -31,7 +31,7 @@
   },
   "devDependencies": {
     "@pocket-tools/eslint-config": "^1.1.0",
-    "@types/aws-lambda": "^8.10.100",
+    "@types/aws-lambda": "^8.10.101",
     "@types/chai": "^4.3.1",
     "@types/chai-as-promised": "^7.1.4",
     "@types/jest": "^27.5.0",
@@ -40,15 +40,15 @@
     "@typescript-eslint/parser": "^5.28.0",
     "chai": "^4.3.6",
     "chai-as-promised": "^7.1.1",
-    "eslint": "^8.17.0",
+    "eslint": "^8.18.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.0.0",
     "jest": "^27.5.1",
     "nock": "^13.2.7",
-    "prettier": "^2.7.0",
+    "prettier": "^2.7.1",
     "sinon": "^14.0.0",
     "ts-jest": "^27.1.4",
     "ts-node": "^10.8.1",
-    "typescript": "^4.7.3"
+    "typescript": "^4.7.4"
   }
 }
