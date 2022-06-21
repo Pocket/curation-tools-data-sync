@@ -4,10 +4,14 @@ import { ScheduledSurfaceGuid } from '../dynamodb/types';
 describe('time converter', function () {
   //for timestamp conversion: https://www.epochconverter.com/
   const testDate = '2022-06-29';
-  const estTimestamp = 1656486000; //add 7 hrs to the given date
-  const berlinTimestamp = 1656464400; //add one hour to the given date
-  const istTimestamp = 1656451800; //subtract one day and set to 930 pm
-  const gmtTimestamp = 1656471600; //add 3 hours with given date
+  //add 7 hrs to the given date
+  const estTimestamp = 1656486000;
+  //add one hour to the given date
+  const berlinTimestamp = 1656464400;
+  //subtract one day and set to 930 pm to the given date
+  const istTimestamp = 1656451800;
+  //add 3 hours to the given date
+  const gmtTimestamp = 1656471600;
 
   it('convert given UTC date to EST 3am local time for NEW_TAB_EN_US', () => {
     const timeStamp = getLocalTimeFromScheduledDate(
