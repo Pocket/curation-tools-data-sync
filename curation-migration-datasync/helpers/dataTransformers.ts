@@ -29,7 +29,7 @@ export function getCuratorNameFromSso(ssoName: string): string {
 /***
  * converts utc string to timestamp
  * @param utcString e.g Sat, 01 Apr 2022 21:55:15 GMT
- * @returns epoc timestamp e.g 1648936515
+ * @returns epoch timestamp e.g 1648936515
  */
 export function convertUtcStringToTimestamp(utcString: string): number {
   const dt = new Date(utcString).getTime();

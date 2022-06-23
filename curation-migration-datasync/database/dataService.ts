@@ -20,6 +20,7 @@ import {
   convertUtcStringToTimestamp,
   getCuratorNameFromSso,
 } from '../helpers/dataTransformers';
+import { ScheduledSurfaceGuid } from '../dynamodb/types';
 
 export class DataService {
   private db: Knex;
@@ -69,7 +70,8 @@ export class DataService {
 
       const curatedItem = hydrateCuratedFeedItem(
         queuedItem,
-        eventBody.scheduledDate
+        eventBody.scheduledDate,
+        ScheduledSurfaceGuid[eventBody.scheduledSurfaceGuid]
       );
       curatedItem.curated_rec_id = await this.insertCuratedFeedItem(
         trx,
@@ -178,7 +180,8 @@ export class DataService {
 
       const curatedItem = hydrateCuratedFeedItem(
         queuedItem,
-        eventBody.scheduledDate
+        eventBody.scheduledDate,
+        ScheduledSurfaceGuid[eventBody.scheduledSurfaceGuid]
       );
       await trx(config.tables.curatedFeedItems)
         .update(curatedItem)

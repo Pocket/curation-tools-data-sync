@@ -17,10 +17,7 @@ import { config } from './config';
 import { Knex } from 'knex';
 import { CuratedItemRecordModel } from './dynamodb/curatedItemRecordModel';
 import { DataService } from './database/dataService';
-import {
-  convertDateToTimestamp,
-  convertUtcStringToTimestamp,
-} from './helpers/dataTransformers';
+import { convertUtcStringToTimestamp } from './helpers/dataTransformers';
 import {
   addScheduledItem,
   removeScheduledItem,
@@ -28,6 +25,7 @@ import {
   updateApprovedItem,
 } from './eventConsumer';
 import * as hydrator from './database/hydrator';
+import { getLocalTimeFromScheduledDate } from './helpers/timeConverter';
 const curatedRecordModel = new CuratedItemRecordModel();
 
 describe('event consumption integration test', function () {
@@ -252,7 +250,10 @@ describe('event consumption integration test', function () {
         .first();
 
       expect(curatedItem.time_live).toEqual(
-        convertDateToTimestamp(testEventBody.scheduledDate)
+        getLocalTimeFromScheduledDate(
+          testEventBody.scheduledDate,
+          ScheduledSurfaceGuid[testEventBody.scheduledSurfaceGuid]
+        )
       );
       expect(curatedItem.feed_id).toEqual(1);
       expect(curatedItem.resolved_id).toEqual(12345);
