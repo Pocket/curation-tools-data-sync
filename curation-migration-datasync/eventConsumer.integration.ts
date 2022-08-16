@@ -228,6 +228,10 @@ describe('event consumption integration test', function () {
       scheduledDate: '2022-03-25',
     };
 
+    afterAll(() => {
+      sinon.restore();
+    });
+
     async function assertTables(
       testEventBody: ScheduledItemPayload,
       db: Knex,
@@ -339,6 +343,7 @@ describe('event consumption integration test', function () {
 
     it('should not process duplicate events', async () => {
       const consoleSpy = sinon.spy(console, 'log');
+      const dbSpy = sinon.spy(db, 'transaction');
 
       //item already present in dynamo
       const duplicateEvent = {
@@ -348,6 +353,7 @@ describe('event consumption integration test', function () {
 
       await addScheduledItem(duplicateEvent, db);
       expect(consoleSpy.calledOnce).toBe(true);
+      expect(dbSpy.callCount).toBe(0);
       expect(consoleSpy.getCall(0).firstArg).toContain(
         'duplicate add-scheduled-item event'
       );
