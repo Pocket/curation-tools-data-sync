@@ -16,8 +16,22 @@ export async function addScheduledItem(
   eventBody: ScheduledItemPayload,
   db: Knex
 ) {
-  const dbService = new DataService(db);
+  const curatedItemModel = new CuratedItemRecordModel();
+  const scheduledItem = await curatedItemModel.getByScheduledItemExternalId(
+    eventBody.scheduledItemExternalId
+  );
+
+  if (scheduledItem) {
+    console.log(`duplicate add-scheduled-item event, ${JSON.stringify(
+      scheduledItem
+    )}. 
+    scheduledItemExternalId is already present in the id mapping dynamo table `);
+    //ignore duplicate events
+    return;
+  }
+
   const parserResponse = await getParserMetadata(eventBody.url);
+  const dbService = new DataService(db);
 
   // Insert into the legacy database and retrieve ID for mapping
   const curatedRecId = await dbService.addScheduledItem(
@@ -27,7 +41,6 @@ export async function addScheduledItem(
   );
 
   // Create mapping record in DynamoDB
-  const curatedItemModel = new CuratedItemRecordModel();
   await curatedItemModel.upsertFromEvent(curatedRecId, eventBody);
 }
 
