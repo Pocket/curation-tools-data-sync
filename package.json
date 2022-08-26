@@ -25,13 +25,13 @@
   },
   "homepage": "https://github.com/Pocketcuration-tools-data-sync#readme",
   "dependencies": {
-    "@pocket-tools/apollo-utils": "^2.3.1",
+    "@pocket-tools/apollo-utils": "^2.3.2",
     "@sentry/node": "^6.19.7",
     "@sentry/tracing": "^6.19.7"
   },
   "devDependencies": {
     "@pocket-tools/eslint-config": "^1.1.0",
-    "@types/aws-lambda": "^8.10.101",
+    "@types/aws-lambda": "^8.10.102",
     "@types/chai": "^4.3.3",
     "@types/chai-as-promised": "^7.1.4",
     "@types/jest": "^27.5.0",
