@@ -19,7 +19,7 @@
     "@sentry/serverless": "^6.15.0",
     "aws-lambda": "^1.0.7",
     "exponential-backoff": "^3.1.0",
-    "knex": "^1.0.4",
+    "knex": "^2.4.1",
     "mysql": "^2.18.1",
     "node-fetch": "^2.6.7"
   }

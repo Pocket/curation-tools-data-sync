@@ -15,8 +15,10 @@
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.54.0",
+    "@aws-sdk/client-s3": "^3.54.1",
     "@aws-sdk/client-secrets-manager": "^3.42.0",
     "@aws-sdk/lib-dynamodb": "^3.54.0",
+    "@aws-sdk/signature-v4-crt": "^3.254.0",
     "@aws-sdk/smithy-client": "^3.54.0",
     "@aws-sdk/types": "^3.54.0",
     "@sentry/serverless": "^6.15.0",
