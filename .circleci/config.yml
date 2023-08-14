@@ -120,7 +120,7 @@ jobs:
         type: boolean
         default: false
     docker:
-      - image: circleci/node:14
+      - image: circleci/node:14.17.4
         auth:
           username: $DOCKERHUB_USERNAME
           password: $DOCKERHUB_PASSWORD
@@ -183,7 +183,7 @@ jobs:
         type: boolean
         default: false
     docker:
-      - image: circleci/node:14
+      - image: circleci/node:14:17.4
         auth:
           username: $DOCKERHUB_USERNAME
           password: $DOCKERHUB_PASSWORD
@@ -223,7 +223,7 @@ jobs:
   test_integration:
     description: Run integration tests against external services, e.g. Localstack
     docker:
-      - image: circleci/node:14
+      - image: circleci/node:14.17.4
         auth:
           username: $DOCKERHUB_USERNAME
           password: $DOCKERHUB_PASSWORD
@@ -238,7 +238,7 @@ jobs:
         environment:
           MYSQL_ALLOW_EMPTY_PASSWORD: yes
           TZ: 'US/Central'
-      - image: circleci/node:14
+      - image: circleci/node:14.17.4
         auth:
           username: $DOCKERHUB_USERNAME
           password: $DOCKERHUB_PASSWORD
@@ -272,7 +272,7 @@ jobs:
   test_specs:
     description: Run spec tests
     docker:
-      - image: circleci/node:14
+      - image: circleci/node:14.17.4
         auth:
           username: $DOCKERHUB_USERNAME
           password: $DOCKERHUB_PASSWORD
