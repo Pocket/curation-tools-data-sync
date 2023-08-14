@@ -3,6 +3,7 @@
 
 echo "Setting up database"
 
+sudo echo "deb http://archive.debian.org/debian stretch main contrib non-free" > /etc/apt/sources.list
 sudo apt-get update && sudo apt-get install -y default-mysql-client
 
 set -e
