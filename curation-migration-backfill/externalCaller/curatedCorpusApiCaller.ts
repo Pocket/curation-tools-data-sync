@@ -26,7 +26,7 @@ export async function importApprovedCorpusItem(data: CorpusInput) {
 
   //admin api requires jwt token to fetch to add a scheduledItem
   const bearerToken = 'Bearer '.concat(
-    generateJwt(await getCurationToolsDataSyncPrivateKey())
+    generateJwt(await getCurationToolsDataSyncPrivateKey()),
   );
 
   const variables = { data };

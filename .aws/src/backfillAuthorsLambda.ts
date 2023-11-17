@@ -14,7 +14,7 @@ export class BackfillAuthorsLambda extends Resource {
     scope: Construct,
     private name: string,
     private vpc: PocketVPC,
-    private pagerDuty?: PocketPagerDuty
+    private pagerDuty?: PocketPagerDuty,
   ) {
     super(scope, name);
 
@@ -34,7 +34,7 @@ export class BackfillAuthorsLambda extends Resource {
         },
         functionResponseTypes: ['ReportBatchItemFailures'],
         lambda: {
-          runtime: LAMBDA_RUNTIMES.NODEJS14,
+          runtime: LAMBDA_RUNTIMES.NODEJS20,
           handler: 'index.handler',
           timeout: 120,
           environment: {
@@ -77,7 +77,7 @@ export class BackfillAuthorsLambda extends Resource {
           },
         },
         tags: config.tags,
-      }
+      },
     );
   }
 }

@@ -142,7 +142,7 @@ describe('curation migration', () => {
           isSyndicated: true,
           isCollection: false,
           publisher: 'Gums Weekly',
-        })
+        }),
       );
 
       //nock the curatedCorpusApi call

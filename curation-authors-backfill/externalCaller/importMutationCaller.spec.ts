@@ -49,7 +49,7 @@ describe('callImportMutation function', () => {
 
     const curatedCorpusCallerSpy = jest.spyOn(
       CuratedCorpusApi,
-      'updateApprovedCorpusItemAuthors'
+      'updateApprovedCorpusItemAuthors',
     );
     const res = await callUpdateMutation(input);
     expect(curatedCorpusCallerSpy).toBeCalledTimes(3);
@@ -63,7 +63,7 @@ describe('callImportMutation function', () => {
 
     const curatedCorpusCallerSpy = jest.spyOn(
       CuratedCorpusApi,
-      'updateApprovedCorpusItemAuthors'
+      'updateApprovedCorpusItemAuthors',
     );
 
     await expect(callUpdateMutation(input)).rejects.toThrowError(testError);

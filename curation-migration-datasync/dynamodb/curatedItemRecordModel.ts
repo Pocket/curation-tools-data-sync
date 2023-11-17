@@ -26,7 +26,7 @@ export class CuratedItemRecordModel {
    * @returns CuratedItemRecord matching curated item record
    */
   public async getByScheduledItemExternalId(
-    scheduledItemExternalId: string
+    scheduledItemExternalId: string,
   ): Promise<CuratedItemRecord | null> {
     const input: QueryCommandInput = {
       TableName: config.aws.dynamoDB.curationMigrationTable,
@@ -39,7 +39,7 @@ export class CuratedItemRecordModel {
       Limit: 1,
     };
     const res: QueryCommandOutput = await this.client.send(
-      new QueryCommand(input)
+      new QueryCommand(input),
     );
 
     if (res.Items?.length) {
@@ -62,7 +62,7 @@ export class CuratedItemRecordModel {
    * @param approvedItemExternalId approvedItem's externalId
    */
   public async getByApprovedItemExternalId(
-    approvedItemExternalId: string
+    approvedItemExternalId: string,
   ): Promise<CuratedItemRecord[]> {
     const input: QueryCommandInput = {
       TableName: config.aws.dynamoDB.curationMigrationTable,
@@ -74,7 +74,7 @@ export class CuratedItemRecordModel {
       },
     };
     const res: QueryCommandOutput = await this.client.send(
-      new QueryCommand(input)
+      new QueryCommand(input),
     );
 
     //this must always be false coz we are expecting only one item per record.
@@ -82,7 +82,7 @@ export class CuratedItemRecordModel {
     if (res.LastEvaluatedKey) {
       Sentry.captureMessage(
         `method 'getByApprovedItemExternalId' called with '${approvedItemExternalId}'
-       has multiple pages of results that we are not handling!`
+       has multiple pages of results that we are not handling!`,
       );
     }
 
@@ -95,7 +95,7 @@ export class CuratedItemRecordModel {
    * @returns CuratedItemRecord matching curated items
    */
   public async getByScheduledSurfaceGuid(
-    scheduledSurfaceGuid: ScheduledSurfaceGuid
+    scheduledSurfaceGuid: ScheduledSurfaceGuid,
   ): Promise<CuratedItemRecord[]> {
     const input: QueryCommandInput = {
       TableName: config.aws.dynamoDB.curationMigrationTable,
@@ -107,7 +107,7 @@ export class CuratedItemRecordModel {
       },
     };
     const res: QueryCommandOutput = await this.client.send(
-      new QueryCommand(input)
+      new QueryCommand(input),
     );
 
     // LastEvaluatedKey will only be present if there are multiple pages of
@@ -117,7 +117,7 @@ export class CuratedItemRecordModel {
     if (res.LastEvaluatedKey) {
       Sentry.captureMessage(
         `method 'getByScheduledSurfaceGuid' called with '${scheduledSurfaceGuid}'
-       has multiple pages of results that we are not handling!`
+       has multiple pages of results that we are not handling!`,
       );
     }
 
@@ -130,7 +130,7 @@ export class CuratedItemRecordModel {
    * @returns CuratedItemRecord matching curated item record
    */
   public async getByCuratedRecId(
-    curatedRecId: number
+    curatedRecId: number,
   ): Promise<CuratedItemRecord | null> {
     const input: GetCommandInput = {
       TableName: config.aws.dynamoDB.curationMigrationTable,
@@ -165,7 +165,7 @@ export class CuratedItemRecordModel {
         Key: {
           curatedRecId: curatedRecId,
         },
-      })
+      }),
     );
   }
 
@@ -176,7 +176,7 @@ export class CuratedItemRecordModel {
    * @returns Omit<CuratedItemRecord, 'curatedRecId'>
    */
   recordFromEvent(
-    eventBody: ScheduledItemPayload
+    eventBody: ScheduledItemPayload,
   ): Omit<CuratedItemRecord, 'curatedRecId'> {
     return {
       scheduledItemExternalId: eventBody.scheduledItemExternalId,
@@ -197,7 +197,7 @@ export class CuratedItemRecordModel {
    */
   public async upsertFromEvent(
     curatedRecId: number,
-    eventBody: ScheduledItemPayload
+    eventBody: ScheduledItemPayload,
   ): Promise<void> {
     const inputItem: CuratedItemRecord = {
       curatedRecId,

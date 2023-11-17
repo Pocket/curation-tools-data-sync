@@ -44,7 +44,7 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
         prospectData = await fetchProspectData(url);
       } catch (error) {
         throw new Error(
-          `Failed to fetch prospect data from Parser. Reason: ${error}`
+          `Failed to fetch prospect data from Parser. Reason: ${error}`,
         );
       }
 
@@ -65,8 +65,8 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
 
       console.log(
         `MUTATION INPUT: externalId: ${externalId}, publisher: ${publisher}, authors: ${stringifyAuthors(
-          authors
-        )}`
+          authors,
+        )}`,
       );
 
       try {
@@ -80,12 +80,12 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
           }, url: ${data.updateApprovedCorpusItemAuthors.url}, title: ${
             data.updateApprovedCorpusItemAuthors.title
           } authors: ${stringifyAuthors(
-            data.updateApprovedCorpusItemAuthors.authors
-          )}`
+            data.updateApprovedCorpusItemAuthors.authors,
+          )}`,
         );
       } catch (error) {
         throw new Error(
-          `Update mutation call failed for item. Reason: ${error}`
+          `Update mutation call failed for item. Reason: ${error}`,
         );
       }
 

@@ -29,5 +29,5 @@ export const dbClient: DynamoDBDocumentClient = DynamoDBDocumentClient.from(
       // dynamo actually errors out if this is left as the default `false`.
       removeUndefinedValues: true,
     },
-  }
+  },
 );

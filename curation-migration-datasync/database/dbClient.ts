@@ -12,7 +12,7 @@ export async function readClient(): Promise<Knex> {
   if (readDb) return readDb;
 
   const { host, username, password, port, dbname } = await getDbCredentials(
-    config.db.readSecretId
+    config.db.readSecretId,
   );
 
   readDb = createConnection({
@@ -33,7 +33,7 @@ export async function writeClient(): Promise<Knex> {
   if (writeDb) return writeDb;
 
   const { host, username, password, port, dbname } = await getDbCredentials(
-    config.db.writeSecretId
+    config.db.writeSecretId,
   );
 
   writeDb = createConnection({
@@ -67,7 +67,7 @@ export function createConnection(dbConfig: {
     charset: config.db.charset,
   };
   return knex({
-    client: 'mysql',
+    client: 'mysql2',
     connection,
     pool: {
       min: 0, //knex docs state to set to 0 so that idle connections are released. Default was 2 for legacy knex reasons (according to docs)

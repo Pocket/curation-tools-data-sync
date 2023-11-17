@@ -1,17 +1,17 @@
-import { ssm } from '@cdktf/provider-aws';
+import { DataAwsSsmParameter } from '@cdktf/provider-aws/lib/data-aws-ssm-parameter';
 import { config } from './config';
 import { Construct } from 'constructs';
 
 export function getEnvVariableValues(scope: Construct) {
-  const sentryDsn = new ssm.DataAwsSsmParameter(scope, 'sentry-dsn', {
+  const sentryDsn = new DataAwsSsmParameter(scope, 'sentry-dsn', {
     name: `/${config.name}/${config.environment}/SENTRY_DSN`,
   });
 
-  const serviceHash = new ssm.DataAwsSsmParameter(scope, 'service-hash', {
+  const serviceHash = new DataAwsSsmParameter(scope, 'service-hash', {
     name: `${config.circleCIPrefix}/SERVICE_HASH`,
   });
 
-  const parserEndpoint = new ssm.DataAwsSsmParameter(scope, 'parser-endpoint', {
+  const parserEndpoint = new DataAwsSsmParameter(scope, 'parser-endpoint', {
     name: `/${config.name}/${config.environment}/PARSER_ENDPOINT`,
   });
 

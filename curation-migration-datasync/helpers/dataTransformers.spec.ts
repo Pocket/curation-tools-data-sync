@@ -14,7 +14,7 @@ describe('data transformer methods', () => {
       expect(() => {
         getCuratorNameFromSso('thawk');
       }).toThrow(
-        'unexpected sso format, createdBy are expected to startWith `ad|Mozilla-LDAP|`'
+        'unexpected sso format, createdBy are expected to startWith `ad|Mozilla-LDAP|`',
       );
     });
   });

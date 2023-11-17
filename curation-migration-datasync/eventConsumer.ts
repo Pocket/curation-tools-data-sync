@@ -14,16 +14,16 @@ import * as Sentry from '@sentry/serverless';
  */
 export async function addScheduledItem(
   eventBody: ScheduledItemPayload,
-  db: Knex
+  db: Knex,
 ) {
   const curatedItemModel = new CuratedItemRecordModel();
   const scheduledItem = await curatedItemModel.getByScheduledItemExternalId(
-    eventBody.scheduledItemExternalId
+    eventBody.scheduledItemExternalId,
   );
 
   if (scheduledItem) {
     console.log(`duplicate add-scheduled-item event, ${JSON.stringify(
-      scheduledItem
+      scheduledItem,
     )}. 
     scheduledItemExternalId is already present in the id mapping dynamo table `);
     //ignore duplicate events
@@ -37,7 +37,7 @@ export async function addScheduledItem(
   const curatedRecId = await dbService.addScheduledItem(
     eventBody,
     parseInt(parserResponse.resolvedId),
-    parserResponse.domainId
+    parserResponse.domainId,
   );
 
   // Create mapping record in DynamoDB
@@ -51,16 +51,16 @@ export async function addScheduledItem(
  */
 export async function removeScheduledItem(
   eventBody: ScheduledItemPayload,
-  db: Knex
+  db: Knex,
 ) {
   const dbService = new DataService(db);
   const curatedItemModel = new CuratedItemRecordModel();
   const curatedRecord = await curatedItemModel.getByScheduledItemExternalId(
-    eventBody.scheduledItemExternalId
+    eventBody.scheduledItemExternalId,
   );
   if (curatedRecord == null) {
     throw new Error(
-      `No mapping found for scheduledItemExternalId=${eventBody.scheduledItemExternalId}`
+      `No mapping found for scheduledItemExternalId=${eventBody.scheduledItemExternalId}`,
     );
   }
 
@@ -80,11 +80,11 @@ export async function removeScheduledItem(
  */
 export async function updateScheduledItem(
   eventBody: ScheduledItemPayload,
-  db: Knex
+  db: Knex,
 ) {
   const curatedItemModel = new CuratedItemRecordModel();
   const scheduledItem = await curatedItemModel.getByScheduledItemExternalId(
-    eventBody.scheduledItemExternalId
+    eventBody.scheduledItemExternalId,
   );
 
   if (!scheduledItem) {
@@ -102,7 +102,7 @@ export async function updateScheduledItem(
     eventBody,
     scheduledItem.curatedRecId,
     parseInt(parserResponse.resolvedId),
-    parserResponse.domainId
+    parserResponse.domainId,
   );
 
   await curatedItemModel.upsertFromEvent(scheduledItem.curatedRecId, eventBody);
@@ -115,13 +115,13 @@ export async function updateScheduledItem(
  */
 export async function updateApprovedItem(
   eventBody: ApprovedItemPayload,
-  db: Knex
+  db: Knex,
 ) {
   // dynamoDb will have a record of curatedRecId mapped to approvedItem
   // only if it was previously scheduled.
   const curatedItemModel = new CuratedItemRecordModel();
   const curatedItems = await curatedItemModel.getByApprovedItemExternalId(
-    eventBody.approvedItemExternalId
+    eventBody.approvedItemExternalId,
   );
 
   //if dynamo returns 0 curatedItem, then the approvedItem was not scheduled before,
@@ -144,13 +144,13 @@ export async function updateApprovedItem(
       //logging error and iterate to next item
       console.log(
         `updateApprovedItem event failed for event: ${JSON.stringify(
-          eventBody
-        )}, ${e}`
+          eventBody,
+        )}, ${e}`,
       );
       Sentry.captureException(
         `updateApprovedItem event failed for event: ${JSON.stringify(
-          eventBody
-        )}, ${e}`
+          eventBody,
+        )}, ${e}`,
       );
     }
   }
