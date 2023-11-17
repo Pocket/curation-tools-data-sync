@@ -34,6 +34,8 @@ phases:
     commands:
       - . /home/circleci/.codebuild_shims_wrapper.sh
       - echo $CODEBUILD_WEBHOOK_HEAD_REF
+      - nvm install --no-progress
+      - nvm use
       - echo Setting Up Terraform Token
       - rc="credentials \"app.terraform.io\" { "
       - rc="${rc} token=\"$TERRAFORM_TOKEN\" "
