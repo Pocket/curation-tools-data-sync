@@ -15,7 +15,7 @@ describe('fetchTopDomain', () => {
   it('fetches by domainId', async () => {
     const res = await dbService.fetchTopDomain(
       'https://conspiracies.com/are-birds-actually-real',
-      '111'
+      '111',
     );
     sandbox.assert.calledOnceWithExactly(domainStub, '111');
     expect(res).toEqual(1234);

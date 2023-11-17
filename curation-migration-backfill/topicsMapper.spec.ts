@@ -7,7 +7,7 @@ describe('topics mapepr test', () => {
   it('should convert a valid topic from  readiila-tmp to curatedCorpusApi', () => {
     const readItLaTmpTopic = 'Health & Fitness';
     expect(getTopicForCuratedCorpusApi(readItLaTmpTopic)).toEqual(
-      'HEALTH_FITNESS'
+      'HEALTH_FITNESS',
     );
   });
 
@@ -23,7 +23,7 @@ describe('topics mapepr test', () => {
   it('should convert a valid topic from curatedCorpusApi to readitLaTmp topics', () => {
     const curatedCorpusTopic = 'HEALTH_FITNESS';
     expect(getTopicForReaditLaTmpDatabase(curatedCorpusTopic)).toEqual(
-      'Health & Fitness'
+      'Health & Fitness',
     );
   });
 

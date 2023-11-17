@@ -9,7 +9,7 @@ export const sleep = async (ms: number) => {
  * parses a CSV of authors and returns an array of valid authors
  */
 export const parseAuthorsCsv = (
-  authorsCsv: string
+  authorsCsv: string,
 ): ApprovedItemAuthor[] | [] => {
   // get an array of authors
   const rawAuthors = authorsCsv.split(',');

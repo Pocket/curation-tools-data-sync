@@ -16,7 +16,7 @@ describe('time converter', function () {
   it('convert given UTC date to EST 3am local time for NEW_TAB_EN_US', () => {
     const timeStamp = getLocalTimeFromScheduledDate(
       testDate,
-      ScheduledSurfaceGuid.NEW_TAB_EN_US
+      ScheduledSurfaceGuid.NEW_TAB_EN_US,
     );
     expect(timeStamp).toEqual(estTimestamp);
   });
@@ -24,7 +24,7 @@ describe('time converter', function () {
   it('convert given UTC date to Berlin 3am local time for NEW_TAB_DE_DE', () => {
     const timeStamp = getLocalTimeFromScheduledDate(
       testDate,
-      ScheduledSurfaceGuid.NEW_TAB_DE_DE
+      ScheduledSurfaceGuid.NEW_TAB_DE_DE,
     );
     expect(timeStamp).toEqual(berlinTimestamp);
   });
@@ -32,7 +32,7 @@ describe('time converter', function () {
   it('convert given UTC date to IST 3am local time for NEW_TAB_EN_INTL', () => {
     const timeStamp = getLocalTimeFromScheduledDate(
       testDate,
-      ScheduledSurfaceGuid.NEW_TAB_EN_INTL
+      ScheduledSurfaceGuid.NEW_TAB_EN_INTL,
     );
     expect(timeStamp).toEqual(istTimestamp);
   });
@@ -40,7 +40,7 @@ describe('time converter', function () {
   it('convert month start for NEW_TAB_EN_INTL', () => {
     const timeStamp = getLocalTimeFromScheduledDate(
       '2022-01-01',
-      ScheduledSurfaceGuid.NEW_TAB_EN_INTL
+      ScheduledSurfaceGuid.NEW_TAB_EN_INTL,
     );
     //expected: Friday, December 31, 2021 9:30:00 PM
     expect(timeStamp).toEqual(1640986200);
@@ -49,7 +49,7 @@ describe('time converter', function () {
   it('convert given UTC date to GMT 3am local time for any other new tab', () => {
     const timeStamp = getLocalTimeFromScheduledDate(
       testDate,
-      ScheduledSurfaceGuid.NEW_TAB_EN_GB
+      ScheduledSurfaceGuid.NEW_TAB_EN_GB,
     );
     expect(timeStamp).toEqual(gmtTimestamp);
   });

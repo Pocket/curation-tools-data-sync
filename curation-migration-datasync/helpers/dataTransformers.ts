@@ -20,7 +20,7 @@ export function getCuratorNameFromSso(ssoName: string): string {
   const prefix = 'ad|Mozilla-LDAP|';
   if (!ssoName.startsWith(prefix)) {
     throw new Error(
-      'unexpected sso format, createdBy are expected to startWith `ad|Mozilla-LDAP|`'
+      'unexpected sso format, createdBy are expected to startWith `ad|Mozilla-LDAP|`',
     );
   }
   return ssoName.substring(prefix.length);

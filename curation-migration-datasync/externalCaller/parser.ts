@@ -37,7 +37,7 @@ export const parser = {
  * @param url
  */
 export async function getParserMetadata(
-  url: string
+  url: string,
 ): Promise<ParserMetadataResponse> {
   const backOffOptions = {
     numOfAttempts: 3, //default is 10
@@ -45,6 +45,6 @@ export async function getParserMetadata(
 
   return (await backOff(
     () => parser.parserCaller(url),
-    backOffOptions
+    backOffOptions,
   )) as ParserMetadataResponse;
 }

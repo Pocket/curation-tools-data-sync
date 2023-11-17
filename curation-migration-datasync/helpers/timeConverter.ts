@@ -17,7 +17,7 @@ import { ScheduledSurfaceGuid } from '../dynamodb/types';
  */
 export function getLocalTimeFromScheduledDate(
   scheduledDate: string,
-  scheduledSurfaceGuid: ScheduledSurfaceGuid
+  scheduledSurfaceGuid: ScheduledSurfaceGuid,
 ): number {
   let date;
   switch (scheduledSurfaceGuid) {
@@ -63,7 +63,7 @@ function getDate(scheduledDate: string, hours = 0, mins = 0, secs = 0): Date {
       parseInt(d[2]),
       hours,
       mins,
-      secs
-    )
+      secs,
+    ),
   );
 }

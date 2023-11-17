@@ -81,7 +81,7 @@ describe('curation migration', () => {
       sinon.stub(ProspectApi, 'fetchProspectData').returns(
         Promise.resolve({
           authors: 'Jack London,Mark Twain',
-        })
+        }),
       );
 
       //nock the curatedCorpusApi call

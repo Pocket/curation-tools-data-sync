@@ -17,7 +17,7 @@ import * as Sentry from '@sentry/serverless';
  * generate insert command parameter from curatedItemRecord
  */
 export const generateInsertParameters = (
-  curatedItemRecord: CuratedItemRecord
+  curatedItemRecord: CuratedItemRecord,
 ): PutCommandInput => {
   return {
     TableName: config.aws.dynamoDB.curationMigrationTable,
@@ -38,7 +38,7 @@ export const generateInsertParameters = (
  */
 export const insertCuratedItem = async (
   dbClient: DynamoDBDocumentClient,
-  curatedItemRecord: CuratedItemRecord
+  curatedItemRecord: CuratedItemRecord,
 ): Promise<void> => {
   const params = generateInsertParameters(curatedItemRecord);
 
@@ -52,7 +52,7 @@ export const insertCuratedItem = async (
  */
 export const deleteItemByCuratedRecId = async (
   dbClient: DynamoDBDocumentClient,
-  curatedRecId: number
+  curatedRecId: number,
 ): Promise<void> => {
   await dbClient.send(
     new DeleteCommand({
@@ -60,7 +60,7 @@ export const deleteItemByCuratedRecId = async (
       Key: {
         curatedRecId: curatedRecId,
       },
-    })
+    }),
   );
 };
 
@@ -71,7 +71,7 @@ export const deleteItemByCuratedRecId = async (
  */
 export const getByCuratedRecId = async (
   dbClient,
-  curatedRecId: number
+  curatedRecId: number,
 ): Promise<CuratedItemRecord> => {
   const input: GetCommandInput = {
     TableName: config.aws.dynamoDB.curationMigrationTable,
@@ -98,7 +98,7 @@ export const getByCuratedRecId = async (
  */
 export const getByScheduledSurfaceGuid = async (
   dbClient,
-  scheduledSurfaceGuid: ScheduledSurfaceGuid
+  scheduledSurfaceGuid: ScheduledSurfaceGuid,
 ): Promise<CuratedItemRecord[]> => {
   const input: QueryCommandInput = {
     TableName: config.aws.dynamoDB.curationMigrationTable,
@@ -118,7 +118,7 @@ export const getByScheduledSurfaceGuid = async (
   if (res.LastEvaluatedKey) {
     Sentry.captureMessage(
       `method 'getByScheduledSurfaceGuid' called with '${scheduledSurfaceGuid}'
-       has multiple pages of results that we are not handling!`
+       has multiple pages of results that we are not handling!`,
     );
   }
 
@@ -146,7 +146,7 @@ export const getByScheduledSurfaceGuid = async (
 export const getByScheduledItemExternalId = async (
   dbClient,
   //todo: can be a enum as we are only getting 4 new tabs
-  scheduledItemExternalId: string
+  scheduledItemExternalId: string,
 ): Promise<CuratedItemRecord[]> => {
   const input: QueryCommandInput = {
     TableName: config.aws.dynamoDB.curationMigrationTable,
@@ -164,7 +164,7 @@ export const getByScheduledItemExternalId = async (
   if (res.LastEvaluatedKey) {
     Sentry.captureMessage(
       `method 'getByScheduledItemExternalId' called with '${scheduledItemExternalId}'
-       has multiple pages of results that we are not handling!`
+       has multiple pages of results that we are not handling!`,
     );
   }
 

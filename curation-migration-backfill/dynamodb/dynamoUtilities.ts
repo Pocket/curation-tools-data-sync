@@ -13,7 +13,7 @@ import config from '../config';
  * hit that in our integration tests
  */
 export const truncateDynamoDb = async (
-  dbClient: DynamoDBDocumentClient
+  dbClient: DynamoDBDocumentClient,
 ): Promise<void> => {
   const rows = await scanAllRows(dbClient);
 
@@ -25,7 +25,7 @@ export const truncateDynamoDb = async (
         Key: {
           curatedRecId: r.curatedRecId,
         },
-      })
+      }),
     );
   }
 };
@@ -38,12 +38,12 @@ export const truncateDynamoDb = async (
  * array of Items
  */
 export const scanAllRows = async (
-  dbClient: DynamoDBDocumentClient
+  dbClient: DynamoDBDocumentClient,
 ): Promise<ScanCommandOutput> => {
   return await dbClient.send(
     new ScanCommand({
       TableName: config.aws.dynamoDB.curationMigrationTable,
       AttributesToGet: [config.aws.dynamoDB.curatedRecIdHashKey],
-    })
+    }),
   );
 };

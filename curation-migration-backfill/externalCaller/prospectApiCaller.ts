@@ -30,8 +30,8 @@ export async function fetchProspectData(url: string): Promise<ProspectInfo> {
   if (jsonRes.errors != null || jsonRes.data == null) {
     throw new Error(
       `Failed to retrieve data from prospect-api for url ${url}.\nErrors: ${JSON.stringify(
-        jsonRes.errors
-      )}`
+        jsonRes.errors,
+      )}`,
     );
   }
   return jsonRes.data.getUrlMetadata as ProspectInfo;

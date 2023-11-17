@@ -12,7 +12,7 @@ export async function readClient(): Promise<Knex> {
   if (readDb) return readDb;
 
   const { host, username, password, port, dbname } = await getDbCredentials(
-    config.db.readSecretId
+    config.db.readSecretId,
   );
 
   readDb = createConnection({
@@ -33,7 +33,7 @@ export async function writeClient(): Promise<Knex> {
   if (writeDb) return writeDb;
 
   const { host, username, password, port, dbname } = await getDbCredentials(
-    config.db.writeSecretId
+    config.db.writeSecretId,
   );
 
   writeDb = createConnection({

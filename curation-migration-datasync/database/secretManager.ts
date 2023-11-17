@@ -28,7 +28,7 @@ export async function getDbCredentials(id: string): Promise<DbCredentials> {
   const data = await client.send(
     new GetSecretValueCommand({
       SecretId: id,
-    })
+    }),
   );
   const parsed = JSON.parse(data.SecretString as string) as DbCredentials;
   dbCredentials[id] = parsed;

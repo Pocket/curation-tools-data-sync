@@ -16,7 +16,7 @@ import { ScheduledSurfaceGuid } from '../dynamodb/types';
 export function hydrateCuratedFeedItem(
   queuedItem: CuratedFeedQueuedItem,
   scheduledDate: string,
-  scheduledSurfaceGuid: ScheduledSurfaceGuid
+  scheduledSurfaceGuid: ScheduledSurfaceGuid,
 ): CuratedFeedItem {
   if (queuedItem.queued_id == undefined) {
     throw new Error(`queued_id cannot be undefined in ${queuedItem}`);
@@ -32,7 +32,7 @@ export function hydrateCuratedFeedItem(
     time_updated: queuedItem.time_updated,
     time_live: getLocalTimeFromScheduledDate(
       scheduledDate,
-      scheduledSurfaceGuid
+      scheduledSurfaceGuid,
     ),
   };
 }
@@ -40,7 +40,7 @@ export function hydrateCuratedFeedItem(
 export function hydrateCuratedFeedProspectItem(
   eventBody: ScheduledItemPayload,
   resolvedId: number,
-  topDomainId: number
+  topDomainId: number,
 ): CuratedFeedProspectItem {
   return {
     feed_id: ScheduledSurfaceToFeedIdMap[eventBody.scheduledSurfaceGuid],
@@ -59,7 +59,7 @@ export function hydrateCuratedFeedProspectItem(
 
 export function hydrateCuratedFeedQueuedItem(
   prospectItem: CuratedFeedProspectItem,
-  topicId: number
+  topicId: number,
 ): CuratedFeedQueuedItem {
   if (prospectItem.prospect_id == undefined) {
     throw new Error(`prospect_id cannot be undefined in  ${prospectItem}`);

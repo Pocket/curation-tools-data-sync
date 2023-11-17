@@ -68,7 +68,7 @@ describe('database integration test', function () {
 
   it('gets topicId for a name', async () => {
     const topicID = await new DataService(db).getTopicIdByName(
-      'Health & Fitness'
+      'Health & Fitness',
     );
     expect(topicID).equals(1);
   });
@@ -93,7 +93,7 @@ describe('database integration test', function () {
 
     await db.transaction(async (trx) => {
       generatedProspectId = await new DataService(
-        db
+        db,
       ).insertCuratedFeedProspectItem(trx, prospectItem);
     });
 
@@ -120,7 +120,7 @@ describe('database integration test', function () {
     await db.transaction(async (trx) => {
       await new DataService(db).insertCuratedFeedProspectItem(
         trx,
-        prospectItem
+        prospectItem,
       );
     });
 
@@ -128,7 +128,7 @@ describe('database integration test', function () {
 
     await db.transaction(async (trx) => {
       generatedProspectId = await new DataService(
-        db
+        db,
       ).insertCuratedFeedProspectItem(trx, prospectItem);
     });
 
@@ -148,10 +148,10 @@ describe('database integration test', function () {
     sinon.stub(dataService, 'insertTileSource').callsFake(fakeTileSource);
     const priorCuratedItem = await db(config.tables.curatedFeedItems).select();
     const priorProspectItem = await db(
-      config.tables.curatedFeedProspects
+      config.tables.curatedFeedProspects,
     ).select();
     const priorQueuedItem = await db(
-      config.tables.curatedFeedQueuedItems
+      config.tables.curatedFeedQueuedItems,
     ).select();
 
     try {
