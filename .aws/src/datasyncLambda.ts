@@ -135,7 +135,7 @@ export class DatasyncLambda extends Resource {
         maxReceiveCount: 3,
       },
       lambda: {
-        runtime: LAMBDA_RUNTIMES.NODEJS14,
+        runtime: LAMBDA_RUNTIMES.NODEJS18,
         handler: 'index.handler',
         timeout: 120,
         vpcConfig: {

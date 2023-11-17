@@ -34,7 +34,7 @@ export class BackfillAuthorsLambda extends Resource {
         },
         functionResponseTypes: ['ReportBatchItemFailures'],
         lambda: {
-          runtime: LAMBDA_RUNTIMES.NODEJS20,
+          runtime: LAMBDA_RUNTIMES.NODEJS18,
           handler: 'index.handler',
           timeout: 120,
           environment: {

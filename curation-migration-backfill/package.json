@@ -6,7 +6,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/node": "^20.9.1",
+    "@types/node": "^18.18.9",
     "@types/node-fetch": "^2.6.9",
     "aws-sdk-client-mock": "^3.0.0",
     "aws-sdk-mock": "^5.8.0",
