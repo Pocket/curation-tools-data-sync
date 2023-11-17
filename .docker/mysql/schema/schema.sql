@@ -1,6 +1,8 @@
 CREATE DATABASE IF NOT EXISTS `readitla_ril-tmp`;
 USE `readitla_ril-tmp`;
 
+SET GLOBAL explicit_defaults_for_timestamp = 0;
+
 CREATE TABLE `curated_feed_prospects` (
   `prospect_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `feed_id` int(10) unsigned NOT NULL DEFAULT '0',
