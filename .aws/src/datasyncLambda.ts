@@ -13,10 +13,13 @@ import {
   PocketSQSWithLambdaTargetProps,
   PocketVPC,
 } from '@pocket-tools/terraform-modules';
-import { cloudwatch, iam, sqs } from '@cdktf/provider-aws';
+import { CloudwatchMetricAlarm } from '@cdktf/provider-aws/lib/cloudwatch-metric-alarm';
+import { DataAwsIamPolicyDocument } from '@cdktf/provider-aws/lib/data-aws-iam-policy-document';
+import { SqsQueue } from '@cdktf/provider-aws/lib/sqs-queue';
+import { DataAwsSqsQueue } from '@cdktf/provider-aws/lib/data-aws-sqs-queue';
+import { SqsQueuePolicy } from '@cdktf/provider-aws/lib/sqs-queue-policy';
 import { getEnvVariableValues } from './utilities';
 import { config } from './config';
-import { SqsQueue } from '@cdktf/provider-aws/lib/sqs';
 
 export class DatasyncLambda extends Resource {
   constructor(
@@ -24,7 +27,7 @@ export class DatasyncLambda extends Resource {
     private name: string,
     private vpc: PocketVPC,
     private curationMigrationTable: ApplicationDynamoDBTable,
-    private pagerDuty?: PocketPagerDuty
+    private pagerDuty?: PocketPagerDuty,
   ) {
     super(scope, name);
 
@@ -43,14 +46,14 @@ export class DatasyncLambda extends Resource {
     const eventBridgeTarget: PocketEventBridgeTargets = {
       targetId: `${config.prefix}-Datasync-Target-SQS-Id`,
       arn: target.sqsQueueResource.arn,
-      terraformResource: target.sqsQueueResource as sqs.SqsQueue,
+      terraformResource: target.sqsQueueResource as SqsQueue,
       deadLetterArn: eventBridgeDLQ.arn,
     };
 
     const dataSyncEventRuleConfig: PocketEventBridgeProps = {
       eventRule: {
         name: `${config.prefix}-EventBridge-Rule`,
-        pattern: {
+        eventPattern: {
           source: ['curation-migration-datasync'],
           'detail-type': [
             'add-scheduled-item',
@@ -70,19 +73,19 @@ export class DatasyncLambda extends Resource {
       new PocketEventBridgeRuleWithMultipleTargets(
         this,
         `${config.prefix}-EventBridge-Rule`,
-        dataSyncEventRuleConfig
+        dataSyncEventRuleConfig,
       );
 
     // Permissions for EventBridge publishing to SQS Target and DLQ (if fail to send)
     this.createPolicyForEventBridgeRuleToSQS(
       'DLQ',
       eventBridgeDLQ,
-      dataSyncEventRuleWithTargetObj.getEventBridge().rule.arn
+      dataSyncEventRuleWithTargetObj.getEventBridge().rule.arn,
     );
     this.createPolicyForEventBridgeRuleToSQS(
       'Datasync-SQS',
       target.sqsQueueResource,
-      dataSyncEventRuleWithTargetObj.getEventBridge().rule.arn
+      dataSyncEventRuleWithTargetObj.getEventBridge().rule.arn,
     );
   }
 
@@ -91,7 +94,7 @@ export class DatasyncLambda extends Resource {
    * @private
    */
   private createSqsForDlq() {
-    const dlq = new sqs.SqsQueue(this, 'datasync-target-lambda-dlq', {
+    const dlq = new SqsQueue(this, 'datasync-target-lambda-dlq', {
       name: `${config.prefix}-Datasync-Lambda-DLQ`,
     });
 
@@ -193,7 +196,7 @@ export class DatasyncLambda extends Resource {
     const sqsLambda = new PocketSQSWithLambdaTarget(
       this,
       `${config.prefix}-Datasync-Lambda`,
-      lambdaConfig
+      lambdaConfig,
     );
 
     this.createSqsLambdaDlqAlarm(sqsLambda.applicationSqsQueue);
@@ -226,7 +229,7 @@ export class DatasyncLambda extends Resource {
   private createSqsLambdaDlqAlarm(applicationSqsQueue: ApplicationSQSQueue) {
     this.createSqsAlarm(
       applicationSqsQueue.deadLetterQueue.name,
-      'SQS-Lambda-DLQ-Alarm'
+      'SQS-Lambda-DLQ-Alarm',
     );
   }
 
@@ -244,9 +247,9 @@ export class DatasyncLambda extends Resource {
     alarmName,
     evaluationPeriods = 1,
     period = 300,
-    threshold = 5
+    threshold = 5,
   ) {
-    new cloudwatch.CloudwatchMetricAlarm(this, alarmName.toLowerCase(), {
+    new CloudwatchMetricAlarm(this, alarmName.toLowerCase(), {
       alarmName: `${config.prefix}-${alarmName}`,
       alarmDescription: `Number of messages >= ${threshold}`,
       namespace: 'AWS/SQS',
@@ -273,10 +276,10 @@ export class DatasyncLambda extends Resource {
    */
   private createPolicyForEventBridgeRuleToSQS(
     name: string,
-    sqsQueue: sqs.SqsQueue | sqs.DataAwsSqsQueue,
-    eventBridgeRuleArn: string
+    sqsQueue: SqsQueue | DataAwsSqsQueue,
+    eventBridgeRuleArn: string,
   ) {
-    const eventBridgeRuleSQSPolicy = new iam.DataAwsIamPolicyDocument(
+    const eventBridgeRuleSQSPolicy = new DataAwsIamPolicyDocument(
       this,
       `${config.prefix}-EventBridge-${name}-Policy`,
       {
@@ -300,10 +303,10 @@ export class DatasyncLambda extends Resource {
             ],
           },
         ],
-      }
+      },
     ).json;
 
-    return new sqs.SqsQueuePolicy(this, `${name.toLowerCase()}-policy`, {
+    return new SqsQueuePolicy(this, `${name.toLowerCase()}-policy`, {
       queueUrl: sqsQueue.url,
       policy: eventBridgeRuleSQSPolicy,
     });
