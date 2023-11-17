@@ -48,7 +48,7 @@ phases:
         nvm use
         npm ci
         tfenv install
-        'if [ "$GIT_BRANCH" = "$DEV_BRANCH" ]; then NODE_ENV=development npm run synth; else npm run synth; fi'
+        if [ "$GIT_BRANCH" = "$DEV_BRANCH" ]; then NODE_ENV=development npm run synth; else npm run synth; fi
         cd cdktf.out/stacks/curation-tools-data-sync
         terraform init
   build:
