@@ -8,7 +8,7 @@ import {
   PocketSQSWithLambdaTarget,
   PocketVPC,
 } from '@pocket-tools/terraform-modules';
-import { cloudwatch } from '@cdktf/provider-aws';
+import { CloudwatchMetricAlarm } from '@cdktf/provider-aws/lib/cloudwatch-metric-alarm';
 import { getEnvVariableValues } from './utilities';
 
 export class BackfillLambda extends Resource {
@@ -17,7 +17,7 @@ export class BackfillLambda extends Resource {
     private name: string,
     private vpc: PocketVPC,
     private curationMigrationTable: ApplicationDynamoDBTable,
-    private pagerDuty?: PocketPagerDuty
+    private pagerDuty?: PocketPagerDuty,
   ) {
     super(scope, name);
 
@@ -34,7 +34,7 @@ export class BackfillLambda extends Resource {
       },
       functionResponseTypes: ['ReportBatchItemFailures'],
       lambda: {
-        runtime: LAMBDA_RUNTIMES.NODEJS14,
+        runtime: LAMBDA_RUNTIMES.NODEJS18,
         handler: 'index.handler',
         timeout: 120,
         environment: {
@@ -106,7 +106,7 @@ export class BackfillLambda extends Resource {
    * to be used so far - if it's ever reused, it should be moved to Terraform Modules.
    */
   createDLQAlarm() {
-    return new cloudwatch.CloudwatchMetricAlarm(this, 'backfill-dlq-alarm', {
+    return new CloudwatchMetricAlarm(this, 'backfill-dlq-alarm', {
       alarmName: config.prefix + '-Backfill-DLQ-Alarm',
       alarmDescription:
         'Alert on more than 5% of backfilled records ending up in the DLQ.',

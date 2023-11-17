@@ -40,10 +40,10 @@ export class DataService {
   public async addScheduledItem(
     eventBody: ScheduledItemPayload,
     resolvedId: number,
-    domainId: string
+    domainId: string,
   ): Promise<number> {
     const topicId = await this.getTopicIdByName(
-      getTopicForReaditLaTmpDatabase(eventBody.topic)
+      getTopicForReaditLaTmpDatabase(eventBody.topic),
     );
 
     const topDomainId = await this.fetchTopDomain(eventBody.url, domainId);
@@ -51,31 +51,31 @@ export class DataService {
     const prospectItem = hydrateCuratedFeedProspectItem(
       eventBody,
       resolvedId,
-      topDomainId
+      topDomainId,
     );
 
     const trx = await this.db.transaction();
     try {
       prospectItem.prospect_id = await this.insertCuratedFeedProspectItem(
         trx,
-        prospectItem
+        prospectItem,
       );
 
       const queuedItem = hydrateCuratedFeedQueuedItem(prospectItem, topicId);
 
       queuedItem.queued_id = await this.insertCuratedFeedQueuedItem(
         trx,
-        queuedItem
+        queuedItem,
       );
 
       const curatedItem = hydrateCuratedFeedItem(
         queuedItem,
         eventBody.scheduledDate,
-        ScheduledSurfaceGuid[eventBody.scheduledSurfaceGuid]
+        ScheduledSurfaceGuid[eventBody.scheduledSurfaceGuid],
       );
       curatedItem.curated_rec_id = await this.insertCuratedFeedItem(
         trx,
-        curatedItem
+        curatedItem,
       );
 
       await this.insertTileSource(trx, hydrateTileSource(curatedItem));
@@ -87,14 +87,14 @@ export class DataService {
       await trx.rollback();
       throw new Error(
         `failed to transact for the event body
-        ${JSON.stringify(eventBody)}, resolvedId: ${resolvedId} \n error: ${e}`
+        ${JSON.stringify(eventBody)}, resolvedId: ${resolvedId} \n error: ${e}`,
       );
     }
   }
 
   public async deleteScheduledItem(curatedRecId: number) {
     const item = await this.db<CuratedFeedItemModel>(
-      config.tables.curatedFeedItems
+      config.tables.curatedFeedItems,
     )
       .select(
         'prospect_id',
@@ -105,7 +105,7 @@ export class DataService {
         'time_added',
         'time_updated',
         'time_live',
-        'resolved_id'
+        'resolved_id',
       )
       .where('curated_rec_id', curatedRecId)
       .first();
@@ -149,10 +149,10 @@ export class DataService {
     eventBody: ScheduledItemPayload,
     curatedRecId: number,
     resolvedId: number,
-    domainId: string
+    domainId: string,
   ) {
     const topicId = await this.getTopicIdByName(
-      getTopicForReaditLaTmpDatabase(eventBody.topic)
+      getTopicForReaditLaTmpDatabase(eventBody.topic),
     );
 
     await this.db.transaction(async (trx: Knex.Transaction) => {
@@ -181,7 +181,7 @@ export class DataService {
       const curatedItem = hydrateCuratedFeedItem(
         queuedItem,
         eventBody.scheduledDate,
-        ScheduledSurfaceGuid[eventBody.scheduledSurfaceGuid]
+        ScheduledSurfaceGuid[eventBody.scheduledSurfaceGuid],
       );
       await trx(config.tables.curatedFeedItems)
         .update(curatedItem)
@@ -201,33 +201,33 @@ export class DataService {
    */
   public async updateApprovedItem(
     eventBody: ApprovedItemPayload,
-    curatedRecId: number
+    curatedRecId: number,
   ): Promise<void> {
     const item = await this.db(config.tables.curatedFeedItems)
       .select()
       .join(
         config.tables.curatedFeedProspects,
         'curated_feed_prospects.prospect_id',
-        'curated_feed_items.prospect_id'
+        'curated_feed_items.prospect_id',
       )
       .join(
         config.tables.curatedFeedQueuedItems,
         'curated_feed_queued_items.queued_id',
-        'curated_feed_items.queued_id'
+        'curated_feed_items.queued_id',
       )
       .where('curated_rec_id', curatedRecId)
       .first();
 
     if (item == undefined) {
       throw new Error(
-        `couldn't find an item with curatedRecId -> ${curatedRecId}`
+        `couldn't find an item with curatedRecId -> ${curatedRecId}`,
       );
     }
 
     let topicId;
     if (eventBody.topic) {
       topicId = await this.getTopicIdByName(
-        getTopicForReaditLaTmpDatabase(eventBody.topic)
+        getTopicForReaditLaTmpDatabase(eventBody.topic),
       );
     } else {
       topicId = item['topic_id'];
@@ -292,7 +292,7 @@ export class DataService {
    */
   async insertCuratedFeedProspectItem(
     trx: Knex.Transaction,
-    prospectItem: CuratedFeedProspectItem
+    prospectItem: CuratedFeedProspectItem,
   ): Promise<number> {
     //unique on feedId and resolvedId
     const row = await trx(config.tables.curatedFeedProspects)
@@ -314,7 +314,7 @@ export class DataService {
    */
   async insertCuratedFeedQueuedItem(
     trx: Knex.Transaction,
-    queuedItem: CuratedFeedQueuedItem
+    queuedItem: CuratedFeedQueuedItem,
   ): Promise<number> {
     //unique on prospect_id
     const row = await trx(config.tables.curatedFeedQueuedItems)
@@ -336,7 +336,7 @@ export class DataService {
    */
   async insertCuratedFeedItem(
     trx: Knex.Transaction,
-    curatedFeedItem: CuratedFeedItem
+    curatedFeedItem: CuratedFeedItem,
   ): Promise<number> {
     const row = await trx(config.tables.curatedFeedItems)
       .insert({

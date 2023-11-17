@@ -35,7 +35,7 @@ describe('getParsedDomainId', () => {
     await expect(getParserMetadata('myurl.com')).rejects.toThrowError(
       `request to ${
         config.parserEndpoint
-      }/?${params.toString()} failed, reason: ${testError}`
+      }/?${params.toString()} failed, reason: ${testError}`,
     );
     expect(parserCallerSpy).toBeCalledTimes(3);
   });

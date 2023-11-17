@@ -11,7 +11,7 @@ import { updateApprovedCorpusItemAuthors } from './curatedCorpusApiCaller';
  * as well as errors thrown by the mutation call
  */
 export async function callUpdateMutation(
-  data: ApprovedItemAuthorsInput
+  data: ApprovedItemAuthorsInput,
 ): Promise<UpdateApprovedCorpusItemAuthorsMutationResponse> {
   // we've set the default number of retries to 3
   const backOffOptions = {
@@ -24,13 +24,13 @@ export async function callUpdateMutation(
     // call our mutation function
     res = await backOff(
       () => updateApprovedCorpusItemAuthors(data),
-      backOffOptions
+      backOffOptions,
     );
     if (res.errors != null) {
       throw new Error(
         `Failed to retrieve data from curated-corpus-api.\n GraphQL Errors: ${JSON.stringify(
-          res.errors
-        )}`
+          res.errors,
+        )}`,
       );
     }
   } catch (e) {

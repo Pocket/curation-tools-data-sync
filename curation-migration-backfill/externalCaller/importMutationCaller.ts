@@ -11,7 +11,7 @@ import { importApprovedCorpusItem } from './curatedCorpusApiCaller';
  * as well as errors thrown by the mutation call
  */
 export async function callImportMutation(
-  data: CorpusInput
+  data: CorpusInput,
 ): Promise<ImportApprovedCorpusItemMutationResponse> {
   // we've set the default number of retries to 3
   const backOffOptions = {
@@ -26,8 +26,8 @@ export async function callImportMutation(
     if (res.errors != null) {
       throw new Error(
         `Failed to retrieve data from curated-corpus-api.\n GraphQL Errors: ${JSON.stringify(
-          res.errors
-        )}`
+          res.errors,
+        )}`,
       );
     }
   } catch (e) {

@@ -46,7 +46,7 @@ export async function handlerFn(event: SQSEvent): Promise<SQSBatchResponse> {
  * actually performs the logic for processing the event.
  */
 async function _handlerFn(
-  eventBody: EventBridgeEvent<EventDetailType, any>
+  eventBody: EventBridgeEvent<EventDetailType, any>,
 ): Promise<void> {
   const db = await writeClient();
 
@@ -60,11 +60,11 @@ async function _handlerFn(
   if (
     eventBody.detail.scheduledSurfaceGuid &&
     !config.app.allowedScheduledSurfaceGuids.includes(
-      eventBody.detail.scheduledSurfaceGuid
+      eventBody.detail.scheduledSurfaceGuid,
     )
   ) {
     console.log(
-      `Unhandled scheduledSurfaceGuid: ${eventBody.detail.scheduledSurfaceGuid}. Skipping sync.`
+      `Unhandled scheduledSurfaceGuid: ${eventBody.detail.scheduledSurfaceGuid}. Skipping sync.`,
     );
     return;
   }

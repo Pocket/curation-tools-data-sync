@@ -5,13 +5,14 @@ import {
   RemoteBackend,
   TerraformStack,
 } from 'cdktf';
-import { AwsProvider, s3 } from '@cdktf/provider-aws';
+import { AwsProvider } from '@cdktf/provider-aws/lib/provider';
+import { S3Bucket } from '@cdktf/provider-aws/lib/s3-bucket';
 import { config } from './config';
 import { PocketPagerDuty, PocketVPC } from '@pocket-tools/terraform-modules';
-import { PagerdutyProvider } from '@cdktf/provider-pagerduty';
-import { LocalProvider } from '@cdktf/provider-local';
-import { NullProvider } from '@cdktf/provider-null';
-import { ArchiveProvider } from '@cdktf/provider-archive';
+import { PagerdutyProvider } from '@cdktf/provider-pagerduty/lib/provider';
+import { LocalProvider } from '@cdktf/provider-local/lib/provider';
+import { NullProvider } from '@cdktf/provider-null/lib/provider';
+import { ArchiveProvider } from '@cdktf/provider-archive/lib/provider';
 import { BackfillLambda } from './backfillLambda';
 import { DynamoDB } from './dynamoDb';
 import { DatasyncLambda } from './datasyncLambda';
@@ -50,7 +51,7 @@ class CurationToolsDataSync extends TerraformStack {
       'backfill-lambda',
       vpc,
       idMapperDynamoDb.curationMigrationTable,
-      pagerDuty
+      pagerDuty,
     );
 
     // ** infrastructure for datasync process **
@@ -59,7 +60,7 @@ class CurationToolsDataSync extends TerraformStack {
       'datasync-lambda',
       vpc,
       idMapperDynamoDb.curationMigrationTable,
-      pagerDuty
+      pagerDuty,
     );
   }
 
@@ -81,7 +82,7 @@ class CurationToolsDataSync extends TerraformStack {
         workspaces: {
           name: 'incident-management',
         },
-      }
+      },
     );
 
     return new PocketPagerDuty(this, 'pagerduty', {
@@ -103,7 +104,7 @@ class CurationToolsDataSync extends TerraformStack {
    * @private
    */
   private createMigrationBucket() {
-    return new s3.S3Bucket(this, 'synthetic-s3-bucket', {
+    return new S3Bucket(this, 'synthetic-s3-bucket', {
       bucket:
         `pocket-curation-migration-${config.environment}-backfill-bucket`.toLowerCase(),
       tags: config.tags,

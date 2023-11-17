@@ -28,7 +28,7 @@ Object.keys(TopicMappedToReaditlaTmpDb).forEach(
   (topic: TopicMappedToReaditlaTmpDb) => {
     const topicValue: string = TopicMappedToReaditlaTmpDb[<any>topic];
     TopicMappedToCuratedCorpusApi.set(topicValue, topic);
-  }
+  },
 );
 
 export function getTopicForCuratedCorpusApi(input: string | null) {

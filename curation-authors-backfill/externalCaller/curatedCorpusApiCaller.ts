@@ -10,7 +10,7 @@ import { getCurationToolsDataSyncPrivateKey } from '../secretManager';
  * @returns TODO: what return do we need here? technically i think nothing, but maybe we return the fields requested below for logging/verification?
  */
 export async function updateApprovedCorpusItemAuthors(
-  data: ApprovedItemAuthorsInput
+  data: ApprovedItemAuthorsInput,
 ) {
   const mutation = `
   mutation updateApprovedCorpusItemAuthors($data: UpdateApprovedCorpusItemAuthorsInput!) {
@@ -27,7 +27,7 @@ export async function updateApprovedCorpusItemAuthors(
 
   //admin api requires jwt token to fetch to add a scheduledItem
   const bearerToken = 'Bearer '.concat(
-    generateJwt(await getCurationToolsDataSyncPrivateKey())
+    generateJwt(await getCurationToolsDataSyncPrivateKey()),
   );
 
   const variables = { data };

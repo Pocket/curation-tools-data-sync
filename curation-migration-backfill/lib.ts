@@ -39,7 +39,7 @@ export function curatorToSsoUser(curator: string | null): string {
 
   if (!ssoUser) {
     throw new Error(
-      `curator value '${curator}' has no valid mapping to SSO User`
+      `curator value '${curator}' has no valid mapping to SSO User`,
     );
   }
 
@@ -57,7 +57,7 @@ export function curatorToSsoUser(curator: string | null): string {
  */
 export function languageExtractor(
   lang: string | null,
-  scheduledSurfaceGuid: string
+  scheduledSurfaceGuid: string,
 ) {
   // Valid language record
   // TODO: should we be validating en/de here?
@@ -88,7 +88,7 @@ export function epochToDateString(epoch: number): string {
  */
 export function hydrateCorpusInput(
   record: BackfillMessage,
-  prospectData: ProspectInfo
+  prospectData: ProspectInfo,
 ): CorpusInput {
   const curator = curatorToSsoUser(record.curator);
   const surfaceGuid = feedIdToGuid[record.feed_id];

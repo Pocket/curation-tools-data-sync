@@ -9,7 +9,7 @@ import { ApprovedItemAuthorsInfo } from '../types';
  * @returns Promise<ApprovedItemAuthorsInfo> a CSV string of authors
  */
 export async function fetchProspectData(
-  url: string
+  url: string,
 ): Promise<ApprovedItemAuthorsInfo> {
   const query = `
   query getUrlMetadata($url: String!) {
@@ -34,8 +34,8 @@ export async function fetchProspectData(
   if (jsonRes.errors != null || jsonRes.data == null) {
     throw new Error(
       `Failed to retrieve data from prospect-api for url ${url}.\nErrors: ${JSON.stringify(
-        jsonRes.errors
-      )}`
+        jsonRes.errors,
+      )}`,
     );
   }
 
