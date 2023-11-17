@@ -10,7 +10,7 @@ const connection = {
 };
 
 export const dbClient = knex({
-  client: 'mysql',
+  client: 'mysql2',
   connection,
   pool: {
     /**

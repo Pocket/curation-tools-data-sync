@@ -67,7 +67,7 @@ export function createConnection(dbConfig: {
     charset: config.db.charset,
   };
   return knex({
-    client: 'mysql',
+    client: 'mysql2',
     connection,
     pool: {
       min: 0, //knex docs state to set to 0 so that idle connections are released. Default was 2 for legacy knex reasons (according to docs)
