@@ -63,7 +63,7 @@ describe('event consumption integration test', function () {
     await Promise.all(
       curatedItemRecords.map((item) => {
         curatedRecordModel.upsert(item);
-      })
+      }),
     );
 
     await db(config.tables.curatedFeedTopics).truncate();
@@ -124,7 +124,7 @@ describe('event consumption integration test', function () {
           // other fields we don't need
         } as ScheduledItemPayload;
         await expect(removeScheduledItem(testEventBody, db)).rejects.toThrow(
-          'No record found for curatedRecId'
+          'No record found for curatedRecId',
         );
       });
       it('throws error if the scheduledItemExternalId is not present in dynamo map', async () => {
@@ -134,14 +134,14 @@ describe('event consumption integration test', function () {
           // other fields we don't need
         } as ScheduledItemPayload;
         await expect(removeScheduledItem(testEventBody, db)).rejects.toThrow(
-          'No mapping found for scheduledItemExternalId'
+          'No mapping found for scheduledItemExternalId',
         );
       });
     });
     describe('happy path', () => {
       const count = async (
         table: string,
-        where: Record<string, any>
+        where: Record<string, any>,
       ): Promise<number> => {
         return db(table)
           .where(where)
@@ -170,7 +170,7 @@ describe('event consumption integration test', function () {
             config.tables.curatedFeedQueuedItems,
             config.tables.curatedFeedItems,
             config.tables.curatedFeedItemsDeleted,
-          ].map((table) => db(table).truncate())
+          ].map((table) => db(table).truncate()),
         );
       });
       it('deletes records and updates audit table', async () => {
@@ -233,17 +233,17 @@ describe('event consumption integration test', function () {
     async function assertTables(
       testEventBody: ScheduledItemPayload,
       db: Knex,
-      topDomainId: number
+      topDomainId: number,
     ) {
       const curatedItemRecord =
         await curatedRecordModel.getByScheduledItemExternalId(
-          'random_scheduled_guid_1'
+          'random_scheduled_guid_1',
         );
       expect(curatedItemRecord?.approvedItemExternalId).toEqual(
-        testEventBody.approvedItemExternalId
+        testEventBody.approvedItemExternalId,
       );
       expect(curatedItemRecord?.scheduledSurfaceGuid).toEqual(
-        testEventBody.scheduledSurfaceGuid
+        testEventBody.scheduledSurfaceGuid,
       );
 
       const curatedItem = await db(config.tables.curatedFeedItems)
@@ -256,17 +256,17 @@ describe('event consumption integration test', function () {
       expect(curatedItem.time_live).toEqual(
         getLocalTimeFromScheduledDate(
           testEventBody.scheduledDate,
-          ScheduledSurfaceGuid[testEventBody.scheduledSurfaceGuid]
-        )
+          ScheduledSurfaceGuid[testEventBody.scheduledSurfaceGuid],
+        ),
       );
       expect(curatedItem.feed_id).toEqual(1);
       expect(curatedItem.resolved_id).toEqual(12345);
       expect(curatedItem.status).toEqual('live');
       expect(curatedItem.time_added).toEqual(
-        convertUtcStringToTimestamp(testEventBody.createdAt)
+        convertUtcStringToTimestamp(testEventBody.createdAt),
       );
       expect(curatedItem.time_updated).toEqual(
-        convertUtcStringToTimestamp(testEventBody.updatedAt)
+        convertUtcStringToTimestamp(testEventBody.updatedAt),
       );
 
       const queuedItems = await db(config.tables.curatedFeedQueuedItems)
@@ -282,10 +282,10 @@ describe('event consumption integration test', function () {
       expect(queuedItems.relevance_length).toEqual('week');
       expect(queuedItems.topic_id).toEqual(1);
       expect(queuedItems.time_added).toEqual(
-        convertUtcStringToTimestamp(testEventBody.createdAt)
+        convertUtcStringToTimestamp(testEventBody.createdAt),
       );
       expect(queuedItems.time_updated).toEqual(
-        convertUtcStringToTimestamp(testEventBody.updatedAt)
+        convertUtcStringToTimestamp(testEventBody.updatedAt),
       );
       expect(queuedItems.prospect_id).toEqual(curatedItem.prospect_id);
 
@@ -303,10 +303,10 @@ describe('event consumption integration test', function () {
       expect(prospectItem.status).toEqual('approved');
       expect(prospectItem.top_domain_id).toEqual(topDomainId);
       expect(prospectItem.time_added).toEqual(
-        convertUtcStringToTimestamp(testEventBody.createdAt)
+        convertUtcStringToTimestamp(testEventBody.createdAt),
       );
       expect(prospectItem.time_updated).toEqual(
-        convertUtcStringToTimestamp(testEventBody.updatedAt)
+        convertUtcStringToTimestamp(testEventBody.updatedAt),
       );
       expect(prospectItem.prospect_id).toEqual(curatedItem.prospect_id);
       expect(prospectItem.title).toEqual(testEventBody.title);
@@ -333,11 +333,11 @@ describe('event consumption integration test', function () {
       sinon.stub(DataService.prototype, 'insertTileSource').throws('sql error');
       const dymamoDbSpy = sinon.spy(
         CuratedItemRecordModel.prototype,
-        'upsertFromEvent'
+        'upsertFromEvent',
       );
       nockParser(testEventBody);
       await expect(addScheduledItem(testEventBody, db)).rejects.toThrow(
-        'failed to transact for the event body'
+        'failed to transact for the event body',
       );
       expect(dymamoDbSpy.callCount).toEqual(0);
     });
@@ -356,7 +356,7 @@ describe('event consumption integration test', function () {
       expect(consoleSpy.calledOnce).toBe(true);
       expect(dbSpy.callCount).toBe(0);
       expect(consoleSpy.getCall(0).firstArg).toContain(
-        'duplicate add-scheduled-item event'
+        'duplicate add-scheduled-item event',
       );
     });
   });
@@ -437,7 +437,7 @@ describe('event consumption integration test', function () {
           config.tables.curatedFeedProspects,
           config.tables.curatedFeedQueuedItems,
           config.tables.curatedFeedItems,
-        ].map((table) => db(table).truncate())
+        ].map((table) => db(table).truncate()),
       );
       clock.restore();
     });
@@ -459,7 +459,7 @@ describe('event consumption integration test', function () {
           .first();
         expect(prospectRecord.title).toEqual(testEventBody.title);
         expect(prospectRecord.time_updated).toEqual(
-          convertUtcStringToTimestamp(testEventBody.updatedAt)
+          convertUtcStringToTimestamp(testEventBody.updatedAt),
         );
 
         const queuedItemRecord = await db(config.tables.curatedFeedQueuedItems)
@@ -467,7 +467,7 @@ describe('event consumption integration test', function () {
           .first();
         expect(queuedItemRecord.curator).toEqual(prospectRecord.curator);
         expect(queuedItemRecord.time_updated).toEqual(
-          prospectRecord.time_updated
+          prospectRecord.time_updated,
         );
 
         const curatedItem = await db(config.tables.curatedFeedItems)
@@ -478,10 +478,10 @@ describe('event consumption integration test', function () {
 
         const curatedItemRecord =
           await curatedRecordModel.getByScheduledItemExternalId(
-            'random_scheduled_guid_2'
+            'random_scheduled_guid_2',
           );
         expect(curatedItemRecord?.lastUpdatedAt).toEqual(
-          Math.round(lastUpdatedAt.getTime() / 1000)
+          Math.round(lastUpdatedAt.getTime() / 1000),
         );
       });
 
@@ -515,7 +515,7 @@ describe('event consumption integration test', function () {
           .where({ curated_rec_id: curatedRecord.curated_rec_id })
           .first();
         expect(curatedItemRecord.resolved_id).toEqual(
-          curatedRecord.resolved_id
+          curatedRecord.resolved_id,
         );
       });
     });
@@ -549,7 +549,7 @@ describe('event consumption integration test', function () {
 
       const scheduledItemRecord =
         await curatedRecordModel.getByScheduledItemExternalId(
-          eventBody.scheduledItemExternalId
+          eventBody.scheduledItemExternalId,
         );
       expect(scheduledItemRecord).not.toBeUndefined();
 
@@ -626,7 +626,7 @@ describe('event consumption integration test', function () {
           config.tables.curatedFeedQueuedItems,
           config.tables.curatedFeedItems,
           config.tables.curatedFeedTopics,
-        ].map((table) => db(table).truncate())
+        ].map((table) => db(table).truncate()),
       );
     });
 
@@ -639,13 +639,13 @@ describe('event consumption integration test', function () {
           config.tables.curatedFeedItems,
           config.tables.curatedFeedTopics,
           config.tables.domains,
-        ].map((table) => db(table).truncate())
+        ].map((table) => db(table).truncate()),
       );
 
       await db(config.tables.curatedFeedItems).insert(curatedRecordPriorUpdate);
       await db(config.tables.curatedFeedProspects).insert(prospectPriorUpdate);
       await db(config.tables.curatedFeedQueuedItems).insert(
-        queuedItemPriorUpdate
+        queuedItemPriorUpdate,
       );
 
       await db(config.tables.curatedFeedTopics).insert({
@@ -676,7 +676,7 @@ describe('event consumption integration test', function () {
         prospectRecord,
         prospectPriorUpdate,
         queuedItemRecord,
-        queuedItemPriorUpdate.topic_id
+        queuedItemPriorUpdate.topic_id,
       );
 
       //curated_feed_items remains as it is.
@@ -741,13 +741,13 @@ describe('event consumption integration test', function () {
         queued_id: curatedRecordPriorUpdate_2.queued_id,
       };
       await db(config.tables.curatedFeedItems).insert(
-        curatedRecordPriorUpdate_2
+        curatedRecordPriorUpdate_2,
       );
       await db(config.tables.curatedFeedProspects).insert(
-        prospectItemPriorUpdate_2
+        prospectItemPriorUpdate_2,
       );
       await db(config.tables.curatedFeedQueuedItems).insert(
-        queuedItemPriorUpdate_2
+        queuedItemPriorUpdate_2,
       );
 
       await updateApprovedItem(testEventBody, db);
@@ -771,7 +771,7 @@ describe('event consumption integration test', function () {
         prospectRecord,
         prospectPriorUpdate,
         queuedItemRecord,
-        2 //personal finance id
+        2, //personal finance id
       );
 
       assertForUpdateApprovedItems(
@@ -779,7 +779,7 @@ describe('event consumption integration test', function () {
         prospectRecord_2,
         prospectPriorUpdate,
         queuedItemRecord_2,
-        2 // personal finance id
+        2, // personal finance id
       );
 
       //curated_feed_items remains as it is.
@@ -848,11 +848,11 @@ function assertForUpdateApprovedItems(
   prospectRecord,
   prospectPriorUpdate,
   queuedItemRecord,
-  topicId
+  topicId,
 ) {
   expect(prospectRecord.title).toEqual(testEventBody.title);
   expect(prospectRecord.time_updated).toEqual(
-    convertUtcStringToTimestamp(testEventBody.updatedAt)
+    convertUtcStringToTimestamp(testEventBody.updatedAt),
   );
   expect(prospectRecord.image_src).toEqual(testEventBody.imageUrl);
   //points to personal_finance
