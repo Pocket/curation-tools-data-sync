@@ -80,20 +80,6 @@ export class BackfillLambda extends Resource {
             ],
           },
         ],
-        alarms: {
-          errors: {
-            // The backfill lambda is throttled to concurrency of 10.
-            evaluationPeriods: 1,
-            comparisonOperator: 'GreaterThanOrEqualToThreshold',
-            period: 1800, // 30 minutes
-            // approx. 5% failure rate (taken from test runs on EN_INTL,
-            // which is the shortest backfill run)
-            threshold: 150,
-            actions: config.isDev
-              ? []
-              : [pagerDuty!.snsNonCriticalAlarmTopic.arn],
-          },
-        },
       },
       tags: config.tags,
     });
