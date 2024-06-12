@@ -260,10 +260,8 @@ export class DatasyncLambda extends Resource {
       period: period,
       threshold: threshold,
       statistic: 'Sum',
-      alarmActions: config.isDev
-        ? []
-        : [this.pagerDuty.snsCriticalAlarmTopic.arn],
-      okActions: config.isDev ? [] : [this.pagerDuty.snsCriticalAlarmTopic.arn],
+      alarmActions: [],
+      okActions: [],
     });
   }
 
