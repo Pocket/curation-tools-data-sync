@@ -1,9 +1,5 @@
 import { Construct } from 'constructs';
-import {
-  App,
-  S3Backend,
-  TerraformStack,
-} from 'cdktf';
+import { App, S3Backend, TerraformStack } from 'cdktf';
 import { AwsProvider } from '@cdktf/provider-aws/lib/provider';
 import { S3Bucket } from '@cdktf/provider-aws/lib/s3-bucket';
 import { config } from './config';
