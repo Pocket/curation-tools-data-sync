@@ -28,7 +28,7 @@ async function rollbackQueuedItems(queuedIds: number[], trx: Knex.Transaction) {
 
 async function rollbackTileSource(
   curatedRecIds: number[],
-  trx: Knex.Transaction
+  trx: Knex.Transaction,
 ) {
   await dbClient('tile_source')
     .delete()
@@ -38,7 +38,7 @@ async function rollbackTileSource(
 
 async function rollbackCuratedItems(
   curatedRecIds: number[],
-  trx: Knex.Transaction
+  trx: Knex.Transaction,
 ) {
   return trx('curated_feed_items')
     .delete()
@@ -70,7 +70,7 @@ async function rollback() {
 rollback()
   .then((res) => {
     console.log(
-      `Successfully rollback feed ID: ${res.feedId} after time_live: ${res.timeLive}`
+      `Successfully rollback feed ID: ${res.feedId} after time_live: ${res.timeLive}`,
     );
     console.log(`Number of items affected back: ${res.curatedRecIds.length}`);
     console.log('Curated Rec IDs: ', JSON.stringify(res.curatedRecIds));

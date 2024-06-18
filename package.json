@@ -12,8 +12,8 @@
     "test-integration": "jest \"\\.integration\\.ts\" --runInBand",
     "test-all": "npm run test-spec && npm run test-integration",
     "postinstall": "(cd bin && npm install); (cd curation-authors-backfill && npm install); (cd curation-migration-backfill && npm install); (cd curation-migration-datasync && npm install)",
-    "lint-check": "eslint --fix-dry-run \"curation-*/**/*.ts\"",
-    "lint-fix": "eslint --fix \"curation*/**/*.ts\""
+    "lint-check": "eslint \"**/*.ts\"",
+    "lint-fix": "eslint --fix \"**/*.ts\""
   },
   "repository": {
     "type": "git",
