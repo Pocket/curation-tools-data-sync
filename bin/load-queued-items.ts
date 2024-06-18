@@ -53,7 +53,7 @@ function getRandomInt(min, max) {
 async function insertIntoCuratedFeedItem(
   queuedItem,
   timeLive,
-  trx: Knex.Transaction
+  trx: Knex.Transaction,
 ) {
   const now = Math.floor(new Date().getTime() / 1000);
 
@@ -107,7 +107,7 @@ async function moveQueuedItems(feedId, baseTime) {
       const curatedRecId = await insertIntoCuratedFeedItem(
         queuedItem,
         i * 3600 + baseTime,
-        trx
+        trx,
       );
       await updateQueuedItem(queuedItem['queued_id'], trx);
       await insertTileSource(curatedRecId, trx);
@@ -116,7 +116,9 @@ async function moveQueuedItems(feedId, baseTime) {
     } catch (e) {
       await trx.rollback();
       console.log(
-        `Number of items emptied from the queue before error occurred: ${i - 1}`
+        `Number of items emptied from the queue before error occurred: ${
+          i - 1
+        }`,
       );
       console.log(`Failed at queued item ID: ${queuedItem['queued_id']}`);
       console.log(`Failed for the time_live: ${i * 3600 + baseTime}`);
@@ -137,7 +139,7 @@ async function load() {
   const count = await moveQueuedItems(
     feedId,
     // Starting from the next hour
-    startTime
+    startTime,
   );
 
   return { count, startTime };
