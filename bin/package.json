@@ -11,7 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "knex": "^3.0.1",
-    "mysql2": "^3.6.3"
+    "mysql2": ">=3.9.8"
   },
   "devDependencies": {
     "ts-node": "^10.9.1",
