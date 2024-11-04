@@ -322,7 +322,7 @@ export class DatasyncLambda extends Resource {
       subnetIds: this.vpc.privateSubnetIds,
       rdsConfig: {
         databaseName: config.name.toLowerCase(),
-        masterUsername: 'pkt_cr_data_sync',
+        masterUsername: 'pkt_curation_data_sync',
         skipFinalSnapshot: true,
         engine: 'aurora-mysql',
         engineMode: 'serverless',
