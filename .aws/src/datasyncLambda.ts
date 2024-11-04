@@ -325,12 +325,13 @@ export class DatasyncLambda extends Resource {
         masterUsername: 'pkt_curation_data_sync',
         skipFinalSnapshot: true,
         engine: 'aurora-mysql',
-        engineMode: 'serverless',
-        scalingConfiguration: {
+        engineMode: 'provisioned',
+        engineVersion: '8.0.mysql_aurora.3.07.1',
+        serverlessv2ScalingConfiguration: {
           minCapacity: config.rds.minCapacity,
           maxCapacity: config.rds.maxCapacity,
-          autoPause: false,
         },
+        createServerlessV2Instance: true,
         deletionProtection: false,
       },
 
